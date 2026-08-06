@@ -1,0 +1,70 @@
+# Dependencies & Build Outputs
+node_modules/
+.next/
+out/
+build/
+dist/
+.turbo/
+coverage/
+.vercel/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+secrets.json
+
+# Sensitive Spreadsheets & Customer Client Data (.xls, .xlsx, .csv)
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.csv
+白紙*.xls
+*FUJIARTE*.xls
+
+# Sensitive Business Plans, Internal Master Plans & Mockup Assets
+PLANO_MASTER_SENIOR.md
+plano*.jpeg
+plano*.jpg
+plano*.png
+*.txt
+docs/04-modelo-comercial-e-fiscal.md
+docs/07-fluxo-de-caixa.md
+
+# IDEs, Editors & AI Agents Context
+.claude/
+.vscode/
+.idea/
+.gemini/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS System Files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+desktop.ini
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/
+temp/
