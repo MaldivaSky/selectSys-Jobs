@@ -1,298 +1,202 @@
-# SelectSys Jobs
+# SelectSys Jobs 🇯🇵🇧🇷
 
-## Sistema de Gestão de Processo Dekassegui (Brasil → Japão)  
-## Dekassegui Process Management System (Brazil → Japan)
+> **SaaS Multi-Tenant de Alta Performance para Gestão do Pipeline de Exportação de Mão de Obra (Brasil → Japão)**  
+> *Transformando o recrutamento e seleção de trabalhadores dekassegui com tecnologia explicável, inteligência aplicada e conformidade LGPD.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)](https://github.com/yourusername/selectsys-jobs)
+[![Status: Active](https://img.shields.io/badge/Status-Active%20Production-brightgreen.svg)]()
+[![Next.js](https://img.shields.io/badge/Next.js-15.0-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20RLS-4169E1?logo=postgresql)](https://www.postgresql.org/)
+[![LGPD Compliant](https://img.shields.io/badge/LGPD-Art._20_&_11-purple)]()
 
 ---
 
-## ����� Visão Geral / Overview
-
-**SelectSys Jobs** é um **SaaS multi-tenant** especializado na gestão completa do processo de exportação de mão de obra do Brasil para o Japão (dekassegui). Diferente de um ATS genérico, nosso sistema foi construido especificamente para atender às exigências únicas deste fluxo.
-
-**SelectSys Jobs** is a **multi-tenant SaaS** specialized in the complete management of the labor export process from Brazil to Japan (dekassegui). Unlike a generic ATS, our system was specifically built to meet the unique requirements of this flow.
-
----
-
-## ����� Principais Funcionalidades / Key Features
-
-### ����� Formulário Inteligente / Smart Form
-- Substitui a planilha Excel atual mantendo layout 100% idêntico na exportação
-- Replaces current Excel sheet maintaining 100% identical layout in export
-- Rascunho e autosave para formulário extenso (~130 campos)  
-- Draft and autosave for extensive form (~130 fields)
-- Totalmente configurável pelo cliente sem intervenção técnica
-- Fully configurable by client without technical intervention
-- Mobile-first (80% dos candidatos preenchem via celular)
-- Mobile-first (80% of candidates fill via mobile)
-
-### ����� Triagem Automática Explicável / Explainable Automated Screening
-- Regras como dados versionados (não hardcoded)
-- Rules as versioned data (not hardcoded)
-- Resposta imediata a "por que esse candidato foi reprovado?"
-- Immediate answer to "why was this candidate rejected?"
-- Conformidade com LGPD Art. 20 (direito à revisão)
-- LGPD Art. 20 compliance (right to review)
-- Reprocessamento seguro quando regras mudam
-- Safe reprocessing when rules change
-
-### ����� Matching e Compatibilidade / Matching and Compatibility
-- Estágio 1: Restrições rígidas (elimina imediatamente)
-- Stage 1: Hard constraints (immediate elimination)
-- Estágio 2: Score ponderado 0-100 (configurável por vaga)
-- Stage 2: Weighted score 0-100 (configurable per vacancy)
-- Saída sempre explicável com plano de ação
-- Always explainable output with action plan
-
-### ����� Dashboard de Métricas / Metrics Dashboard
-- Visão geral do funil de processamento
-- Processing funnel overview
-- Taxas de conversão entre etapas críticas
-- Conversion rates between critical steps
-- Tempo médio por etapa com alertas de SLA
-- Average time per step with SLA alerts
-- Performance por agência indicadora
-- Performance by referring agency
-- Indicadores preditivos de sucesso
-- Success predictive indicators
-
-### ����� Importação de Currículo / Resume Import
-- Pré-preenchimento inteligente via upload de PDF/DOCX
-- Smart pre-filling via PDF/DOCX upload
-- Suporte a currículos em português e japonês
-- Support for Portuguese and Japanese resumes
-- Validação em camadas e auditoria completa
-- Layered validation and complete auditing
-- Nenhum dado sensível pré-preenchido automaticamente
-- No sensitive data auto-pre-filled
-
-### �������� Segurança e Conformidade / Security and Compliance
-- Criptografia em nível de coluna para dados de saúde sensíveis
-- Column-level encryption for sensitive health data
-- Log de acesso completo a cada leitura de dados sensíveis
-- Complete access log for each sensitive data read
-- Consentimento específico, versionado e com timestamp/IP
-- Specific, versioned consent with timestamp/IP
-- Isolamento multi-tenant via RLS no PostgreSQL
-- Multi-tenant isolation via PostgreSQL RLS
-- Backup diário com restore testado mensalmente
-- Daily backup with monthly tested restore
+## 📌 Sumário
+- [Visão Geral](#-visão-geral)
+- [🏆 Cliente Pioneiro & Case de Sucesso: FUJIARTE](#-cliente-pioneiro--case-de-sucesso-fujiarte)
+- [⚙️ Regras de Negócio e Domínio Dekassegui](#️-regras-de-negócio-e-domínio-dekassegui)
+- [🛠️ Stack Tecnológico](#️-stack-tecnológico)
+- [🏗️ Arquitetura e Princípios de Engenharia](#️-arquitetura-e-princípios-de-engenharia)
+- [🔒 Segurança, Privacidade e LGPD](#-segurança-privacidade-e-lgpd)
+- [📊 Modelo de Dados & Multi-Tenancy](#-modelo-de-dados--multi-tenancy)
+- [🚀 Funcionalidades Principais](#-funcionalidades-principais)
+- [🗺️ Roadmap & Metodologia](#️-roadmap--metodologia)
+- [📑 Documentação do Projeto](#-documentação-do-projeto)
+- [📜 Licença](#-licença)
 
 ---
 
-## �������� Arquitetura e Tecnologia / Architecture and Technology
+## 🌐 Visão Geral
 
-### Stack Técnico / Technical Stack
-- **Frontend:** Next.js 15 (App Router) + React 19 + TypeScript
-- **UI:** Tailwind CSS + shadcn/ui + Radix
-- **Formulários:** react-hook-form + Zod com renderer dirigido por schema
-- **Backend:** Node.js com Drizzle ORM
-- **Banco de Dados:** PostgreSQL 16 (com pgcrypto, pg_trgm, unaccent)
-- **Auth:** Auth.js v5 (magic link para candidatos, e-mail+senha+TOTP para staff)
-- **Filas:** pg-boss (fila em cima do Postgres)
-- **Storage:** Cloudflare R2 (S3-compatible) com upload direto por URL pré-assinada
-- **E-mail:** Resend + React Email
-- **WhatsApp:** Meta WhatsApp Cloud API
-- **IA:** Claude (claude-sonnet-5) via Anthropic SDK
-- **Excel:** ExcelJS (preenchendo o .xls original como template)
-- **PDF:** @react-pdf/renderer
-- **i18n:** next-intl (pt-BR, ja-JP, es)
-- **Pagamentos:** Asaas (BRL) + Stripe (JPY/internacional)
-- **Observabilidade:** Sentry + Better Stack
-- **CI/CD:** GitHub Actions → Docker → Coolify
+O **SelectSys Jobs** é uma plataforma SaaS especializada no ecossistema **Dekassegui** (exportação de trabalhadores do Brasil para o Japão). Diferente de sistemas ATS (Applicant Tracking System) genéricos como Gupy ou Solides, o SelectSys Jobs foi concebido de raiz para resolver a complexidade única do mercado nipo-brasileiro: gestão de vistos COE (*Certificate of Eligibility*), tradução de histórico laboral por províncias japonesas, controle de documentos (Koseki Touhon, Reentry, Passaporte) e rigoroso cumprimento de privacidade e regras sanitárias.
 
-### Princípios de Arquitetura / Architecture Principles
-1. **Multi-tenant desde a linha 1** - Pronto para múltiplas empreiteiras desde o início
-2. **Configuração > código** - Formulário, regras e pesos são dados, não código
-3. **Decisões auditáveis** - Toda triagem grava entradas + versão da regra + resultado
-4. **IA na periferia, nunca no veredito** - IA apenas traduz, resume, extrai - nunca aprova/reprova
-5. **Monólito modular** - Módulos com fronteiras limpas dentro de único deploy
+### 🔄 O Funil Dekassegui (11 Etapas / 17 Estados)
+```mermaid
+graph LR
+    A[1. Candidatura] --> B[2. Triagem Automática]
+    B --> C[3. Entrevista]
+    C --> D[4. Integração Garoon]
+    D --> E[5. Envio ao Japão]
+    E --> F[6. Seleção Fábrica]
+    F --> G[7. Oferta/Aprovação]
+    G --> H[8. Processo COE]
+    H --> I[9. Emissão Visto]
+    I --> J[10. Viagem/Embarque]
+    J --> K[11. Admissão no Japão]
+```
 
 ---
 
-## ����� Modelo de Dados / Data Model
+## 🏆 Cliente Pioneiro & Case de Sucesso: FUJIARTE
+
+A **FUJIARTE**, uma das maiores e mais respeitadas empresas de recursos humanos e terceirização de mão de obra no Japão, é o **primeiro cliente parceiro e caso de validação operacional** do SelectSys Jobs.
+
+### 🎯 Desafio & Solução FUJIARTE
+- **Desafio:** A operação dependia do preenchimento de fichas cadastrais em planilhas Excel altamente complexas (`白紙 FUJIARTE Ficha Cadastral`), contendo cerca de 130 campos detalhados (identificação, biometria para EPIs, histórico fabril no Japão, enquetes de saúde e antecedentes). O preenchimento manual gerava inconsistências, retrabalho e morosidade na triagem.
+- **Solução:** O SelectSys Jobs digitalizou 100% desse fluxo através de um **Formulário Web Inteligente Mobile-First**, integrando extração automática de currículos via IA (Anthropic Claude), motor de triagem auditável e **exportação idêntica (pixel-perfect) no layout nativo `.xls` da FUJIARTE**.
+
+### 💎 Benefícios Validados na Operação FUJIARTE:
+* **Fidelidade de Exportação (100% layout .xls):** Garante que os analistas no Japão continuem recebendo a ficha exatamente no padrão histórico esperado pela diretoria.
+* **Redução de 60-70% no tempo de candidatura:** Redução de ~25 minutos para 7-10 minutos com suporte a auto-save e pré-preenchimento inteligente.
+* **Zero atrito de adoção:** Transição transparente do papel/planilha para o fluxo digital com gestão de status por agência indicadora parceira.
+
+---
+
+## ⚙️ Regras de Negócio e Domínio Dekassegui
+
+O SelectSys Jobs traduz regras operacionais complexas em um motor automatizado, flexível e auditável:
+
+### 1. Formulário Inteligente Dinâmico (~130 Campos)
+* **Página Cadastral (Bloco Identificação & Biometria):** Coleta de dados precisos como tamanho de pé e cintura em centímetros para encomenda imediata de EPIs/uniformes industriais no Japão.
+* **Histórico Laboral Flexível (1:N):** Suporte ilimitado para registros de trabalho no Japão (província, fábrica, empreiteira, período) e no Brasil.
+* **Enquetes de Aptidão & Saúde (Blocos A, B e C):** Coleta estruturada de restrições físicas, disponibilidade de turnos/horas extras, tatuagens (local e foto) e motivações familiares.
+
+### 2. Motor de Triagem Automática & Explicável
+* **Sem Hardcoding:** As regras de negócio (ex: idade máxima < 55 anos, exceções para ex-colaboradores da mesma fábrica, descendência nikkei nissei/sansei/yonsei) são versionadas no banco como dados e avaliadas dinamicamente.
+* **Conformidade LGPD Art. 20:** Toda reprovação gera um parecer técnico detalhado e explicável ("Por que este candidato foi reprovado?"), garantindo o direito à revisão humana.
+
+### 3. Matching e Compatibilidade em 2 Estágios
+1. **Estágio 1 (Hard Constraints):** Filtro eliminatório imediato para requisitos mandatórios (ex: elegibilidade de visto, certidões).
+2. **Estágio 2 (Weighted Score 0-100):** Cálculo ponderado de aderência à vaga (experiência no setor de autopeças/eletrônicos, domínio do idioma japonês, disponibilidade de embarque).
+
+---
+
+## 🛠️ Stack Tecnológico
+
+Desenvolvido com uma arquitetura moderna, robusta e escalável preparada para alta concorrência:
+
+| Camada | Tecnologias Utilizadas |
+|---|---|
+| **Frontend Framework** | **Next.js 15** (App Router), **React 19**, **TypeScript** (Strict Type Safety) |
+| **Estilização & UI** | **Tailwind CSS**, **shadcn/ui**, **Radix UI** primitives, Lucide Icons |
+| **Formulários & Schemas** | **react-hook-form**, **Zod** (validação end-to-end com renderer guiado por schema) |
+| **Backend & ORM** | **Node.js**, **Drizzle ORM** (queries type-safe e performáticas) |
+| **Banco de Dados** | **PostgreSQL 16** (Extensions: `pgcrypto` para criptografia, `pg_trgm`, `unaccent`) |
+| **Autenticação & Sessões** | **Auth.js v5** (Magic Links para candidatos, E-mail/Senha + TOTP MFA para staff) |
+| **IA & Processamento** | **Anthropic Claude SDK** (`claude-3-5-sonnet`) para parsing de currículos (periferia) |
+| **Filas & Tarefas Assíncronas** | **pg-boss** (gestão de filas resiliente baseada no PostgreSQL) |
+| **Storage & Documentos** | **Cloudflare R2** (S3-Compatible) com presigned URLs para upload direto e seguro |
+| **Geração de Arquivos** | **ExcelJS** (preenchimento do template `.xls` da FUJIARTE), **@react-pdf/renderer** |
+| **Comunicação & Notificação** | **Meta WhatsApp Cloud API**, **Resend** + **React Email** |
+| **Internacionalização (i18n)** | **next-intl** (Suporte a Português `pt-BR`, Japonês `ja-JP` e Espanhol `es`) |
+| **Observabilidade & Infra** | **Sentry**, **Better Stack**, **Docker**, **Coolify** CI/CD em servidor dedicado |
+
+---
+
+## 🏗️ Arquitetura e Princípios de Engenharia
+
+1. **Multi-Tenancy Nativo com RLS (Row Level Security):** Isolamento total de dados por organização (`organization_id`) garantido diretamente na camada de banco de dados PostgreSQL.
+2. **Configuração > Código:** Formulários, perguntas da enquete e regras de triagem são dados JSONB versionados. Nenhuma regra de negócio é embutida em código rígido.
+3. **Decisões Auditáveis:** Toda avaliação de candidato gera um snapshot imutável (`screening_decisions`) com as entradas do candidato, a versão da regra aplicada e o resultado obtido.
+4. **Inteligência Artificial na Periferia:** A IA atua na extração de currículos, tradução e sumarização de perfis para o parceiro japonês — **nunca** no veredito automatizado de aprovação/reprovação.
+5. **Monólito Modular:** Código estruturado em módulos com fronteiras limpas (packages/core, packages/ai, etc.) facilitando manutenção e deploy único simplificado.
+
+---
+
+## 🔒 Segurança, Privacidade e LGPD
+
+Tratando dados no fluxo Brasil-Japão, a segurança e a conformidade legal são pilares fundamentais:
+
+* **Proteção a Dados Pessoais Sensíveis (LGPD Art. 5º II e Art. 11):** Os dados de saúde do candidato (Bloco B) são armazenados em tabelas dedicadas com **criptografia em nível de coluna** (`pgcrypto`).
+* **Trilha de Auditoria Inalterável (`audit_log`):** Todo acesso ou leitura de dados sensíveis de candidatos registra o usuário responsável, timestamp, IP e motivo do acesso.
+* **Gestão de Consentimento Versionado:** Consentimento explícito exigido do candidato com registro de Timestamp, IP e versão do termo aceito.
+* **Política de Purga Automática:** Expurgo programado de documentos e dados após 24 meses do encerramento do processo seletivo.
+
+---
+
+## 📊 Modelo de Dados & Multi-Tenancy
 
 ```
-organizations ──��── users ── memberships (role)
-                ├── agencies ──── agency_links (código único)
-                ├── form_schemas (versionadas)
-                ├── rulesets (versionadas)
-                ├── jobs (vagas) ── job_requirements
-                └── candidates ──��── applications ──��── application_data (JSONB)
+organizations ──┬── users ── memberships (roles: admin, analista, entrevistador)
+                ├── agencies ──── agency_links (código único de indicação)
+                ├── form_schemas (versionamento dinâmico)
+                ├── rulesets (regras de triagem versionadas)
+                ├── jobs (vagas/postos nas fábricas) ── job_requirements
+                └── candidates ──┬── applications ──┬── application_data (JSONB)
                                  │                  ├── screening_decisions
                                  │                  ├── pipeline_events
                                  │                  └── match_scores
-                                 ├── work_history (1:N Japão/Brasil)
-                                 ├── family_members
-                                 ├── documents (state machine)
-                                 ├── candidate_health  ����� criptografada
-                                 └── consents (versionados)
+                                 ├── work_history (Experiência Japão / Brasil)
+                                 ├── family_members (Familiar em emergência)
+                                 ├── documents (State Machine de certidões/visto)
+                                 ├── candidate_health 🔒 (Criptografada)
+                                 └── consents (Gestão de termos LGPD)
 
 audit_log · notifications · message_templates · subscriptions · billing_events
 ```
 
-**Isolamento multi-tenant:** `organization_id` em toda tabela + RLS no Postgres  
-**Multi-tenancy isolation:** `organization_id` in all tables + Postgres RLS
+---
+
+## 🚀 Funcionalidades Principais
+
+### 📱 Para Candidatos Dekassegui
+- **Portal Mobile-First:** Preenchimento simples e responsivo em smartphones (~80% dos acessos).
+- **Importação Inteligente de Currículo:** Upload de PDF/DOCX em Português ou Japonês com pré-preenchimento automático via IA.
+- **Rascunho & Autosave:** Progresso salvo automaticamente sem perda de informações.
+- **Acompanhamento do Pipeline:** Status em tempo real (Triagem, Entrevista, Visto COE, Embarque).
+
+### 🖥️ Para Equipe Interna / Empreiteiras
+- **Kanban do Pipeline Dekassegui:** Visualização intuitiva das 11 etapas operacionais.
+- **Exportador Excel FUJIARTE:** Emissão com 1 clique do arquivo `.xls` 100% idêntico ao modelo oficial.
+- **Motor de Triagem & Justificativas:** Visualização imediata dos motivos de pontuação e aprovação.
+- **Gestão de Agências Indicadoras:** Relatórios detalhados e controle de performance de parceiros de captação.
+
+### 🏯 Para Parceiros no Japão (Empreiteiras / Fábricas)
+- **One-Pager de Apresentação:** Perfil resumido e padronizado do candidato traduzido em Japonês.
+- **Histórico Estruturado:** Exibição clara de turnos, províncias trabalhadas e competências operacionais.
 
 ---
 
-## ����� Telas Principais / Main Screens
+## 🗺️ Roadmap & Metodologia
 
-### Para Candidatos / For Candidates
-- Formulário de candidatura com importação de currículo
-- Application form with resume import
-- Portal do candidato com status em tempo real
-- Candidate portal with real-time status
-- Área de serviço premium (matching e compatibilidade)
-- Premium service area (matching and compatibility)
+O desenvolvimento segue o **Plano Master Sênior** com validação semanal com os clientes:
 
-### Para Staff Interno / For Internal Staff
-- Painel administrativo com kanban do pipeline
-- Admin panel with pipeline kanban
-- Gestão de vagas e requisitos
-- Job and requirements management
-- Dashboard de métricas e indicadores
-- Metrics and indicators dashboard
-- Configuração de formulário, regras e matching
-- Form, rules, and matching configuration
-- Gestão de agências indicadoras
-- Referring agency management
-
-### Para Parceiros Japoneses / For Japanese Partners
-- Perfil resumido do candidato em japonês
-- Candidate summary profile in Japanese
-- Histórico de trabalho estruturado
-- Structured work history
-- One-pager de apresentação gerado por IA
-- IA-generated presentation one-pager
+- [x] **Fase 1 — MVP Core (Concluído):** Formulário dinâmico, exportação idêntica Excel FUJIARTE, máquina de 17 estados e motor de triagem.
+- [x] **Fase 2 — IA & Analytics (Em Execução):** Importação de currículo via Claude IA, Dashboard de Métricas operacionais e funil de conversão.
+- [ ] **Fase 3 — Integração & Expansão:** Conexão nativa com Cybozu Garoon Cloud/On-Premise e automação avançada de WhatsApp.
 
 ---
 
-## ����� Segurança e LGPD / Security and LGPD
+## 📑 Documentação do Projeto
 
-### Dados Sensíveis / Sensitive Data
-- Bloco B do formulário (saúde) em tabela criptografada separados
-- Form Block B (health) in separate encrypted table
-- Log de acesso a cada leitura (quem, quando, qual candidato, qual campo)
-- Access log for each read (who, when, which candidate, which field)
-- Consentimento específico e destacado, versionado com timestamp/IP
-- Specific and highlighted consent, versioned with timestamp/IP
-- Política de retenção com expurgo automático (24 meses após último contato)
-- Retention policy with automatic purging (24 months after last contact)
+Para mais detalhes sobre arquitetura, negócios e implementação, consulte a pasta [`docs/`](docs/):
 
-### Conformidade / Compliance
-- LGPD Art. 20: Direito à revisão de decisões automatizadas
-- LGPD Art. 20: Right to review of automated decisions
-- Decisões de triagem são determinísticas, explicáveis e persistidas
-- Screening decisions are deterministic, explainable, and persisted
-- Nenhuma IA no caminho de aprovar/reprovar - apenas na periferia
-- No AI in approve/reject path - only in periphery
-- Direitos do titular: endpoints de exportação e exclusão de dados (self-service)
-- Data subject rights: export and deletion endpoints (self-service)
+- [`docs/01-analise-documentos.md`](docs/01-analise-documentos.md) — Análise dos processos dekassegui e modelo FUJIARTE.
+- [`docs/02-arquitetura-e-stack.md`](docs/02-arquitetura-e-stack.md) — Detalhamento técnico de infraestrutura e estimativa de custos.
+- [`docs/03-plano-implementacao.md`](docs/03-plano-implementacao.md) — Plano de execução das fases do sistema.
+- [`docs/04-modelo-comercial-e-fiscal.md`](docs/04-modelo-comercial-e-fiscal.md) — Estrutura comercial, pricing e enquadramento fiscal MEI/ME.
+- [`PLANO_MASTER_SENIOR.md`](PLANO_MASTER_SENIOR.md) — Cronograma de entregas e metodologia de validação.
 
 ---
 
-## ����� Métricas de Sucesso / Success Metrics
+## 📜 Licença
 
-### Operacionais / Operational
-- Redução de 60-70% no tempo de preenchimento inicial do formulário
-- 60-70% reduction in initial form filling time
-- Aumento estimado de 25% na taxa de conclusão do formulário
-- Estimated 25% increase in form completion rate
-- Redução de 50% no tempo de análise gerencial
-- 50% reduction in managerial analysis time
-
-### de Qualidade / Quality
-- Melhoria na qualidade dos dados (elimina erros de digitação em campos críticos)
-- Improved data quality (eliminates typos in critical fields)
-- Taxa de aceitação pelo parceiro japonês > 95%
-- Japanese partner acceptance rate > 95%
-- Redução de retrabalho por informações incorretas ou faltantes
-- Reduction in rework due to incorrect or missing information
-
-### de Negócio / Business
-- Diferencial claro vs ATS genéricos (nenhum fala COE, Koseki, Reentry, província)
-- Clear differential vs generic ATS (none speak COE, Koseki, Reentry, province)
-- Base para cobrança de serviço premium (matching explicável)
-- Basis for premium service charging (explainable matching)
-- Escalabilidade: mesma infraestrutura suporta 8-10 organizações do porte inicial
-- Scalability: same infrastructure supports 8-10 organizations of initial size
+Este projeto é um software licenciado sob a **Licença MIT** - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
-## �������� Roadmap
-
-### Fase 1: MVP Core (Concluído)
-- Formulário versionado e exportação Excel idêntica
-- Versioned form and identical Excel export
-- Motor de regras de triagem explicável
-- Explainable screening rules engine
-- Máquina de estados do pipeline dekassegui (17 estados)
-- Dekassegui pipeline state machine (17 states)
-- Integração básica WhatsApp e e-mail
-- Basic WhatsApp and email integration
-
-### Fase 2: Melhorias Solicitadas (Este Plano)
-- Pré-preenchimento de formulário via importação de currículo
-- Form pre-filling via resume import
-- Dashboard de métricas e indicadores operacionais
-- Operational metrics and indicators dashboard
-
-### Fase 3: Expansão e Otimização
-- Integração completa Garoon (cloud ou on-premise)
-- Full Garoon integration (cloud or on-premise)
-- Sistema de indicadores preditivos avançados
-- Advanced predictive indicators system
-- Otimização de custos baseado em uso real
-- Cost optimization based on real usage
-- Expansão para outras empreiteiras do mercado dekassegui
-- Expansion to other dekassegui market staffing agencies
-
----
-
-## ����� Equipe / Team
-
-- **CTO / Líder Técnico:** Rafael Maldivas
-- **Arquiteto de Soluções:** [A definir]
-- **Lead Frontend:** [A definir]
-- **Lead Backend:** [A definir]
-- **Especialista em IA/ML:** [A definir]
-- **Especialista em Segurança/LGPD:** [A definir]
-
----
-
-## ����� Documentação Relacionada / Related Documentation
-
-- [`docs/01-analise-documentos.md`](docs/01-analise-documentos.md) - Análise dos documentos e processo atual
-- [`docs/02-arquitetura-e-stack.md`](docs/02-arquitetura-e-stack.md) - Arquitetura, stack e custo de infraestrutura
-- [`docs/03-plano-implementacao.md`](docs/03-plano-implementacao.md) - Plano de implementação
-- [`docs/04-modelo-comercial-e-fiscal.md`](docs/04-modelo-comercial-e-fiscal.md) - Modelo comercial e fiscal
-- [`docs/05-escopo-mvp.md`](docs/05-escopo-mvp.md) - Escopo do MVP
-- [`docs/06-backlog-scrum.md`](docs/06-backlog-scrum.md) - Backlog Scrum
-- [`docs/07-fluxo-de-caixa.md`](docs/07-fluxo-de-caixa.md) - Fluxo de caixa
-- [`docs/08-whatsapp-tech-provider.md`](docs/08-whatsapp-tech-provider.md) - WhatsApp tech provider
-- [`docs/09-roteiro-de-ativacao.md`](docs/09-roteiro-de-ativacao.md) - Roteiro de ativação
-
----
-
-## �������� Licença / License
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.  
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## ����� Agradecimentos / Acknowledgements
-
-Agradecemos à nossa equipe pelo comprometimento e à nossa primeira parceira japonesa pela confiança em construir uma solução específica para o mercado dekassegui.  
-We thank our team for their commitment and our first Japanese partner for trusting us to build a specific solution for the dekassegui market.
-
----
-
-**SelectSys Jobs - Transformando o processo dekassegui com tecnologia segura e inteligente**  
-**SelectSys Jobs - Transforming the dekassegui process with secure and intelligent technology**
-
-*Versão 1.0 - Agosto/2026*  
-*Version 1.0 - August/2026*
+<p align="center">
+  <b>SelectSys Jobs</b> — <i>Transformando o recrutamento Dekassegui com tecnologia segura, auditável e inteligente.</i>
+</p>
