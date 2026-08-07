@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   User, Shield, CheckCircle2, ChevronRight, ChevronLeft,
-  Lock, Building2, MapPin, UploadCloud, FileText
+  Lock, Building2, MapPin
 } from 'lucide-react';
 import { Hanko } from '../brand/Hanko';
-import { BrandLockup } from '../brand/BrandMark';
-import { AIServiceAdapter } from '../dados/aiService';
+import { AutoPreenchimento } from '../components/ficha/AutoPreenchimento';
+import { normalizarHex } from '../theme/marcaTenant';
+import {
+  calcularIdade as idadeDe,
+  progressoTotal,
+  validarCelular,
+  validarCpf,
+  validarNascimento,
+  validarValidadeDocumento,
+} from '../dados/validacao';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
@@ -44,11 +52,18 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState('');
+  /** Faixa de aviso da ficha (extração aplicada, erro de validação, etc.). */
+  const [avisoFicha, setAvisoFicha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  /** Rascunho lido do localStorage, aguardando o candidato decidir se retoma. */
+  const [rascunhoPendente, setRascunhoPendente] = useState<{ dados: Record<string, unknown>; etapa: number } | null>(null);
   
   // Tenant Context
-  const [tenantInfo, setTenantInfo] = useState<{ id: string; nome: string; cor_primaria: string } | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<{
+    id: string;
+    nome: string;
+    cor_primaria: string;
+    logo_url: string;
+  } | null>(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
 
   useEffect(() => {
@@ -60,16 +75,19 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, nome, features')
+        .select('id, nome, logo_url, cor_primaria, features')
         .eq('slug', tenantSlug)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         alert('Agência não encontrada ou link inválido.');
         navigate('/login');
       } else {
-        const cor = (data.features as Record<string, string>)?.cor_primaria ?? '#294b86';
-        setTenantInfo({ id: data.id, nome: data.nome, cor_primaria: cor });
+        // Colunas dedicadas mandam; `features` cobre as orgs do seed antigo.
+        const feats = (data.features ?? {}) as Record<string, string>;
+        const cor = normalizarHex(data.cor_primaria ?? feats.cor_primaria);
+        const logo = data.logo_url ?? feats.logo_url ?? '';
+        setTenantInfo({ id: data.id, nome: data.nome, cor_primaria: cor, logo_url: logo });
         setFormData(prev => ({ ...prev, agenciaCodigo: data.id }));
       }
       setLoadingTenant(false);
@@ -178,7 +196,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
         } else {
           setCepFeedback('CEP não encontrado na base ViaCEP.');
         }
-      } catch (err) {
+      } catch {
         setCepFeedback('Erro de conexão ao buscar ViaCEP.');
       }
     } else {
@@ -186,59 +204,97 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     }
   };
 
-  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Na vida real, extrairia o texto do PDF usando pdf.js antes de mandar pra IA.
-    // Para homologação MVP, simularemos o envio de texto.
-    setAiLoading(true);
-    setAiFeedback('Analisando currículo com Inteligência Artificial DeepSeek...');
-    
-    try {
-      // Mock de texto extraído do PDF
-      const rawText = "Nome: ROBERTO KENJI SATO, nascido em 14/05/1992. Moro em Hamamatsu, Shizuoka. Sou Sansei. Contato: +81 90-1234-5678.";
-      const extractedData = await AIServiceAdapter.extractCandidateData(rawText);
-      
-      setFormData(prev => ({
-        ...prev,
-        nomeCompleto: extractedData.nome_completo || prev.nomeCompleto,
-        dataNascimento: extractedData.data_nascimento || prev.dataNascimento,
-        cidade: extractedData.cidade || prev.cidade,
-        estado: extractedData.provincia || prev.estado, // Adaptado
-        geracaoNikkei: extractedData.descendencia_nikkei.toLowerCase().includes('sansei') ? 'sansei' : prev.geracaoNikkei,
-        celular: extractedData.telefone || prev.celular
-      }));
-      setAiFeedback('✅ Currículo extraído com sucesso! 18 campos preenchidos automaticamente.');
-      setTimeout(() => setAiFeedback(''), 5000);
-    } catch (err) {
-      setAiFeedback('❌ Erro ao extrair currículo. Preencha manualmente.');
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  /* ── AUTOPREENCHIMENTO ────────────────────────────────────────────────
+     A IA devolve só os campos que o candidato marcou na revisão, já com os
+     nomes do formData. `experienciasJapao` recebe tratamento à parte porque
+     o wizard guarda a experiência num formato próprio (Experience). */
+  const aplicarExtracao = useCallback((campos: Record<string, unknown>) => {
+    setFormData(prev => {
+      const proximo: Record<string, unknown> = { ...prev };
+      let aplicados = 0;
 
-  // Autosave a cada 3s (Doc 05 Escopo A2)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAutoSaved(true);
-      setTimeout(() => setAutoSaved(false), 1500);
-    }, 4000);
-    return () => clearInterval(timer);
+      for (const [chave, valor] of Object.entries(campos)) {
+        if (chave === 'experienciasJapao') {
+          const lista = (valor as Record<string, string>[]).map(e => ({
+            provincia: e.provincia || '',
+            empreiteira: e.empreiteira || '',
+            fabrica: e.empresa || '',
+            periodo: [e.periodoInicio, e.periodoFim].filter(Boolean).join(' a '),
+            motivoSaida: ''
+          }));
+          if (lista.length) {
+            proximo.experienciasJapao = [...(prev.experienciasJapao as Experience[]), ...lista];
+            aplicados++;
+          }
+          continue;
+        }
+        // Só escreve em campo que o formulário realmente tem: uma chave nova
+        // vinda da IA não pode criar estado fantasma.
+        if (chave in prev) {
+          proximo[chave] = valor;
+          aplicados++;
+        }
+      }
+
+      setAvisoFicha({ tipo: 'ok', texto: `${aplicados} ${aplicados === 1 ? 'campo preenchido' : 'campos preenchidos'} pela leitura do documento. Confira antes de avançar.` });
+      return proximo as typeof prev;
+    });
   }, []);
+
+  /* ── AUTOSAVE REAL ────────────────────────────────────────────────────
+     Antes o badge "Salvo" só piscava num setInterval, sem gravar nada: o
+     candidato que fechasse a aba na etapa 6 perdia as 6 etapas. Agora o
+     rascunho vai para o localStorage, com chave por tenant, e a ficha é
+     retomada de onde parou. */
+  const chaveRascunho = tenantSlug ? `ssj:ficha:${tenantSlug}` : null;
+  const jaRestaurou = useRef(false);
+  const [rascunhoEncontrado, setRascunhoEncontrado] = useState<{ etapa: number; quando: string } | null>(null);
+
+  useEffect(() => {
+    if (!chaveRascunho || jaRestaurou.current) return;
+    jaRestaurou.current = true;
+    try {
+      const cru = localStorage.getItem(chaveRascunho);
+      if (!cru) return;
+      const salvo = JSON.parse(cru) as { dados: Record<string, unknown>; etapa: number; quando: number };
+      // Rascunho velho demais é mais atrapalho que ajuda.
+      if (Date.now() - salvo.quando > 30 * 24 * 3600 * 1000) {
+        localStorage.removeItem(chaveRascunho);
+        return;
+      }
+      setRascunhoPendente(salvo);
+      setRascunhoEncontrado({
+        etapa: salvo.etapa,
+        quando: new Date(salvo.quando).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+      });
+    } catch {
+      localStorage.removeItem(chaveRascunho);
+    }
+  }, [chaveRascunho]);
+
+  useEffect(() => {
+    if (!chaveRascunho || rascunhoEncontrado) return; // não sobrescreve antes da decisão
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(chaveRascunho, JSON.stringify({ dados: formData, etapa: step, quando: Date.now() }));
+        setAutoSaved(true);
+        setTimeout(() => setAutoSaved(false), 1600);
+      } catch {
+        /* cota cheia ou modo privativo: seguir sem autosave é melhor que travar */
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [formData, step, chaveRascunho, rascunhoEncontrado]);
 
   // Cálculo automático de idade ao vivo
   const calcularIdade = (dataNasc: string) => {
     if (!dataNasc) return '';
-    const hoje = new Date();
-    const nascido = new Date(dataNasc);
-    let idade = hoje.getFullYear() - nascido.getFullYear();
-    const m = hoje.getMonth() - nascido.getMonth();
-    if (m < 0 || (m === 0 && hoje.getDate() < nascido.getDate())) {
-      idade--;
-    }
+    const idade = idadeDe(dataNasc);
     return isNaN(idade) ? '' : `${idade}`;
   };
+
+  /** Quanto da ficha já está preenchido — alimenta a barra do topo. */
+  const progresso = progressoTotal(formData as unknown as Record<string, unknown>);
 
   const handleTatuagemToggle = (regiao: string) => {
     const regioes = formData.tatuagensRegioes.includes(regiao)
@@ -313,7 +369,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
       <div className="ssj-container" style={{ maxWidth: '920px', margin: '0 auto' }}>
         
         {/* Ficha Cadastral FUJIARTE - Form Container */}
-        <div className="ssj-card ssj-in" style={{
+        <div className="ssj-card ssj-in ssj-ficha-card" style={{
           borderRadius: '16px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -323,23 +379,47 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
         }}>
 
           {/* Cabeçalho do Tenant & Linha do Tempo Hanko (Linha do Tempo Japonesa) */}
-          <div style={{ padding: '20px 24px 16px', background: 'var(--ssj-surface-2)', borderBottom: '1px solid var(--ssj-rule)' }}>
+          <div className="ssj-ficha-cabecalho" style={{ background: 'var(--ssj-surface-2)', borderBottom: '1px solid var(--ssj-rule)' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {false ? (
-                  <img src="" alt={tenantInfo?.nome} style={{ height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
-                ) : (
-                  <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Building2 size={24} color="#fff" />
-                  </div>
-                )}
+                {/* Placa clara: a maioria dos logos de agência é escura e
+                    sumiria contra a superfície do card no tema escuro. */}
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '14px',
+                    background: tenantInfo?.logo_url ? '#ffffff' : primaryColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: tenantInfo?.logo_url ? '8px' : 0,
+                    flexShrink: 0,
+                    boxShadow: `0 10px 24px -12px ${primaryColor}`,
+                  }}
+                >
+                  {tenantInfo?.logo_url ? (
+                    <img
+                      src={tenantInfo.logo_url}
+                      alt={tenantInfo.nome}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <Building2 size={28} color="#fff" />
+                  )}
+                </div>
                 <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>Ficha Cadastral Oficial</h2>
-                  <span style={{ fontSize: '13px', color: 'var(--ssj-muted)' }}>Destino: {tenantInfo?.nome}</span>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>
+                    {tenantInfo?.nome || 'Ficha Cadastral'}
+                  </h2>
+                  <span style={{ fontSize: '13px', color: 'var(--ssj-muted)' }}>Ficha cadastral oficial</span>
                 </div>
               </div>
-              <BrandLockup size={24} withTagline={false} />
+              {/* Atribuição discreta: no ambiente do candidato quem assina é a agência. */}
+              <span style={{ fontSize: '10px', color: 'var(--ssj-muted)', opacity: 0.7, letterSpacing: '0.04em' }}>
+                operado com SelectSys Jobs
+              </span>
             </div>
 
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
@@ -358,8 +438,26 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
               ))}
             </div>
 
+            {/* Resumo compacto: no celular os 7 selos viram uma linha só, com
+                barra de progresso. Sete rótulos em 375px não são legíveis por
+                ninguém — e é nesse aparelho que a maioria preenche a ficha. */}
+            <div className="ssj-ficha-passo-mobile">
+              <div className="ssj-ficha-passo-topo">
+                <strong>
+                  Etapa {step} de 7 · {stepsList[step - 1]?.title}
+                </strong>
+                <span>{Math.round(progresso * 100)}%</span>
+              </div>
+              <div className="ssj-ficha-progresso">
+                <div
+                  className="ssj-ficha-progresso-fill"
+                  style={{ width: `${Math.max(3, progresso * 100)}%`, background: primaryColor }}
+                />
+              </div>
+            </div>
+
             {/* Selos Hanko Interativos em Linha */}
-            <div style={{
+            <div className="ssj-ficha-trilha" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(7, 1fr)',
               gap: '6px',
@@ -442,8 +540,59 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
             </span>
           </div>
 
+          {/* Retomada de rascunho: quem voltou depois não recomeça do zero. */}
+          {rascunhoEncontrado && rascunhoPendente && (
+            <div className="ssj-ficha-retomar" style={{ borderColor: primaryColor }}>
+              <div>
+                <strong>Você tem uma ficha começada.</strong>
+                <span>
+                  Salva em {rascunhoEncontrado.quando}, na etapa {rascunhoEncontrado.etapa} de 7.
+                </span>
+              </div>
+              <div className="ssj-ficha-retomar-acoes">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (chaveRascunho) localStorage.removeItem(chaveRascunho);
+                    setRascunhoEncontrado(null);
+                    setRascunhoPendente(null);
+                  }}
+                  className="ssj-ia-btn-3"
+                >
+                  Começar do zero
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, ...(rascunhoPendente.dados as typeof prev) }));
+                    setStep(rascunhoPendente.etapa);
+                    setRascunhoEncontrado(null);
+                    setRascunhoPendente(null);
+                  }}
+                  className="ssj-ia-btn"
+                  style={{ background: primaryColor }}
+                >
+                  Continuar de onde parei
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Conteúdo do Formulário */}
-          <div style={{ padding: '28px 32px 36px' }}>
+          <div className="ssj-ficha-conteudo">
+
+          {avisoFicha && (
+            <div
+              className={`ssj-ficha-aviso ${avisoFicha.tipo === 'erro' ? 'e-erro' : ''}`}
+              role="status"
+              style={avisoFicha.tipo === 'ok' ? { borderColor: primaryColor, color: primaryColor } : undefined}
+            >
+              <CheckCircle2 size={16} />
+              <span>{avisoFicha.texto}</span>
+              <button type="button" onClick={() => setAvisoFicha(null)} aria-label="Fechar aviso">✕</button>
+            </div>
+          )}
+
           
           {/* ETAPA 1: IDENTIFICAÇÃO & DOCUMENTOS */}
           {step === 1 && (
@@ -452,28 +601,12 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                 <User size={20} /> Etapa 1: Dados Pessoais & Documentação Oficial
               </h3>
 
-              {/* DROPZONE B2C DEEPSEEK */}
-              <div style={{ backgroundColor: 'var(--ssj-surface-2)', border: '2px dashed var(--ssj-rule)', padding: '24px', borderRadius: '16px', textAlign: 'center', position: 'relative' }}>
-                {aiLoading ? (
-                  <div style={{ color: 'var(--ssj-indigo)', fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                    <UploadCloud size={32} className="spinner" />
-                    <span>{aiFeedback}</span>
-                  </div>
-                ) : (
-                  <>
-                    <FileText size={32} color="var(--ssj-muted)" style={{ marginBottom: '12px' }} />
-                    <h4 style={{ margin: '0 0 8px', fontSize: '16px', color: 'var(--ssj-text)' }}>Autopreenchimento com Inteligência Artificial</h4>
-                    <p style={{ fontSize: '13px', color: 'var(--ssj-muted)', marginBottom: '16px', maxWidth: '400px', margin: '0 auto 16px' }}>
-                      Pule a digitação! Faça upload do seu currículo em PDF/Imagem e nossa IA (DeepSeek V3) preencherá sua ficha automaticamente.
-                    </p>
-                    <label style={{ display: 'inline-block', backgroundColor: 'var(--ssj-indigo)', color: '#fff', padding: '12px 24px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>
-                      Fazer Upload do Currículo
-                      <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" style={{ display: 'none' }} onChange={handleResumeUpload} />
-                    </label>
-                    {aiFeedback && <div style={{ marginTop: '16px', color: 'var(--ssj-verde)', fontSize: '14px', fontWeight: 700 }}>{aiFeedback}</div>}
-                  </>
-                )}
-              </div>
+              <AutoPreenchimento
+                tenantSlug={tenantSlug ?? ''}
+                cor={primaryColor}
+                valoresAtuais={formData as unknown as Record<string, unknown>}
+                onAplicar={aplicarExtracao}
+              />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
                 <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr auto', gap: '24px', alignItems: 'start' }}>
@@ -539,11 +672,12 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                     className="ssj-input"
                     style={{ width: '100%' }}
                   />
-                  {formData.dataNascimento && (
+                  {formData.dataNascimento && !validarNascimento(formData.dataNascimento) && (
                     <span style={{ fontSize: '12px', color: 'var(--ssj-verde)', fontWeight: 600, marginTop: '4px', display: 'block' }}>
                       Idade Calculada: {calcularIdade(formData.dataNascimento)} anos
                     </span>
                   )}
+                  <MsgCampo erro={validarNascimento(formData.dataNascimento)} />
                 </div>
 
                 <div>
@@ -630,13 +764,16 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                   <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>CPF</label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={formData.cpf}
                     onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
                     placeholder="000.000.000-00"
                     maxLength={14}
                     className="ssj-input"
+                    aria-invalid={!!validarCpf(formData.cpf)}
                     style={{ width: '100%', fontFamily: 'var(--ssj-font-mono)' }}
                   />
+                  <MsgCampo erro={validarCpf(formData.cpf)} />
                 </div>
 
                 <div>
@@ -657,6 +794,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                       className="ssj-input"
                     />
                   </div>
+                  <MsgCampo erro={validarValidadeDocumento(formData.passaporteValidade, 'Passaporte')} tom="aviso" />
                 </div>
 
                 <div style={{ gridColumn: '1 / -1', marginTop: '16px', padding: '20px', background: 'var(--ssj-paper)', borderRadius: '12px', border: '1px dashed var(--ssj-rule)' }}>
@@ -850,14 +988,17 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                 <div>
                   <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Celular / WhatsApp · 携帯電話</label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="tel"
                     value={formData.celular}
                     onChange={e => setFormData({ ...formData, celular: maskPhone(e.target.value) })}
                     placeholder="(11) 99999-9999"
                     maxLength={15}
                     className="ssj-input"
+                    aria-invalid={!!validarCelular(formData.celular)}
                     style={{ width: '100%' }}
                   />
+                  <MsgCampo erro={validarCelular(formData.celular)} />
                 </div>
 
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -1525,5 +1666,22 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
       </div>
     </div>
   </div>
+  );
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   MENSAGEM DE CAMPO
+   ---------------------------------------------------------------------------
+   Um erro de CPF precisa aparecer colado no CPF, não num alert() no fim da
+   ficha — a essa altura o candidato já não sabe qual dos 130 campos falhou.
+
+   `tom="aviso"` é para o que não impede o envio mas o candidato precisa saber
+   (passaporte vencendo, por exemplo).
+   ═════════════════════════════════════════════════════════════════════════ */
+function MsgCampo({ erro, tom = 'erro' }: { erro: string | null; tom?: 'erro' | 'aviso' }) {
+  if (!erro) return null;
+  return (
+    <span className={`ssj-campo-msg ${tom === 'aviso' ? 'e-aviso' : ''}`} role="alert">
+      {erro}
+    </span>
   );
 }
