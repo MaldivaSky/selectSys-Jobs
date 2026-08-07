@@ -446,7 +446,7 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
           }}>
             Ver Protótipo B2C ➔
           </Link>
-          <Link to="/admin" style={{
+          <Link to="/c/fujiarte" style={{
             padding: '14px 32px',
             borderRadius: '12px',
             fontSize: '14px',
@@ -456,7 +456,7 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
             border: '1px solid var(--ssj-rule)',
             textDecoration: 'none'
           }}>
-            Ver Case Piloto FUJIARTE
+            Testar Formulário FUJIARTE (Visão Candidato)
           </Link>
         </div>
       </section>
