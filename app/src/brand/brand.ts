@@ -40,4 +40,15 @@ export const BRAND_COLORS = {
 } as const;
 
 /** Caminho da ponte, compartilhado por logo, favicon e animação de abertura. */
-export const BRIDGE_PATH = 'M31 78 Q60 34 89 78';
+/** Caminho oficial da ponte. Copia literal de
+ *  prototipo/SelectSys Jobs App (standalone).html — a fonte da marca.
+ *  Compartilhado por logo, favicon, icones e animacao de abertura. */
+export const BRIDGE_PATH = 'M42 70 Q60 38 78 70';
+
+/** Geometria oficial do simbolo, em viewBox 120. Nao ajustar. */
+export const MARK_GEO = {
+  anel: { cx: 60, cy: 58, r: 30, w: 2.4 },
+  ponte: { w: 4 },
+  origem: { cx: 42, cy: 70, r: 5 },
+  destino: { cx: 78, cy: 70, r: 5.5 },
+} as const;

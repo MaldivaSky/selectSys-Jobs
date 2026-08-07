@@ -1,4 +1,4 @@
-import { BRAND, BRAND_COLORS as C, BRIDGE_PATH } from './brand';
+import { BRAND, BRAND_COLORS as C, BRIDGE_PATH, MARK_GEO as G } from './brand';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SELECTSYS JOBS · LOGO
@@ -49,11 +49,11 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
       style={{ flex: 'none' }}
     >
       <circle
-        cx="60"
-        cy="60"
-        r="52"
+        cx={G.anel.cx}
+        cy={G.anel.cy}
+        r={G.anel.r}
         stroke={ring}
-        strokeWidth={animated ? 2 : 4}
+        strokeWidth={G.anel.w}
         pathLength={1}
         strokeDasharray={animated ? 1 : undefined}
         style={animated ? { strokeDashoffset: 1, animation: 'ssj-draw 1s .1s ease forwards' } : undefined}
@@ -61,12 +61,12 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
 
       {animated && (
         <line
-          x1="31"
-          y1="78"
-          x2="89"
-          y2="78"
+          x1={G.origem.cx}
+          y1={G.origem.cy}
+          x2={G.destino.cx}
+          y2={G.destino.cy}
           stroke={stroke}
-          strokeWidth="2.4"
+          strokeWidth="1.6"
           strokeLinecap="round"
           pathLength={1}
           strokeDasharray="1"
@@ -77,7 +77,7 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
       <path
         d={BRIDGE_PATH}
         stroke={stroke}
-        strokeWidth={animated ? 4.4 : 7}
+        strokeWidth={G.ponte.w}
         strokeLinecap="round"
         pathLength={1}
         strokeDasharray={animated ? 1 : undefined}
@@ -87,20 +87,20 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
       {!bare && (
         <>
           <circle
-            cx="31"
-            cy="78"
-            r={animated ? 6 : 8}
-            fill={animated ? C.verde : stroke}
+            cx={G.origem.cx}
+            cy={G.origem.cy}
+            r={G.origem.r}
+            fill={C.verde}
             style={animated ? { opacity: 0, animation: 'ssj-pop .4s .35s ease forwards' } : undefined}
           />
           <circle
-            cx="89"
-            cy="78"
-            r={animated ? 7 : 8}
+            cx={G.destino.cx}
+            cy={G.destino.cy}
+            r={G.destino.r}
             fill={C.shu}
             style={
               animated
-                ? { opacity: 0, transformOrigin: '89px 78px', animation: 'ssj-pop .5s 1.25s cubic-bezier(.3,1.4,.5,1) forwards' }
+                ? { opacity: 0, transformOrigin: `${G.destino.cx}px ${G.destino.cy}px`, animation: 'ssj-pop .5s 1.25s cubic-bezier(.3,1.4,.5,1) forwards' }
                 : undefined
             }
           />
@@ -108,7 +108,7 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
       )}
 
       {/* O ponto que faz a travessia: verde → âmbar → vermelho. */}
-      {animated && <circle className="ssj-bridge-dot" r="5.5" fill={C.verde} />}
+      {animated && <circle className="ssj-bridge-dot" r={G.origem.r} fill={C.verde} />}
     </svg>
   );
 }
