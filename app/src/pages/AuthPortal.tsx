@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Key, Mail, Lock, UserCheck, Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, Shield, CheckCircle2, Smartphone, Lock, UserCheck } from 'lucide-react';
 import { BrandLockup } from '../brand/BrandMark';
 import { Hanko } from '../brand/Hanko';
 import { GloboTravessia } from '../brand/GloboTravessia';
@@ -7,30 +7,68 @@ import { supabase } from '../dados/supabase';
 
 export function AuthPortal() {
   const [tab, setTab] = useState<'candidato' | 'staff'>('candidato');
-  const [email, setEmail] = useState('');
+  const [identificador, setIdentificador] = useState('');
   const [password, setPassword] = useState('');
-  const [mfaCode, setMfaCode] = useState('');
   const [magicSent, setMagicSent] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'ANALISTA' | 'ENTREVISTADOR' | 'AGENCIA' | 'ADMIN'>('ANALISTA');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  // Removed mode state
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!identificador) return;
 
     if (supabase) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/candidato`
-        }
-      });
+      const isPhone = !identificador.includes('@') && /[0-9]{8,}/.test(identificador);
+
+      let error;
+      if (isPhone) {
+        let phone = identificador.replace(/\D/g, '');
+        if (phone.length === 10 || phone.length === 11) phone = `+55${phone}`;
+        else if (!phone.startsWith('+')) phone = `+${phone}`;
+        
+        const res = await supabase.auth.signInWithOtp({ phone });
+        error = res.error;
+      } else {
+        const res = await supabase.auth.signInWithOtp({
+          email: identificador,
+          options: { emailRedirectTo: `${window.location.origin}/candidato` }
+        });
+        error = res.error;
+      }
+
       if (error) {
-        alert('Erro ao enviar Magic Link: ' + error.message);
+        alert(`Erro ao enviar código para ${isPhone ? 'WhatsApp' : 'E-mail'}: ` + error.message);
         return;
       }
+
+      if (isPhone) {
+        setOtpSent(true);
+      } else {
+        setMagicSent(true);
+      }
     }
-    
-    setMagicSent(true);
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !otpCode) return;
+
+    let phone = identificador.replace(/\D/g, '');
+    if (phone.length === 10 || phone.length === 11) phone = `+55${phone}`;
+    else if (!phone.startsWith('+')) phone = `+${phone}`;
+
+    const { error } = await supabase.auth.verifyOtp({
+      phone,
+      token: otpCode,
+      type: 'sms'
+    });
+
+    if (error) {
+      alert('Código inválido: ' + error.message);
+      return;
+    }
+    window.location.href = '/candidato';
   };
 
   const handleGoogleOAuth = async () => {
@@ -46,9 +84,26 @@ export function AuthPortal() {
     }
   };
 
-  const handleStaffLogin = (e: React.FormEvent) => {
+  const handleStaffLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Autenticado com sucesso como ${selectedRole}! Redirecionando para o Dashboard...`);
+    
+    if (!supabase) {
+      alert('Erro: Banco de dados não configurado (Supabase nulo).');
+      return;
+    }
+
+    // Autenticação real exigindo senha
+    const { error } = await supabase.auth.signInWithPassword({
+      email: identificador,
+      password,
+    });
+
+    if (error) {
+      alert('Credenciais inválidas: ' + error.message);
+      return;
+    }
+
+    // Se o login for bem-sucedido, redireciona para o painel de gestão
     window.location.href = '/admin';
   };
 
@@ -70,19 +125,19 @@ export function AuthPortal() {
         </div>
 
         {/* Card do Portal de Login */}
-        <div className="ssj-card" style={{ padding: '28px', background: 'var(--ssj-surface)', borderRadius: '16px', border: '1px solid var(--ssj-border)' }}>
+        <div className="ssj-card" style={{ padding: '28px', background: 'var(--ssj-surface)', borderRadius: '16px', border: '1px solid var(--ssj-rule)' }}>
           
           {/* Seletor de Perfil (Candidato vs Staff/Agência) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '24px', padding: '4px', background: 'var(--ssj-surface-2)', borderRadius: '10px' }}>
             <button
-              onClick={() => { setTab('candidato'); setMagicSent(false); }}
+              onClick={() => { setTab('candidato'); setMagicSent(false); setOtpSent(false); }}
               className={`ssj-btn ${tab === 'candidato' ? 'ssj-btn--pri' : 'ssj-btn--ghost'}`}
               style={{ width: '100%', fontSize: '13.5px', justifyContent: 'center' }}
             >
               <Smartphone size={16} /> Candidato
             </button>
             <button
-              onClick={() => { setTab('staff'); setMagicSent(false); }}
+              onClick={() => { setTab('staff'); setMagicSent(false); setOtpSent(false); }}
               className={`ssj-btn ${tab === 'staff' ? 'ssj-btn--pri' : 'ssj-btn--ghost'}`}
               style={{ width: '100%', fontSize: '13.5px', justifyContent: 'center' }}
             >
@@ -96,7 +151,7 @@ export function AuthPortal() {
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <span className="ssj-pill ssj-pill--info" style={{ marginBottom: '8px' }}>Acesso Sem Senha</span>
                 <h3 style={{ margin: '6px 0 4px', fontSize: '18px' }}>Portal do Candidato Dekassegui</h3>
-                <p className="ssj-text-muted" style={{ fontSize: '13px' }}>Preencha sua Ficha FUJIARTE ou acompanhe seu COE/Visto</p>
+                <p className="ssj-text-muted" style={{ fontSize: '13px' }}>Preencha sua Ficha Cadastral ou acompanhe seu COE/Visto</p>
               </div>
 
               {/* Botão SSO Google Real */}
@@ -109,7 +164,7 @@ export function AuthPortal() {
                   justifyContent: 'center',
                   padding: '12px',
                   borderRadius: '10px',
-                  border: '1px solid var(--ssj-border)',
+                  border: '1px solid var(--ssj-rule)',
                   marginBottom: '16px',
                   background: 'var(--ssj-paper)',
                   fontWeight: 600
@@ -125,31 +180,52 @@ export function AuthPortal() {
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', gap: '12px' }}>
-                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-border)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-rule)' }} />
                 <span style={{ fontSize: '11px', color: 'var(--ssj-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ou Magic Link</span>
-                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-border)' }} />
+                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-rule)' }} />
               </div>
 
-              {!magicSent ? (
+              {!magicSent && !otpSent ? (
                 <form onSubmit={handleMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>E-mail ou Celular (WhatsApp)</label>
                     <div style={{ position: 'relative' }}>
                       <input
                         type="text"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="seu.email@exemplo.com"
+                        value={identificador}
+                        onChange={(e) => setIdentificador(e.target.value)}
+                        placeholder="seu.email@exemplo.com ou 11999999999"
                         className="ssj-input"
                         required
                         style={{ width: '100%', paddingLeft: '36px' }}
                       />
-                      <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ssj-muted)' }} />
+                      <Smartphone size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ssj-muted)' }} />
                     </div>
                   </div>
 
                   <button type="submit" className="ssj-btn ssj-btn--pri" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
-                    Receber Link de Acesso sem Senha <ArrowRight size={16} />
+                    Receber Acesso (Link ou Código) <ArrowRight size={16} />
+                  </button>
+                </form>
+              ) : otpSent ? (
+                <form onSubmit={handleVerifyOtp} style={{ textAlign: 'center', padding: '16px', background: 'var(--ssj-paper)', borderRadius: '10px', border: '1px solid var(--ssj-indigo)' }}>
+                  <Smartphone size={32} style={{ color: 'var(--ssj-indigo)', margin: '0 auto 8px' }} />
+                  <h4 style={{ margin: '4px 0', fontSize: '15px' }}>Código Enviado!</h4>
+                  <p className="ssj-text-muted" style={{ fontSize: '12.5px', marginBottom: '16px' }}>
+                    Digite o código de 6 dígitos enviado para o WhatsApp <strong>{identificador}</strong>.
+                  </p>
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="123456"
+                    className="ssj-input"
+                    maxLength={6}
+                    required
+                    style={{ width: '100%', textAlign: 'center', fontSize: '18px', letterSpacing: '0.2em', marginBottom: '12px', fontFamily: 'var(--ssj-font-mono)' }}
+                  />
+                  <button type="submit" className="ssj-btn ssj-btn--pri ssj-btn--block" style={{ width: '100%', justifyContent: 'center' }}>
+                    Verificar e Entrar
                   </button>
                 </form>
               ) : (
@@ -157,96 +233,23 @@ export function AuthPortal() {
                   <CheckCircle2 size={32} style={{ color: 'var(--ssj-verde)', margin: '0 auto 8px' }} />
                   <h4 style={{ margin: '4px 0', fontSize: '15px' }}>Link de Acesso Enviado!</h4>
                   <p className="ssj-text-muted" style={{ fontSize: '12.5px', marginBottom: '12px' }}>
-                    Enviamos um link seguro para <strong>{email}</strong>. Acesse para abrir sua ficha.
+                    Enviamos um link seguro para o e-mail <strong>{identificador}</strong>. Acesse para abrir sua ficha.
                   </p>
                   <button onClick={() => { window.location.href = '/candidato'; }} className="ssj-btn ssj-btn--pri ssj-btn--sm">
-                    Ir para Formulário Ficha FUJIARTE
+                    Ir para Ficha Cadastral
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* ABA 2: STAFF / AGÊNCIAS (Google SSO + Credentials + MFA) */}
+          {/* ABA 2: STAFF / AGÊNCIAS (Login Simples e Direto) */}
           {tab === 'staff' && (
-            <form onSubmit={handleStaffLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-                <span className="ssj-pill ssj-pill--seal" style={{ marginBottom: '6px' }}>Área Restrita Multi-Tenant</span>
+            <form onSubmit={handleStaffLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <span className="ssj-pill ssj-pill--seal" style={{ marginBottom: '8px' }}>Área Restrita Multi-Tenant</span>
                 <h3 style={{ margin: '4px 0', fontSize: '18px' }}>Painel Administrativo & Agências</h3>
-              </div>
-
-              {/* Botão SSO Google Corporativo Real */}
-              <button
-                type="button"
-                onClick={() => {
-                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-                  if (!googleClientId) {
-                    alert('Login Google ainda não configurado. Defina VITE_GOOGLE_CLIENT_ID no ambiente.');
-                    return;
-                  }
-                  if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-                    (window as any).google.accounts.id.initialize({
-                      client_id: googleClientId,
-                      callback: () => {
-                        alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
-                        window.location.href = '/admin';
-                      }
-                    });
-                    (window as any).google.accounts.id.prompt();
-                  } else {
-                    const script = document.createElement('script');
-                    script.src = 'https://accounts.google.com/gsi/client';
-                    script.async = true;
-                    script.defer = true;
-                    script.onload = () => {
-                      if ((window as any).google?.accounts?.id) {
-                        (window as any).google.accounts.id.initialize({
-                          client_id: googleClientId,
-                          callback: () => {
-                            alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
-                            window.location.href = '/admin';
-                          }
-                        });
-                        (window as any).google.accounts.id.prompt();
-                      }
-                    };
-                    document.head.appendChild(script);
-                  }
-                }}
-                className="ssj-btn ssj-btn--ghost"
-                style={{
-                  width: '100%',
-                  justifyContent: 'center',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--ssj-border)',
-                  background: 'var(--ssj-paper)',
-                  fontWeight: 600,
-                  fontSize: '13px'
-                }}
-              >
-                Entrar com Google Workspace Corporativo
-              </button>
-
-              <div style={{ display: 'flex', alignItems: 'center', margin: '8px 0', gap: '12px' }}>
-                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-border)' }} />
-                <span style={{ fontSize: '11px', color: 'var(--ssj-muted)', textTransform: 'uppercase' }}>Credenciais / MFA</span>
-                <div style={{ flex: 1, height: '1px', background: 'var(--ssj-border)' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Selecione seu Perfil Operacional</label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as any)}
-                  className="ssj-input"
-                  style={{ width: '100%' }}
-                >
-                  <option value="ANALISTA">Analista de Triagem FUJIARTE</option>
-                  <option value="ENTREVISTADOR">Entrevistador / Avaliador Sanitário</option>
-                  <option value="AGENCIA">Agência Indicadora Parceira</option>
-                  <option value="ADMIN">Super Admin SaaS SelectSys</option>
-                </select>
+                <p className="ssj-text-muted" style={{ fontSize: '13px' }}>Acesse com suas credenciais de administrador ou parceiro.</p>
               </div>
 
               <div>
@@ -254,9 +257,9 @@ export function AuthPortal() {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="analista@fujiarte.com.br"
+                    value={identificador}
+                    onChange={(e) => setIdentificador(e.target.value)}
+                    placeholder="analista@suaempresa.com.br"
                     className="ssj-input"
                     required
                     style={{ width: '100%', paddingLeft: '36px' }}
@@ -281,24 +284,8 @@ export function AuthPortal() {
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Código MFA TOTP (Google Authenticator / Authy)</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    value={mfaCode}
-                    onChange={(e) => setMfaCode(e.target.value)}
-                    placeholder="123 456"
-                    className="ssj-input"
-                    maxLength={6}
-                    style={{ width: '100%', paddingLeft: '36px', letterSpacing: '0.2em', fontFamily: 'var(--ssj-font-mono)' }}
-                  />
-                  <Key size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ssj-muted)' }} />
-                </div>
-              </div>
-
-              <button type="submit" className="ssj-btn ssj-btn--pri" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '6px' }}>
-                <UserCheck size={16} /> Autenticar e Entrar no Painel
+              <button type="submit" className="ssj-btn ssj-btn--pri" style={{ width: '100%', justifyContent: 'center', padding: '14px', marginTop: '12px' }}>
+                <UserCheck size={18} /> Entrar no Painel B2B
               </button>
             </form>
           )}

@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { BootSplash } from './components/BootSplash';
 import { PageTransition } from './components/PageTransition';
 import { HomePage } from './pages/HomePage';
 import { FuncionalidadesView } from './pages/FuncionalidadesView';
-import { ClaudeFUJIARTEWalkthrough } from './pages/ClaudeFUJIARTEWalkthrough';
-import { FujiarteCase } from './pages/FujiarteCase';
 import { CandidateWizard } from './pages/CandidateWizard';
 import { FichaRenderer } from './components/ficha/FichaRenderer';
 import { AuthPortal } from './pages/AuthPortal';
@@ -16,43 +14,58 @@ import { VagaDetalhe } from './pages/VagaDetalhe';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { PlanoAcaoView } from './pages/PlanoAcaoView';
 import { SuperAdmin } from './pages/SuperAdmin';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { RegisterTenant } from './pages/RegisterTenant';
+import { PoliticaPrivacidade } from './pages/PoliticaPrivacidade';
+import { TermosUso } from './pages/TermosUso';
 import type { Language } from './translations';
+
+function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) => void }) {
+  const location = useLocation();
+  const isWhiteLabelRoute = location.pathname.startsWith('/c/') || location.pathname === '/candidato';
+
+  return (
+    <div className="ssj-shell">
+      {!isWhiteLabelRoute && <Navbar lang={lang} setLang={setLang} />}
+
+      <main className="ssj-main">
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />
+            <Route path="/login" element={<AuthPortal />} />
+            <Route path="/funcionalidades" element={<FuncionalidadesView lang={lang} />} />
+            <Route path="/vagas" element={<VagasHub lang={lang} />} />
+            <Route path="/vagas/:id" element={<VagaDetalhe lang={lang} />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/admin" element={<TenantDashboard />} />
+              <Route path="/superadmin" element={<SuperAdmin lang={lang} />} />
+            </Route>
+            {/* Área do Candidato (B2C) - Roteamento Multi-Tenant */}
+            <Route path="/c/:tenantSlug" element={<CandidateWizard lang={lang} />} />
+            <Route path="/candidato" element={<Navigate to="/c/fujiarte" replace />} />
+            
+            <Route path="/ficha" element={<FichaRenderer />} />
+            
+            <Route path="/signup/admin" element={<RegisterTenant />} />
+            <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/termos" element={<TermosUso />} />
+          </Routes>
+        </PageTransition>
+      </main>
+
+      {!isWhiteLabelRoute && <Footer />}
+    </div>
+  );
+}
 
 export function App() {
   const [lang, setLang] = useState<Language>('pt-BR');
 
   return (
     <Router>
-      {/* Abertura da marca — uma vez por sessão. */}
       <BootSplash />
-
-      <div className="ssj-shell">
-        <Navbar lang={lang} setLang={setLang} />
-
-        <main className="ssj-main">
-          <PageTransition>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<AuthPortal />} />
-              <Route path="/funcionalidades" element={<FuncionalidadesView lang={lang} />} />
-              <Route path="/prototipo" element={<ClaudeFUJIARTEWalkthrough />} />
-              <Route path="/candidato" element={<CandidateWizard lang={lang} />} />
-              {/* Ficha completa: 7 etapas geradas do schema versionado */}
-              <Route path="/ficha" element={<FichaRenderer />} />
-              <Route path="/vagas" element={<VagasHub />} />
-              <Route path="/vagas/:id" element={<VagaDetalhe />} />
-              <Route path="/fujiarte" element={<FujiarteCase lang={lang} />} />
-              <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />
-              <Route path="/admin" element={<TenantDashboard lang={lang} />} />
-              <Route path="/superadmin" element={<SuperAdmin lang={lang} />} />
-              <Route path="/signup/admin" element={<RegisterTenant />} />
-            </Routes>
-          </PageTransition>
-        </main>
-
-        <Footer lang={lang} />
-      </div>
+      <AppLayout lang={lang} setLang={setLang} />
     </Router>
   );
 }

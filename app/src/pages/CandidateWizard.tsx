@@ -4,7 +4,10 @@ import {
   Lock, Building2, MapPin, UploadCloud, FileText
 } from 'lucide-react';
 import { Hanko } from '../brand/Hanko';
+import { BrandLockup } from '../brand/BrandMark';
 import { AIServiceAdapter } from '../dados/aiService';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
 
 interface Experience {
@@ -38,9 +41,45 @@ function maskPhone(v: string) {
 }
 
 export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState('');
+  
+  // Tenant Context
+  const [tenantInfo, setTenantInfo] = useState<{ id: string, nome: string, logo_url: string, cor_primaria: string } | null>(null);
+  const [loadingTenant, setLoadingTenant] = useState(true);
+
+  useEffect(() => {
+    async function fetchTenant() {
+      if (!tenantSlug) {
+        setLoadingTenant(false);
+        return;
+      }
+      
+      if (!supabase) {
+        setLoadingTenant(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, nome, logo_url, cor_primaria')
+        .eq('slug', tenantSlug)
+        .single();
+      
+      if (error || !data) {
+        alert('Agência não encontrada ou link inválido.');
+        navigate('/login');
+      } else {
+        setTenantInfo(data);
+        setFormData(prev => ({ ...prev, agenciaCodigo: data.id }));
+      }
+      setLoadingTenant(false);
+    }
+    fetchTenant();
+  }, [tenantSlug, navigate]);
 
   // FORM DATA — ~130 CAMPOS OFICIAIS DA PLANILHA FUJIARTE
   const [formData, setFormData] = useState({
@@ -114,7 +153,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
     // Etapa 7: Bloco C (Motivação) & Agência
     motivacaoPrincipal: 'poupanca',
-    agenciaCodigo: 'FUJIARTE-SP-01',
+    agenciaCodigo: '',
     termoVeracidade: false
   });
 
@@ -259,13 +298,19 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
       alert("É obrigatório concordar com o Termo de Consentimento LGPD sobre seus dados de saúde."); setStep(6); return; 
     }
 
-    alert('Candidatura submetida com sucesso ao pipeline da FUJIARTE!');
+    alert(`Candidatura submetida com sucesso ao pipeline da ${tenantInfo?.nome || 'agência'}!`);
   };
+
+  if (loadingTenant) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0d1016', color: '#fff' }}>Carregando ficha...</div>;
+  }
+
+  const primaryColor = tenantInfo?.cor_primaria || '#294b86';
 
   return (
     <div className="ssj-section" style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, rgba(28,35,49,1) 0%, rgba(41,75,134,0.9) 45%, rgba(196,69,43,0.85) 100%)',
+      background: `linear-gradient(135deg, rgba(28,35,49,1) 0%, ${primaryColor} 45%, rgba(196,69,43,0.85) 100%)`,
       padding: '40px 0',
       transition: 'background 0.5s ease'
     }}>
@@ -281,8 +326,26 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
           color: 'var(--ssj-text)'
         }}>
 
-          {/* Cabeçalho com Linha do Tempo Hanko (Linha do Tempo Japonesa) */}
+          {/* Cabeçalho do Tenant & Linha do Tempo Hanko (Linha do Tempo Japonesa) */}
           <div style={{ padding: '20px 24px 16px', background: 'var(--ssj-surface-2)', borderBottom: '1px solid var(--ssj-rule)' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {tenantInfo?.logo_url ? (
+                  <img src={tenantInfo.logo_url} alt={tenantInfo.nome} style={{ height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Building2 size={24} color="#fff" />
+                  </div>
+                )}
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>Ficha Cadastral Oficial</h2>
+                  <span style={{ fontSize: '13px', color: 'var(--ssj-muted)' }}>Destino: {tenantInfo?.nome}</span>
+                </div>
+              </div>
+              <BrandLockup size={24} withTagline={false} />
+            </div>
+
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
               {[1, 2, 3, 4, 5, 6, 7].map((s) => (
                 <div
