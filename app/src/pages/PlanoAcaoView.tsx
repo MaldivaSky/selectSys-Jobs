@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ArrowRight,
   BadgeCheck,
@@ -132,29 +133,30 @@ const DUVIDAS = [
 
 export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
   const zap = `https://wa.me/${WHATSAPP}?text=${WHATSAPP_TEXTO}`;
+  const [bandeiraSelecionada, setBandeiraSelecionada] = useState<number | null>(null);
 
   return (
     <div className="ssj-prop">
       {/* ── ABERTURA ──────────────────────────────────────────────────── */}
-      <section className="ssj-prop-hero">
+      <section className="ssj-prop-hero ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--md ssj-centro">
-          <span className="ssj-prop-selo">
+          <span className="ssj-prop-selo ssj-in d1">
             <Building2 size={14} /> Proposta comercial · Agências de recrutamento dekassegui
           </span>
 
-          <h1 className="ssj-titulo-hero">
+          <h1 className="ssj-titulo-hero ssj-in d2">
             Você não perde candidato por falta de vaga.
             <br />
             <span className="ssj-prop-realce">Perde no cadastro, no documento e na espera.</span>
           </h1>
 
-          <p className="ssj-lead">
+          <p className="ssj-lead ssj-in d3">
             Conhecemos o processo dekassegui de ponta a ponta — da ficha de 130 campos ao COE, do visto ao embarque.
             O SelectSys Jobs pega a ficha que a sua agência já usa e devolve uma plataforma completa de captação e
             acompanhamento, com a sua marca, no celular do candidato.
           </p>
 
-          <div className="ssj-prop-acoes">
+          <div className="ssj-prop-acoes ssj-in d4">
             <a href={zap} target="_blank" rel="noreferrer" className="ssj-btn ssj-btn--pri ssj-btn--lg">
               <MessageCircle size={18} /> Falar no WhatsApp
             </a>
@@ -163,17 +165,14 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
             </Link>
           </div>
 
-          <p className="ssj-prop-nota">Implantação única + assinatura mensal · sem fidelidade</p>
+          <p className="ssj-prop-nota ssj-in d5">Implantação única + assinatura mensal · sem fidelidade</p>
         </div>
       </section>
 
-      {/* ── AUTORIDADE NO DOMÍNIO ─────────────────────────────────────────
-          Vocabulário é prova. Uma agência reconhece em três segundos quem já
-          viu um koseki e quem está vendendo software genérico com a palavra
-          "recrutamento" trocada. */}
-      <section className="ssj-section ssj-prop-fundo">
+      {/* ── AUTORIDADE NO DOMÍNIO ───────────────────────────────────────── */}
+      <section className="ssj-section ssj-prop-fundo ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--lg">
-          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm ssj-in d1">
             <h2 className="ssj-titulo">Não vamos te explicar o seu próprio negócio</h2>
             <p className="ssj-lead">
               A plataforma nasceu dentro de uma operação real, sobre uma ficha real. Ela já entende o que a sua
@@ -189,15 +188,23 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
               { t: 'Biometria para EPI', d: 'Altura, cintura e número do pé — a fábrica precisa disso antes de fechar a vaga.' },
               { t: 'Tatuagem e saúde', d: 'Perguntas que pesam na seleção japonesa, tratadas com o cuidado legal que exigem.' },
               { t: 'Histórico no Japão', d: 'Empreiteira, fábrica, província e motivo de saída — o que o cliente japonês olha primeiro.' },
-            ].map((i) => (
-              <div key={i.t} className="ssj-prop-dominio-item">
-                <strong>{i.t}</strong>
-                <span>{i.d}</span>
-              </div>
-            ))}
+            ].map((i, idx) => {
+              const ativo = bandeiraSelecionada === idx;
+              return (
+                <div
+                  key={i.t}
+                  onClick={() => setBandeiraSelecionada(ativo ? null : idx)}
+                  className={`ssj-prop-dominio-item ssj-in d${(idx % 6) + 1} ${ativo ? 'ssj-dominio-ativo' : ''}`}
+                >
+                  <span className="ssj-bandeira-topo" aria-hidden="true" />
+                  <strong>{i.t}</strong>
+                  <span>{i.d}</span>
+                </div>
+              );
+            })}
           </div>
 
-          <p className="ssj-prop-missao">
+          <p className="ssj-prop-missao ssj-in d5">
             Nossa missão é simples: <strong>tirar a burocracia do caminho de quem quer trabalhar no Japão</strong> — e
             devolver à agência o tempo que hoje some em redigitação, cobrança de documento e planilha perdida.
           </p>
@@ -205,9 +212,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── O PROBLEMA ────────────────────────────────────────────────── */}
-      <section className="ssj-section">
+      <section className="ssj-section ssj-in">
         <div className="ssj-container ssj-prop-contraste">
-          <article className="ssj-prop-lado">
+          <article className="ssj-prop-lado ssj-in d1">
             <span className="ssj-prop-rotulo">Hoje</span>
             <ul className="ssj-prop-lista">
               <li>Ficha em papel e planilha, redigitada mais de uma vez</li>
@@ -218,7 +225,7 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
             </ul>
           </article>
 
-          <article className="ssj-prop-lado ssj-prop-lado--depois">
+          <article className="ssj-prop-lado ssj-prop-lado--depois ssj-in d2">
             <span className="ssj-prop-rotulo">Com o SelectSys Jobs</span>
             <ul className="ssj-prop-lista">
               <li>Ficha preenchida uma vez, pelo celular, com apoio de IA</li>
@@ -232,9 +239,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── O QUE ESTÁ INCLUÍDO ───────────────────────────────────────── */}
-      <section className="ssj-section ssj-prop-fundo">
+      <section className="ssj-section ssj-prop-fundo ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--lg">
-          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm ssj-in d1">
             <h2 className="ssj-titulo">O que está incluído</h2>
             <p className="ssj-lead">
               Não é uma lista de funcionalidades para o futuro. É o que a plataforma entrega na implantação.
@@ -242,8 +249,8 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
           </header>
 
           <div className="ssj-auto">
-            {ENTREGAS.map((e) => (
-              <article key={e.titulo} className="ssj-card ssj-prop-cartao">
+            {ENTREGAS.map((e, idx) => (
+              <article key={e.titulo} className={`ssj-card ssj-prop-cartao ssj-in d${(idx % 6) + 1}`}>
                 <span className="ssj-prop-icone">{e.icone}</span>
                 <h3 className="ssj-subtitulo">{e.titulo}</h3>
                 <p className="ssj-texto">{e.texto}</p>
@@ -254,9 +261,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── COMO FUNCIONA ─────────────────────────────────────────────── */}
-      <section className="ssj-section">
+      <section className="ssj-section ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--lg">
-          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm ssj-in d1">
             <h2 className="ssj-titulo">Do jeito mais simples possível</h2>
             <p className="ssj-lead">
               A implantação foi desenhada para exigir o mínimo da sua equipe. O trabalho pesado é nosso.
@@ -264,8 +271,8 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
           </header>
 
           <ol className="ssj-prop-passos">
-            {ETAPAS.map((et) => (
-              <li key={et.n} className="ssj-prop-passo">
+            {ETAPAS.map((et, idx) => (
+              <li key={et.n} className={`ssj-prop-passo ssj-in d${idx + 1}`}>
                 <span className="ssj-prop-passo-n">{et.n}</span>
                 <h3 className="ssj-subtitulo">{et.titulo}</h3>
                 <p className="ssj-texto">{et.texto}</p>
@@ -276,9 +283,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── INVESTIMENTO ──────────────────────────────────────────────── */}
-      <section className="ssj-section ssj-prop-fundo">
+      <section className="ssj-section ssj-prop-fundo ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--lg">
-          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm ssj-in d1">
             <h2 className="ssj-titulo">Investimento</h2>
             <p className="ssj-lead">
               Modelo simples: um valor de implantação, uma vez, e uma assinatura mensal. Sem taxa por candidato, sem
@@ -287,7 +294,7 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
           </header>
 
           <div className="ssj-prop-precos">
-            <article className="ssj-card ssj-prop-preco">
+            <article className="ssj-card ssj-prop-preco ssj-in d2">
               <span className="ssj-prop-rotulo">Implantação</span>
               <p className="ssj-prop-valor">Valor único</p>
               <p className="ssj-texto">
@@ -296,7 +303,7 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
               </p>
             </article>
 
-            <article className="ssj-card ssj-prop-preco">
+            <article className="ssj-card ssj-prop-preco ssj-in d3">
               <span className="ssj-prop-rotulo">Assinatura</span>
               <p className="ssj-prop-valor">Mensal</p>
               <p className="ssj-texto">
@@ -305,14 +312,11 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
             </article>
           </div>
 
-          <p className="ssj-centro ssj-texto">
+          <p className="ssj-centro ssj-texto ssj-in d4">
             Os valores são apresentados em reunião, junto ao escopo fechado da sua operação.
           </p>
 
-          {/* Condição de fundador: nomeada, com prazo, e justificada pela troca
-              real — quem entra primeiro dá referência de mercado e retorno de
-              produto, e isso tem valor. */}
-          <aside className="ssj-prop-fundador">
+          <aside className="ssj-prop-fundador ssj-in d5">
             <span className="ssj-prop-selo ssj-prop-selo--fundador">
               <BadgeCheck size={14} /> Condição fundador · primeiros assinantes
             </span>
@@ -330,9 +334,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── CONFIANÇA ─────────────────────────────────────────────────── */}
-      <section className="ssj-section">
+      <section className="ssj-section ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--lg">
-          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm ssj-in d1">
             <h2 className="ssj-titulo">Dado de candidato é dado sensível</h2>
             <p className="ssj-lead">
               Ficha de dekassegui carrega documento, endereço, família e saúde. A arquitetura foi construída partindo
@@ -341,8 +345,8 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
           </header>
 
           <div className="ssj-auto ssj-auto--sm">
-            {CONFIANCA.map((c) => (
-              <article key={c.titulo} className="ssj-prop-confianca">
+            {CONFIANCA.map((c, idx) => (
+              <article key={c.titulo} className={`ssj-prop-confianca ssj-in d${idx + 1}`}>
                 <span className="ssj-prop-icone ssj-prop-icone--sm">{c.icone}</span>
                 <div>
                   <h3 className="ssj-prop-confianca-titulo">{c.titulo}</h3>
@@ -355,11 +359,11 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── DÚVIDAS ───────────────────────────────────────────────────── */}
-      <section className="ssj-section ssj-prop-fundo">
+      <section className="ssj-section ssj-prop-fundo ssj-in">
         <div className="ssj-container ssj-pilha ssj-pilha--md" style={{ maxWidth: 760 }}>
-          <h2 className="ssj-titulo ssj-centro">Perguntas que sempre aparecem</h2>
-          {DUVIDAS.map((d) => (
-            <details key={d.p} className="ssj-prop-duvida">
+          <h2 className="ssj-titulo ssj-centro ssj-in d1">Perguntas que sempre aparecem</h2>
+          {DUVIDAS.map((d, idx) => (
+            <details key={d.p} className={`ssj-prop-duvida ssj-in d${idx + 1}`}>
               <summary>{d.p}</summary>
               <p className="ssj-texto">{d.r}</p>
             </details>
@@ -368,9 +372,9 @@ export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
       </section>
 
       {/* ── FECHAMENTO ────────────────────────────────────────────────── */}
-      <section className="ssj-section">
+      <section className="ssj-section ssj-in">
         <div className="ssj-container">
-          <div className="ssj-prop-fechamento">
+          <div className="ssj-prop-fechamento ssj-in d1">
             <div className="ssj-pilha ssj-pilha--sm">
               <h2 className="ssj-titulo">Vamos conversar sobre a sua operação</h2>
               <p className="ssj-lead">
