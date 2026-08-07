@@ -5,8 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Active](https://img.shields.io/badge/Status-Active%20Production-brightgreen.svg)]()
-[![Next.js](https://img.shields.io/badge/Next.js-15.0-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0-61DAFB?logo=react)](https://react.dev/)
+[![Frontend](https://img.shields.io/badge/Frontend-Vite%20%7C%20React%2019-61DAFB?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20RLS-4169E1?logo=postgresql)](https://www.postgresql.org/)
 [![LGPD Compliant](https://img.shields.io/badge/LGPD-Art._20_&_11-purple)]()
@@ -22,8 +21,10 @@
 - [🔒 Segurança, Privacidade e LGPD](#-segurança-privacidade-e-lgpd)
 - [📊 Modelo de Dados & Multi-Tenancy](#-modelo-de-dados--multi-tenancy)
 - [🚀 Funcionalidades Principais](#-funcionalidades-principais)
+- [⚡ Execução e Comandos CLI](#-execução-e-comandos-cli)
+- [💰 Indicadores Econômicos & Modelo Comercial](#-indicadores-econômicos--modelo-comercial)
+- [📑 Mapa da Documentação Técnica](#-mapa-da-documentação-técnica)
 - [🗺️ Roadmap & Metodologia](#️-roadmap--metodologia)
-- [📑 Documentação do Projeto](#-documentação-do-projeto)
 - [📜 Licença](#-licença)
 
 ---
@@ -89,8 +90,8 @@ Desenvolvido com uma arquitetura moderna, robusta e escalável preparada para al
 
 | Camada | Tecnologias Utilizadas |
 |---|---|
-| **Frontend Framework** | **Next.js 15** (App Router), **React 19**, **TypeScript** (Strict Type Safety) |
-| **Estilização & UI** | **Tailwind CSS**, **shadcn/ui**, **Radix UI** primitives, Lucide Icons |
+| **Frontend Framework** | **React 19**, **Vite**, **TypeScript** (Strict Type Safety), **React Router** |
+| **Estilização & UI** | **Tailwind CSS v4**, **shadcn/ui**, **Radix UI** primitives, Lucide Icons |
 | **Formulários & Schemas** | **react-hook-form**, **Zod** (validação end-to-end com renderer guiado por schema) |
 | **Backend & ORM** | **Node.js**, **Drizzle ORM** (queries type-safe e performáticas) |
 | **Banco de Dados** | **PostgreSQL 16** (Extensions: `pgcrypto` para criptografia, `pg_trgm`, `unaccent`) |
@@ -100,7 +101,8 @@ Desenvolvido com uma arquitetura moderna, robusta e escalável preparada para al
 | **Storage & Documentos** | **Cloudflare R2** (S3-Compatible) com presigned URLs para upload direto e seguro |
 | **Geração de Arquivos** | **ExcelJS** (preenchimento do template `.xls` da FUJIARTE), **@react-pdf/renderer** |
 | **Comunicação & Notificação** | **Meta WhatsApp Cloud API**, **Resend** + **React Email** |
-| **Internacionalização (i18n)** | **next-intl** (Suporte a Português `pt-BR`, Japonês `ja-JP` e Espanhol `es`) |
+| **Internacionalização (i18n)** | Suporte a Português `pt-BR`, Japonês `ja-JP` e Espanhol `es` |
+| **Linter & Qualidade** | **Oxlint** (análise estática ultra-rápida de código) |
 | **Observabilidade & Infra** | **Sentry**, **Better Stack**, **Docker**, **Coolify** CI/CD em servidor dedicado |
 
 ---
@@ -111,7 +113,7 @@ Desenvolvido com uma arquitetura moderna, robusta e escalável preparada para al
 2. **Configuração > Código:** Formulários, perguntas da enquete e regras de triagem são dados JSONB versionados. Nenhuma regra de negócio é embutida em código rígido.
 3. **Decisões Auditáveis:** Toda avaliação de candidato gera um snapshot imutável (`screening_decisions`) com as entradas do candidato, a versão da regra aplicada e o resultado obtido.
 4. **Inteligência Artificial na Periferia:** A IA atua na extração de currículos, tradução e sumarização de perfis para o parceiro japonês — **nunca** no veredito automatizado de aprovação/reprovação.
-5. **Monólito Modular:** Código estruturado em módulos com fronteiras limpas (packages/core, packages/ai, etc.) facilitando manutenção e deploy único simplificado.
+5. **Monólito Modular:** Código estruturado em módulos com fronteiras limpas (`app/`, `packages/core`, `packages/ai`, etc.) facilitando manutenção e deploy único simplificado.
 
 ---
 
@@ -169,25 +171,68 @@ audit_log · notifications · message_templates · subscriptions · billing_even
 
 ---
 
-## 🗺️ Roadmap & Metodologia
+## ⚡ Execução e Comandos CLI
 
-O desenvolvimento segue o **Plano Master Sênior** com validação semanal com os clientes:
+### Pré-requisitos
+- Node.js (v18+)
+- npm ou pnpm
+- Banco PostgreSQL 16 com extensão `pgcrypto`
+
+### Comandos Principais
+
+```bash
+# Instalar dependências de todo o projeto
+npm install
+
+# Iniciar o ambiente de desenvolvimento (Frontend App)
+npm run dev
+
+# Executar a verificação de tipos e build de produção
+npm run build
+
+# Executar o linter estático (Oxlint) na aplicação
+npm --prefix app run lint
+```
+
+---
+
+## 💰 Indicadores Econômicos & Modelo Comercial
+
+| Métrica / Item | Valor / Status |
+|---|---|
+| **Acordo Inicial (FUJIARTE)** | Implantação **R$ 1.200** + Assinatura **R$ 150/mês** |
+| **Custo de Infraestrutura** | **R$ 34,20/mês** (Teto máximo definido: R$ 150/mês) |
+| **Margem Operacional Líquida** | **75%** em regime inicial (Lucro R$ 112,47/mês por cliente) |
+| **Tempo de MVP** | 6 semanas (~140 horas de engenharia) |
+| **Conformidade Fiscal** | MEI (CNAE 8219-9/99 apoio adm. inicial) com transição para ME prevista ao atingir 3º cliente |
+
+---
+
+## 📑 Mapa da Documentação Técnica
+
+Toda a documentação detalhada de arquitetura, finanças e backlog se encontra na pasta [`docs/`](docs/):
+
+| Documento | Descrição do Conteúdo |
+|---|---|
+| [`01-analise-documentos.md`](docs/01-analise-documentos.md) | Análise dos processos dekassegui, leitura da ficha FUJIARTE (130 campos) e LGPD. |
+| [`02-arquitetura-e-stack.md`](docs/02-arquitetura-e-stack.md) | Detalhamento técnico de infraestrutura, topologia, schemas JSONB e custos. |
+| [`03-plano-implementacao.md`](docs/03-plano-implementacao.md) | Roadmap de 3 fases e marcos de aceite. |
+| [`04-modelo-comercial-e-fiscal.md`](docs/04-modelo-comercial-e-fiscal.md) | Estrutura comercial, precificação, contratos e enquadramento MEI/ME. |
+| [`05-escopo-mvp.md`](docs/05-escopo-mvp.md) | Anexo contratual: escopo dentro/fora e user stories. |
+| [`06-backlog-scrum.md`](docs/06-backlog-scrum.md) | Planejamento de Sprints, cerimônias e riscos. |
+| [`07-fluxo-de-caixa.md`](docs/07-fluxo-de-caixa.md) | Projeção financeira mês a mês e cenários de escala (2 a 8 clientes). |
+| [`08-whatsapp-tech-provider.md`](docs/08-whatsapp-tech-provider.md) | Especificação do ativo de integração Meta WhatsApp API. |
+| [`09-roteiro-de-ativacao.md`](docs/09-roteiro-de-ativacao.md) | Checklist de ativação operacional, contas, contrato e cartões. |
+| [`10-onboarding-do-nicho.md`](docs/10-onboarding-do-nicho.md) | Guia do mercado dekassegui, vocabulário e roteiro de venda. |
+| [`PLANO_MASTER_SENIOR.md`](PLANO_MASTER_SENIOR.md) | Plano mestre com governança e roadmap sênior. |
+
+---
+
+## 🗺️ Roadmap & Metodologia
 
 - [x] **Fase 1 — MVP Core (Concluído):** Formulário dinâmico, exportação idêntica Excel FUJIARTE, máquina de 17 estados e motor de triagem.
 - [x] **Fase 2 — IA & Analytics (Em Execução):** Importação de currículo via Claude IA, Dashboard de Métricas operacionais e funil de conversão.
 - [ ] **Fase 3 — Integração & Expansão:** Conexão nativa com Cybozu Garoon Cloud/On-Premise e automação avançada de WhatsApp.
-
----
-
-## 📑 Documentação do Projeto
-
-Para mais detalhes sobre arquitetura, negócios e implementação, consulte a pasta [`docs/`](docs/):
-
-- [`docs/01-analise-documentos.md`](docs/01-analise-documentos.md) — Análise dos processos dekassegui e modelo FUJIARTE.
-- [`docs/02-arquitetura-e-stack.md`](docs/02-arquitetura-e-stack.md) — Detalhamento técnico de infraestrutura e estimativa de custos.
-- [`docs/03-plano-implementacao.md`](docs/03-plano-implementacao.md) — Plano de execução das fases do sistema.
-- [`docs/04-modelo-comercial-e-fiscal.md`](docs/04-modelo-comercial-e-fiscal.md) — Estrutura comercial, pricing e enquadramento fiscal MEI/ME.
-- [`PLANO_MASTER_SENIOR.md`](PLANO_MASTER_SENIOR.md) — Cronograma de entregas e metodologia de validação.
 
 ---
 
