@@ -72,6 +72,8 @@ temp/
 .vercel
 .env*
 saida/
+backups/
+*.sql
 marca-opcoes/
 ficha-fujiarte-dump.txt
 ficha-globo-designer.html
