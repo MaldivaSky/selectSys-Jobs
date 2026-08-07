@@ -11,9 +11,12 @@
 
 @import './styles/tokens.css';
 @import './styles/base.css';
+@import './styles/primitivos.css';
 @import './styles/animations.css';
 @import './styles/components.css';
 @import './styles/marca.css';
+@import './styles/ficha.css';
+@import './styles/proposta.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PONTE COM O TAILWIND

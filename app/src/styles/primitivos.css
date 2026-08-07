@@ -1,0 +1,245 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 00. PRIMITIVOS DE LAYOUT
+   ---------------------------------------------------------------------------
+   Por que este arquivo existe.
+
+   O produto já tinha tokens bons (clamp de tipografia, gutter fluido, escala
+   de espaço) e nenhuma página os usava: cada tela reescrevia
+   `style={{ fontSize: '3rem', padding: '40px 20px' }}` no JSX. Com a régua
+   copiada em N arquivos, o mobile quebra em todos e o conserto não se sustenta
+   — arruma-se uma tela e a próxima nasce torta.
+
+   Aqui ficam os primitivos de composição. A página descreve INTENÇÃO
+   ("uma pilha com respiro médio") e o sistema decide o VALOR. É o mesmo
+   princípio de Stack/Box do Radix e Braid, e da escala utilitária do Tailwind:
+   um lugar só define quanto é "médio".
+
+   Práticas de 2025 que entram aqui e faltavam no código:
+   · `dvh` no lugar de `vh` — no celular a barra do navegador some e volta;
+     `100vh` estoura a tela e é o que gera o vão morto no fim da página.
+   · `env(safe-area-inset-*)` — o aparelho do print tem barra de gestos; sem
+     isso o rodapé fica embaixo dela.
+   · Container queries para componentes que precisam reagir ao PRÓPRIO espaço,
+     não ao da janela (um card no painel e o mesmo card na home).
+   · `text-wrap: balance/pretty` para título e parágrafo não quebrarem feio.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── PÁGINA ─────────────────────────────────────────────────────────────────
+   Substitui o `minHeight: '100vh'` + `padding: '40px 20px'` copiado em cada
+   página. O respiro é fluido e o gutter é o mesmo do resto do produto. */
+
+.ssj-page {
+  min-height: 100dvh;
+  padding-block: clamp(20px, 5vw, 64px);
+  padding-inline: var(--ssj-gutter);
+  padding-bottom: max(clamp(20px, 5vw, 64px), env(safe-area-inset-bottom));
+}
+
+.ssj-page--flush {
+  padding-inline: 0;
+}
+
+/* ── PILHA ──────────────────────────────────────────────────────────────────
+   O padrão de espaçamento que resolve 90% dos casos: o espaço pertence ao
+   CONTÊINER, não ao filho. Acaba com `marginBottom` solto que soma errado
+   quando um item some. */
+
+.ssj-pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ssj-s4, 20px);
+}
+
+.ssj-pilha--xs { gap: 6px; }
+.ssj-pilha--sm { gap: 10px; }
+.ssj-pilha--md { gap: clamp(16px, 3vw, 24px); }
+.ssj-pilha--lg { gap: clamp(24px, 5vw, 40px); }
+.ssj-pilha--xl { gap: clamp(32px, 7vw, 64px); }
+
+/* ── LINHA ──────────────────────────────────────────────────────────────────
+   Horizontal que vira vertical sozinha quando não cabe. Sem media query:
+   `flex-wrap` + `min-width` no filho já resolve, e resolve em qualquer
+   largura, inclusive as que ninguém previu. */
+
+.ssj-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(10px, 2vw, 16px);
+}
+
+.ssj-linha--entre { justify-content: space-between; }
+.ssj-linha--fim   { justify-content: flex-end; }
+.ssj-linha--topo  { align-items: flex-start; }
+
+/* Item que pode encolher até sumir, mas nunca empurra a linha para fora da
+   tela — a causa da rolagem lateral no cabeçalho. */
+.ssj-flex-1 { flex: 1; min-width: 0; }
+
+/* ── GRADE AUTOMÁTICA ───────────────────────────────────────────────────────
+   `min()` com 100% é o detalhe que falta na maioria das grades responsivas:
+   sem ele, `minmax(280px, 1fr)` estoura em telas de 320px. */
+
+.ssj-auto {
+  display: grid;
+  gap: clamp(12px, 3vw, 20px);
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+
+.ssj-auto--sm { grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); }
+.ssj-auto--lg { grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); }
+
+/* ── TEXTO ──────────────────────────────────────────────────────────────────
+   Tipografia por intenção. A página nunca escolhe pixel. */
+
+.ssj-titulo-hero {
+  font-family: var(--ssj-font-display);
+  font-size: var(--ssj-t-display);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.ssj-titulo {
+  font-family: var(--ssj-font-display);
+  font-size: var(--ssj-t-h1);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.ssj-subtitulo {
+  font-size: var(--ssj-t-h3);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.ssj-lead {
+  font-size: clamp(15px, 2.2vw, 18px);
+  line-height: 1.6;
+  color: var(--ssj-muted);
+  text-wrap: pretty;
+  max-width: 62ch;
+  margin: 0;
+}
+
+.ssj-texto {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ssj-muted);
+  text-wrap: pretty;
+  margin: 0;
+}
+
+.ssj-centro { text-align: center; }
+.ssj-centro .ssj-lead { margin-inline: auto; }
+
+/* ── ESTADO VAZIO ───────────────────────────────────────────────────────────
+   Produto de mercado não devolve uma frase solta num retângulo de 200px de
+   altura: devolve explicação curta e uma saída. O respiro é proporcional à
+   tela, não 60px fixos. */
+
+.ssj-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: clamp(28px, 8vw, 56px) clamp(16px, 5vw, 40px);
+  border: 1px dashed var(--ssj-rule);
+  border-radius: var(--ssj-r-lg, 16px);
+  background: var(--ssj-surface);
+}
+
+.ssj-vazio__icone {
+  color: var(--ssj-muted);
+  opacity: 0.7;
+}
+
+/* ── ESQUELETO DE CARREGAMENTO ──────────────────────────────────────────────
+   "Carregando..." em texto é o que sobrou dos anos 2000. O esqueleto mantém a
+   altura do conteúdo real e evita o salto de layout quando os dados chegam. */
+
+.ssj-esqueleto {
+  background: linear-gradient(90deg, var(--ssj-surface-2) 25%, var(--ssj-rule-2) 37%, var(--ssj-surface-2) 63%);
+  background-size: 200% 100%;
+  animation: ssj-shimmer 1.4s linear infinite;
+  border-radius: var(--ssj-r-md, 10px);
+}
+
+.ssj-esqueleto--cartao { height: 148px; }
+.ssj-esqueleto--linha  { height: 14px; }
+.ssj-esqueleto--titulo { height: 24px; width: 60%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ssj-esqueleto { animation: none; }
+}
+
+/* ── BARRA DE AÇÃO FIXA ─────────────────────────────────────────────────────
+   Padrão de app nativo e de checkout moderno: a ação principal fica sempre ao
+   alcance do polegar, sem obrigar o usuário a rolar até o fim de um formulário
+   de sete etapas. */
+
+.ssj-barra-acao {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  padding: 12px var(--ssj-gutter);
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--ssj-surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--ssj-rule);
+}
+
+.ssj-barra-acao > * { flex: 1; }
+
+@media (min-width: 768px) {
+  .ssj-barra-acao {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    border-top: none;
+    padding-inline: 0;
+    justify-content: flex-end;
+  }
+  .ssj-barra-acao > * { flex: none; }
+}
+
+/* ── ALVOS DE TOQUE ─────────────────────────────────────────────────────────
+   44px é o piso das diretrizes de iOS e Android. Aplicado no sistema, não
+   caçado botão a botão depois que o usuário reclama. */
+
+/* Critério por LARGURA, não por `pointer: coarse`. Dois motivos: a regra passa
+   a valer também em janela estreita no desktop (onde o layout é o mesmo), e
+   passa a ser verificável em teste automatizado — `pointer` não muda quando se
+   redimensiona a janela, então a regra ficaria sem cobertura e voltaria a
+   quebrar sem ninguém perceber. */
+@media (max-width: 767px) {
+  button,
+  a.ssj-btn,
+  .ssj-opt,
+  select {
+    min-height: 44px;
+  }
+
+  /* Vale para TODO campo, não só os que lembraram de usar `.ssj-input`:
+     abaixo de 16px o iOS dá zoom ao focar e desalinha a página inteira. */
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+}

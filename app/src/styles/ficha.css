@@ -1,0 +1,574 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 06. FICHA DO CANDIDATO
+   ---------------------------------------------------------------------------
+   Mobile-first de verdade: as regras base descrevem o celular e os @media
+   sobem para telas maiores. Escrever ao contrário é como o mobile vira sobra
+   de desktop — que é exatamente o que a maioria dos candidatos dekassegui usa
+   para preencher a ficha.
+
+   Todas as cores saem dos tokens; a cor da agência entra por `style` inline,
+   porque só é conhecida em tempo de execução.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── ZONA DE AUTOPREENCHIMENTO ──────────────────────────────────────────── */
+
+.ssj-ia-zona {
+  border: 2px dashed var(--ssj-rule);
+  border-radius: var(--ssj-r-lg, 16px);
+  padding: 24px 18px;
+  text-align: center;
+  transition: border-color var(--ssj-base) ease, background var(--ssj-base) ease;
+  animation: ssj-fadeUp 0.45s var(--ssj-ease) both;
+}
+
+.ssj-ia-ativa {
+  border-style: solid;
+}
+
+.ssj-ia-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.ssj-ia-titulo {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--ssj-text);
+  letter-spacing: -0.01em;
+}
+
+.ssj-ia-texto {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ssj-muted);
+  margin: 0 auto 18px;
+  max-width: 46ch;
+}
+
+.ssj-ia-nota {
+  font-size: 11.5px;
+  color: var(--ssj-muted);
+  opacity: 0.85;
+  margin: 14px 0 0;
+}
+
+.ssj-ia-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Alvos de toque de 48px: abaixo disso o dedo erra. */
+.ssj-ia-btn,
+.ssj-ia-btn-2,
+.ssj-ia-btn-3 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.ssj-ia-btn {
+  border: none;
+  color: #fff;
+}
+.ssj-ia-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.ssj-ia-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.ssj-ia-btn:disabled {
+  cursor: not-allowed;
+}
+
+.ssj-ia-btn-2 {
+  background: transparent;
+  border: 1.5px solid currentColor;
+}
+.ssj-ia-btn-2:active {
+  transform: scale(0.98);
+}
+
+.ssj-ia-btn-3 {
+  background: transparent;
+  border: 1px solid var(--ssj-rule);
+  color: var(--ssj-muted);
+}
+
+/* ── PROGRESSO ──────────────────────────────────────────────────────────── */
+
+.ssj-ia-pulso {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  animation: ssj-respira 1.8s ease-in-out infinite;
+}
+
+@keyframes ssj-respira {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.08); opacity: 0.75; }
+}
+
+.ssj-ia-barra {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ssj-rule-2);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.ssj-ia-barra-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s var(--ssj-ease);
+}
+
+/* Sem percentual conhecido, a barra caminha: comunica "vivo", não "quanto". */
+.ssj-ia-barra-indef {
+  height: 100%;
+  width: 38%;
+  border-radius: 999px;
+  animation: ssj-caminha 1.25s ease-in-out infinite;
+}
+
+@keyframes ssj-caminha {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.ssj-ia-etapas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+.ssj-ia-etapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  transition: color var(--ssj-base) ease;
+}
+
+.ssj-ia-ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background var(--ssj-base) ease;
+}
+
+/* ── REVISÃO ────────────────────────────────────────────────────────────── */
+
+.ssj-ia-revisao {
+  border: 1.5px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg, 16px);
+  background: var(--ssj-surface);
+  padding: 18px;
+  animation: ssj-fadeUp 0.4s var(--ssj-ease) both;
+}
+
+.ssj-ia-revisao-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid;
+  margin-bottom: 14px;
+}
+
+.ssj-ia-revisao-topo .ssj-ia-selo {
+  margin-bottom: 0;
+}
+
+.ssj-ia-revisao-ajuda {
+  text-align: left;
+  margin: 0 0 14px;
+  max-width: none;
+}
+
+.ssj-ia-fechar {
+  background: none;
+  border: none;
+  color: var(--ssj-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.ssj-ia-fechar:hover {
+  background: var(--ssj-surface-2);
+}
+
+.ssj-ia-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #b06a1f;
+  background: color-mix(in srgb, #b06a1f 10%, transparent);
+  padding: 9px 12px;
+  border-radius: 9px;
+  margin-bottom: 12px;
+}
+
+.ssj-ia-lista {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Muitos campos não podem empurrar o botão de aplicar para fora da tela. */
+  max-height: 48vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ssj-ia-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ssj-rule);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  background: var(--ssj-surface-2);
+}
+.ssj-ia-item:hover {
+  background: var(--ssj-surface);
+}
+
+.ssj-ia-item input[type='checkbox'] {
+  width: 19px;
+  height: 19px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.ssj-ia-item-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.ssj-ia-item-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.ssj-ia-item-rotulo {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ssj-muted);
+}
+
+.ssj-ia-conf {
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ssj-ia-item-valor {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ssj-text);
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.ssj-ia-item-substitui {
+  font-size: 11.5px;
+  color: var(--ssj-muted);
+  margin-top: 4px;
+}
+
+.ssj-ia-revisao-rodape {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+}
+
+/* ── FAIXAS DA FICHA ────────────────────────────────────────────────────── */
+
+.ssj-ficha-retomar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 16px 4px;
+  padding: 14px 16px;
+  border: 1.5px solid;
+  border-radius: 12px;
+  background: var(--ssj-surface-2);
+  animation: ssj-fadeUp 0.4s var(--ssj-ease) both;
+}
+
+.ssj-ficha-retomar strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ssj-text);
+  margin-bottom: 3px;
+}
+
+.ssj-ficha-retomar span {
+  font-size: 12.5px;
+  color: var(--ssj-muted);
+}
+
+.ssj-ficha-retomar-acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.ssj-ficha-retomar-acoes button {
+  flex: 1;
+}
+
+.ssj-ficha-aviso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border: 1.5px solid;
+  border-radius: 11px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  background: var(--ssj-surface-2);
+  animation: ssj-fadeUp 0.35s var(--ssj-ease) both;
+}
+
+.ssj-ficha-aviso.e-erro {
+  border-color: #c4452b;
+  color: #c4452b;
+}
+
+.ssj-ficha-aviso span {
+  flex: 1;
+}
+
+.ssj-ficha-aviso button {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px;
+}
+
+/* ── PASSO E PROGRESSO ──────────────────────────────────────────────────── */
+
+.ssj-ficha-passo-mobile {
+  margin-bottom: 4px;
+}
+
+.ssj-ficha-passo-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ssj-ficha-passo-topo strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ssj-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ssj-ficha-passo-topo span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ssj-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.ssj-ficha-progresso {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ssj-rule-2);
+  overflow: hidden;
+}
+
+.ssj-ficha-progresso-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.45s var(--ssj-ease);
+}
+
+/* Sete selos com rótulo não cabem em 375px: no celular só o resumo aparece. */
+.ssj-ficha-trilha {
+  display: none !important;
+}
+
+/* ── MENSAGEM DE CAMPO ──────────────────────────────────────────────────── */
+
+.ssj-campo-msg {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #c4452b;
+  animation: ssj-fadeIn 0.2s ease both;
+}
+
+.ssj-campo-msg.e-aviso {
+  color: #b06a1f;
+}
+
+.ssj-input[aria-invalid='true'] {
+  border-color: #c4452b;
+}
+
+/* ── ESTRUTURA DA FICHA ─────────────────────────────────────────────────────
+   Mobile primeiro: respiro apertado, uma coluna, sem borda lateral. As telas
+   maiores é que ganham espaço, não o contrário. */
+
+.ssj-ficha-cabecalho {
+  padding: 16px 16px 14px;
+}
+
+.ssj-ficha-conteudo {
+  padding: 20px 16px 28px;
+}
+
+/* As grades declaradas inline com `minmax(260px, 1fr)` já colapsam sozinhas.
+   O que não colapsa são as de colunas fixas — daí o override no celular. */
+@media (max-width: 599px) {
+  .ssj-ficha-conteudo [style*='1fr 1fr'] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── ERGONOMIA DE TOQUE ─────────────────────────────────────────────────────
+   16px no input é o que impede o iOS de dar zoom automático ao focar o campo
+   — o zoom desalinha a página e o candidato perde o contexto do formulário. */
+
+@media (max-width: 767px) {
+  .ssj-input,
+  select.ssj-input,
+  textarea.ssj-input {
+    font-size: 16px;
+    min-height: 46px;
+  }
+
+  /* Os botões de opção (sexo, nacionalidade, geração) fecham em 42px: dois
+     pixels abaixo do mínimo confortável de toque das diretrizes de iOS e
+     Android. Num formulário desta extensão, dois pixels viram dezenas de
+     toques errados. */
+  .ssj-opt {
+    min-height: 46px;
+  }
+
+  /* A ficha ocupa a tela inteira no celular: margem lateral vira desperdício. */
+  .ssj-ficha-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* ── DESKTOP ────────────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  .ssj-ficha-passo-mobile {
+    display: none;
+  }
+  .ssj-ficha-trilha {
+    display: grid !important;
+  }
+  .ssj-ficha-cabecalho {
+    padding: 20px 24px 16px;
+  }
+  .ssj-ficha-conteudo {
+    padding: 28px 32px 36px;
+  }
+}
+
+@media (min-width: 640px) {
+  .ssj-ficha-retomar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 32px 4px;
+  }
+  .ssj-ficha-retomar-acoes button {
+    flex: none;
+  }
+  .ssj-ia-zona {
+    padding: 30px 26px;
+  }
+  .ssj-ia-botoes {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .ssj-ia-revisao {
+    padding: 24px;
+  }
+  .ssj-ia-revisao-rodape {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .ssj-ia-lista {
+    max-height: 42vh;
+  }
+}
+
+/* ── QUEM PEDIU MENOS MOVIMENTO, RECEBE MENOS MOVIMENTO ─────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ssj-ia-zona,
+  .ssj-ia-revisao {
+    animation: none;
+  }
+  .ssj-ia-pulso,
+  .ssj-ia-barra-indef {
+    animation: none;
+  }
+  .ssj-ia-barra-indef {
+    width: 100%;
+  }
+}

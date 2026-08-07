@@ -1,0 +1,434 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 07. PROPOSTA COMERCIAL
+   ---------------------------------------------------------------------------
+   Zero cor literal. Cada valor sai de `tokens.css`, que já tem os dois temas —
+   é isso que faz a página responder ao claro e ao escuro sem uma única
+   condicional em JavaScript. A versão anterior desta tela tinha `#f4f5f2` e
+   `#14181f` escritos no JSX e ficava ilegível no tema escuro.
+
+   Mobile-first: a regra base descreve o celular, as `min-width` acrescentam
+   espaço.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.ssj-prop {
+  width: 100%;
+}
+
+/* ── ABERTURA ───────────────────────────────────────────────────────────── */
+
+.ssj-prop-hero {
+  position: relative;
+  padding-block: clamp(48px, 12vw, 112px);
+  overflow: clip;
+}
+
+/* Halo da marca atrás do título: assina a página sem competir com o texto. */
+.ssj-prop-hero::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: -40%;
+  height: 120%;
+  background: radial-gradient(ellipse 60% 50% at 50% 40%, var(--ssj-indigo-wash), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ssj-prop-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ssj-prop-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: center;
+  padding: 7px 15px;
+  border: 1px solid var(--ssj-indigo-line);
+  border-radius: var(--ssj-r-pill);
+  background: var(--ssj-indigo-wash);
+  color: var(--ssj-indigo);
+  font-family: var(--ssj-font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.ssj-prop-selo--fundador {
+  border-color: var(--ssj-shu-line);
+  background: var(--ssj-shu-wash);
+  color: var(--ssj-shu);
+}
+
+/* O verbo da promessa recebe a cor da marca — um realce só, para não virar
+   enfeite. */
+.ssj-prop-realce {
+  color: var(--ssj-shu);
+}
+
+.ssj-prop-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 8px;
+}
+
+.ssj-prop-nota {
+  font-family: var(--ssj-font-mono);
+  font-size: 12px;
+  color: var(--ssj-muted);
+  margin: 0;
+}
+
+/* ── FUNDO ALTERNADO ────────────────────────────────────────────────────── */
+
+.ssj-prop-fundo {
+  background: var(--ssj-surface-2);
+  border-block: 1px solid var(--ssj-rule);
+}
+
+/* ── AUTORIDADE NO DOMÍNIO ──────────────────────────────────────────────── */
+
+.ssj-prop-dominio {
+  display: grid;
+  gap: clamp(12px, 3vw, 20px);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+
+.ssj-prop-dominio-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 16px 18px;
+  border-left: 2px solid var(--ssj-shu);
+  background: var(--ssj-surface);
+  border-radius: 0 var(--ssj-r-md) var(--ssj-r-md) 0;
+}
+
+.ssj-prop-dominio-item strong {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ssj-text);
+}
+
+.ssj-prop-dominio-item span {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ssj-muted);
+  text-wrap: pretty;
+}
+
+.ssj-prop-missao {
+  text-align: center;
+  font-size: clamp(16px, 2.4vw, 20px);
+  line-height: 1.55;
+  color: var(--ssj-text-2);
+  max-width: 68ch;
+  margin-inline: auto;
+  text-wrap: pretty;
+}
+
+.ssj-prop-missao strong {
+  color: var(--ssj-text);
+  font-weight: 700;
+}
+
+/* ── ANTES E DEPOIS ─────────────────────────────────────────────────────── */
+
+.ssj-prop-contraste {
+  display: grid;
+  gap: clamp(14px, 3vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+
+.ssj-prop-lado {
+  padding: clamp(20px, 5vw, 30px);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg);
+  background: var(--ssj-surface);
+}
+
+.ssj-prop-lado--depois {
+  border-color: var(--ssj-verde-line);
+  background: var(--ssj-verde-wash);
+}
+
+.ssj-prop-rotulo {
+  display: block;
+  font-family: var(--ssj-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ssj-muted);
+  margin-bottom: 14px;
+}
+
+.ssj-prop-lado--depois .ssj-prop-rotulo {
+  color: var(--ssj-verde-ink);
+}
+
+.ssj-prop-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.ssj-prop-lista li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ssj-text-2);
+  text-wrap: pretty;
+}
+
+.ssj-prop-lista li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--ssj-muted);
+}
+
+.ssj-prop-lado--depois .ssj-prop-lista li::before {
+  content: '✓';
+  color: var(--ssj-verde-ink);
+  font-weight: 700;
+}
+
+/* ── CARTÕES DE ENTREGA ─────────────────────────────────────────────────── */
+
+.ssj-prop-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ssj-prop-icone {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--ssj-r-md);
+  background: var(--ssj-indigo-wash);
+  color: var(--ssj-indigo);
+  margin-bottom: 4px;
+}
+
+.ssj-prop-icone--sm {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+/* ── PASSOS ─────────────────────────────────────────────────────────────── */
+
+.ssj-prop-passos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(14px, 3vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  counter-reset: passo;
+}
+
+.ssj-prop-passo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: clamp(20px, 4vw, 28px);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg);
+  background: var(--ssj-surface);
+}
+
+.ssj-prop-passo-n {
+  font-family: var(--ssj-font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ssj-shu);
+  opacity: 0.75;
+}
+
+/* ── INVESTIMENTO ───────────────────────────────────────────────────────── */
+
+.ssj-prop-precos {
+  display: grid;
+  gap: clamp(14px, 3vw, 20px);
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+
+.ssj-prop-preco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ssj-prop-valor {
+  font-family: var(--ssj-font-display);
+  font-size: clamp(24px, 4vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ssj-text);
+  margin: 0;
+}
+
+.ssj-prop-fundador {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: clamp(22px, 5vw, 34px);
+  border: 1px solid var(--ssj-shu-line);
+  border-radius: var(--ssj-r-lg);
+  background: var(--ssj-shu-wash);
+}
+
+.ssj-prop-fundador .ssj-prop-selo--fundador {
+  align-self: flex-start;
+  background: var(--ssj-surface);
+}
+
+.ssj-prop-fundador .ssj-texto {
+  max-width: 68ch;
+}
+
+/* ── CONFIANÇA ──────────────────────────────────────────────────────────── */
+
+.ssj-prop-confianca {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-md);
+  background: var(--ssj-surface);
+}
+
+.ssj-prop-confianca-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ssj-text);
+  margin: 0 0 3px;
+}
+
+/* ── DÚVIDAS ────────────────────────────────────────────────────────────── */
+
+.ssj-prop-duvida {
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-md);
+  background: var(--ssj-surface);
+  overflow: hidden;
+}
+
+.ssj-prop-duvida summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 13px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ssj-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ssj-prop-duvida summary::-webkit-details-marker {
+  display: none;
+}
+
+.ssj-prop-duvida summary::after {
+  content: '+';
+  font-family: var(--ssj-font-mono);
+  font-size: 19px;
+  color: var(--ssj-muted);
+  flex-shrink: 0;
+  transition: transform var(--ssj-base) ease;
+}
+
+.ssj-prop-duvida[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.ssj-prop-duvida .ssj-texto {
+  padding: 0 18px 16px;
+}
+
+/* ── FECHAMENTO ─────────────────────────────────────────────────────────── */
+
+.ssj-prop-fechamento {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 4vw, 28px);
+  padding: clamp(26px, 6vw, 52px);
+  border-radius: var(--ssj-r-xl, 24px);
+  background: var(--ssj-surface-ink);
+  color: var(--ssj-on-ink);
+  text-align: center;
+  align-items: center;
+}
+
+.ssj-prop-fechamento .ssj-titulo,
+.ssj-prop-fechamento .ssj-lead {
+  color: var(--ssj-on-ink);
+}
+
+.ssj-prop-fechamento .ssj-lead {
+  opacity: 0.82;
+  margin-inline: auto;
+}
+
+.ssj-prop-contatos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 460px;
+}
+
+/* O e-mail é longo: em tela estreita ele quebra o botão se não puder encolher. */
+.ssj-prop-contatos .ssj-btn {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.ssj-prop-assinatura {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ssj-font-mono);
+  font-size: 11.5px;
+  color: var(--ssj-on-ink);
+  opacity: 0.62;
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* ── TELAS MAIORES ──────────────────────────────────────────────────────── */
+
+@media (min-width: 600px) {
+  .ssj-prop-acoes {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .ssj-prop-contatos {
+    flex-direction: row;
+    max-width: none;
+    justify-content: center;
+  }
+  .ssj-prop-contatos .ssj-btn {
+    white-space: nowrap;
+  }
+}

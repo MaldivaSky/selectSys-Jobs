@@ -443,6 +443,21 @@
   .ssj-nav__actions .ssj-btn--hide-sm { display: none; }
 }
 
+/* No celular a barra só cabe com logo + tema + hambúrguer. Manter "Entrar"
+   visível empurrava a linha para 453px numa tela de 375px: a página inteira
+   ganhava rolagem lateral e o fundo do cabeçalho terminava antes da borda,
+   deixando uma faixa clara à direita. Os dois CTAs já vivem na gaveta. */
+@media (max-width: 620px) {
+  .ssj-nav__actions .ssj-nav-btn { display: none; }
+  .ssj-nav__brand-tagline { display: none; }
+}
+
+/* Rede de segurança: um filho que vaze não pode mais produzir rolagem lateral
+   na página inteira. `clip` (e não `hidden`) preserva `position: sticky`. */
+.ssj-shell {
+  overflow-x: clip;
+}
+
 /* ── Rodapé ─────────────────────────────────────────────────────────────── */
 .ssj-footer {
   margin-top: auto;
@@ -651,4 +666,169 @@
   border-color: var(--ssj-shu);
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(196, 69, 43, 0.35);
+}
+
+/* ── Vagas Hub ───────────────────────────────────────────────────────────
+   Componentes da vitrine pública. Nenhum valor aqui é repetido no JSX da
+   página: mudar o respiro do cartão é mudar UMA linha, neste arquivo.       */
+
+.ssj-campo-busca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding-inline: 14px;
+  background: var(--ssj-surface);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-md);
+  color: var(--ssj-muted);
+  transition: border-color var(--ssj-base) ease;
+}
+.ssj-campo-busca:focus-within { border-color: var(--ssj-indigo); }
+.ssj-campo-busca input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ssj-text);
+  /* 16px trava o zoom automático do iOS ao focar o campo. */
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.ssj-filtro-provincia {
+  min-height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+  min-width: min(200px, 100%);
+}
+
+.ssj-vaga-cartao {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 24px);
+  padding: clamp(16px, 4vw, 24px);
+  background: var(--ssj-surface);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--ssj-base) var(--ssj-ease),
+              box-shadow var(--ssj-base) ease,
+              border-color var(--ssj-base) ease;
+}
+.ssj-vaga-cartao:hover {
+  transform: translateY(-2px);
+  border-color: var(--ssj-rule-3);
+  box-shadow: var(--ssj-shadow-md, 0 12px 24px rgba(0, 0, 0, 0.06));
+}
+/* Dedo não faz hover: no toque o retorno vem do estado pressionado. */
+@media (pointer: coarse) {
+  .ssj-vaga-cartao:hover { transform: none; box-shadow: none; }
+  .ssj-vaga-cartao:active { transform: scale(0.995); }
+}
+
+.ssj-vaga-agencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ssj-muted);
+}
+
+.ssj-vaga-tags { gap: 8px; margin-top: 4px; }
+
+.ssj-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--ssj-r-sm);
+  background: var(--ssj-surface-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ssj-muted);
+  white-space: nowrap;
+}
+.ssj-tag--valor { color: var(--ssj-verde-ink, var(--ssj-verde)); }
+
+.ssj-vaga-seta {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ssj-surface-2);
+  color: var(--ssj-indigo);
+}
+
+/* Abaixo de 480px a seta é peso morto: o cartão inteiro já é o link. */
+@media (max-width: 479px) {
+  .ssj-vaga-seta { display: none; }
+}
+
+/* ── Correções de ergonomia de toque ─────────────────────────────────────
+   Estes alvos ficavam entre 22px e 40px. O mínimo das diretrizes de iOS e
+   Android é 44px; abaixo disso o erro de toque cresce rápido — e o rodapé é
+   justamente onde ficam os links de LGPD, que precisam ser alcançáveis.     */
+
+/* Por largura, e não por `pointer: coarse`: a regra passa a valer em janela
+   estreita no desktop e — o que importa mais — vira verificável em teste
+   automatizado, porque `pointer` não muda ao redimensionar. */
+@media (max-width: 767px) {
+  .ssj-nav__actions .ssj-icon-btn,
+  .ssj-nav__burger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ssj-footer a {
+    display: inline-block;
+    padding-block: 11px;
+  }
+}
+
+/* ── Rodapé ──────────────────────────────────────────────────────────────
+   Era 100% inline com `#090c11` chumbado: não respondia ao tema e os links
+   fechavam 22px de altura. O bloco escuro é intencional (assinatura da marca)
+   e por isso usa o token de superfície escura, não um hex solto.            */
+
+.ssj-rodape {
+  background: var(--ssj-surface-ink);
+  color: var(--ssj-on-ink);
+  border-top: 1px solid var(--ssj-rule);
+  font-family: var(--ssj-font-sans);
+  padding-top: clamp(40px, 9vw, 80px);
+  /* A barra de gestos do celular não pode cobrir o rodapé. */
+  padding-bottom: max(clamp(24px, 5vw, 40px), env(safe-area-inset-bottom));
+}
+
+.ssj-rodape__titulo {
+  color: var(--ssj-on-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0;
+}
+
+.ssj-rodape__link {
+  color: var(--ssj-on-ink);
+  opacity: 0.72;
+  font-size: 14px;
+  text-decoration: none;
+  transition: opacity var(--ssj-fast) ease;
+}
+.ssj-rodape__link:hover { opacity: 1; }
+
+@media (max-width: 767px) {
+  /* 22px de link + 22px de respiro = os 44px de alvo de toque. */
+  .ssj-rodape__link {
+    display: inline-block;
+    padding-block: 11px;
+  }
 }
