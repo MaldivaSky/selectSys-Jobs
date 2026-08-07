@@ -114,8 +114,8 @@ export function HomePage() {
           <Link to="/vagas" className="premium-btn ssj-btn ssj-btn--lg" style={{ borderRadius: '100px', textDecoration: 'none' }}>
             Ver Vagas por Província <ArrowRight size={20} />
           </Link>
-          <Link to="/c/fujiarte" className="glass-card ssj-btn ssj-btn--lg" style={{ color: '#4ade80', borderColor: 'rgba(74, 222, 128, 0.4)', borderRadius: '100px', textDecoration: 'none' }}>
-            <Sparkles size={20} /> Simular Ficha FUJIARTE
+          <Link to="/candidato" className="glass-card ssj-btn ssj-btn--lg" style={{ color: '#4ade80', borderColor: 'rgba(74, 222, 128, 0.4)', borderRadius: '100px', textDecoration: 'none' }}>
+            <Sparkles size={20} /> Simular Ficha Digital
           </Link>
           <Link to="/login" className="glass-card ssj-btn ssj-btn--lg" style={{ color: textPri, borderRadius: '100px', textDecoration: 'none' }}>
             <UserCircle2 size={20} /> Entrar no Painel RH
@@ -181,7 +181,7 @@ export function HomePage() {
               titulo: 'Exportador Excel .XLS 100% Pixel-Perfect',
               categoria: 'Automação & Documentos',
               dorDoCliente: 'Planilhas gigantes de 200+ células exigidas pelo Japão geram retrabalho e horas de digitação manual do RH.',
-              nossaSolucao: 'O candidato preenche no celular e a plataforma gera em 1 clique a planilha .xls 100% idêntica ao modelo nativo da FUJIARTE.',
+              nossaSolucao: 'O candidato preenche no celular e a plataforma gera em 1 clique a planilha .xls 100% idêntica ao modelo oficial da sua empreiteira.',
               resultadoPratico: 'Fim da digitação manual, zero erro de formatação e aceitação imediata pela diretoria no Japão.'
             })}
             className="glass-card"
@@ -189,7 +189,7 @@ export function HomePage() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <FileSpreadsheet size={32} color="#10b981" />
-              <span className="ssj-pill ssj-pill--ok">Padrão 白紙 FUJIARTE</span>
+              <span className="ssj-pill ssj-pill--ok">Padrão Oficial .XLS</span>
             </div>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: 0 }}>Planilha .XLS sem Digitação</h3>
             <p style={{ fontSize: '15px', color: textSec, lineHeight: 1.6, margin: 0 }}>

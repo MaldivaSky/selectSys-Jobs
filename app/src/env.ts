@@ -5,19 +5,25 @@ export interface EnvVariables {
   VITE_GAROON_SUBDOMAIN?: string;
   VITE_GAROON_USER?: string;
   VITE_GAROON_TOKEN?: string;
+  VITE_RESEND_API_KEY?: string;
 }
 
 function validarEnv(): EnvVariables {
-  const url = import.meta.env.VITE_SUPABASE_URL || '';
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
-  const deepseek = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
-  const garoonSubdomain = import.meta.env.VITE_GAROON_SUBDOMAIN || '';
-  const garoonUser = import.meta.env.VITE_GAROON_USER || '';
-  const garoonToken = import.meta.env.VITE_GAROON_TOKEN || '';
+  const envSource = typeof import.meta !== 'undefined' && import.meta.env
+    ? import.meta.env
+    : (typeof globalThis !== 'undefined' && (globalThis as any).process?.env ? (globalThis as any).process.env : {});
+
+  const url = envSource.VITE_SUPABASE_URL || '';
+  const key = envSource.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+  const deepseek = envSource.VITE_DEEPSEEK_API_KEY || '';
+  const garoonSubdomain = envSource.VITE_GAROON_SUBDOMAIN || '';
+  const garoonUser = envSource.VITE_GAROON_USER || '';
+  const garoonToken = envSource.VITE_GAROON_TOKEN || '';
+  const resendKey = envSource.VITE_RESEND_API_KEY || '';
 
   const erros: string[] = [];
 
-  if (import.meta.env.PROD) {
+  if (envSource.PROD) {
     if (!url) erros.push('VITE_SUPABASE_URL está ausente.');
     if (!key) erros.push('VITE_SUPABASE_PUBLISHABLE_KEY está ausente.');
   }
@@ -47,6 +53,7 @@ function validarEnv(): EnvVariables {
     VITE_GAROON_SUBDOMAIN: garoonSubdomain,
     VITE_GAROON_USER: garoonUser,
     VITE_GAROON_TOKEN: garoonToken,
+    VITE_RESEND_API_KEY: resendKey,
   };
 }
 

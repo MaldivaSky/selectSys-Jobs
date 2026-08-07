@@ -21,6 +21,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { RegisterTenant } from './pages/RegisterTenant';
 import { PoliticaPrivacidade } from './pages/PoliticaPrivacidade';
 import { TermosUso } from './pages/TermosUso';
+import { DpoAuditLogView } from './pages/DpoAuditLogView';
 import type { Language } from './translations';
 
 function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) => void }) {
@@ -62,6 +63,7 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
             <Route path="/ficha" element={<FichaRenderer />} />
             
             <Route path="/signup/admin" element={<RegisterTenant />} />
+            <Route path="/dpo" element={<DpoAuditLogView />} />
             <Route path="/privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/termos" element={<TermosUso />} />
           </Routes>

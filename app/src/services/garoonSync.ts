@@ -118,7 +118,7 @@ export async function executarSincronizacaoGaroon(req: GaroonSyncRequest): Promi
 
   if (req.ambiente === 'cloud') {
     const payload = buildGaroonCloudPayload(req.candidato);
-    const authHeader = typeof btoa !== 'undefined' ? btoa(`${req.usuario}:${req.apiToken}`) : Buffer.from(`${req.usuario}:${req.apiToken}`).toString('base64');
+    const authHeader = typeof btoa !== 'undefined' ? btoa(`${req.usuario}:${req.apiToken}`) : ((globalThis as any).Buffer ? (globalThis as any).Buffer.from(`${req.usuario}:${req.apiToken}`).toString('base64') : '');
     const targetUrl = `https://${req.subdomain}.cybozu.com/g/api/v1/cbp/workflow/records`;
 
     try {
