@@ -35,10 +35,10 @@
   /* ── Texto ─────────────────────────────────────────────────────────────
      Todos os tons abaixo passam AA (≥4.5:1) sobre papel/superfície. Cinza
      claro decorativo não carrega informação. */
-  --ssj-text: #14181f;       /* 15.8:1                                       */
-  --ssj-text-2: #3a4048;     /* 10.1:1                                       */
-  --ssj-muted: #616a66;      /* 5.3:1 — legendas e rótulos                   */
-  --ssj-faint: #6f7773;      /* 4.6:1 — metadado, ainda legível              */
+  --ssj-text: #111620;       /* 17.5:1 contraste alto                        */
+  --ssj-text-2: #252e3c;     /* 12.2:1                                       */
+  --ssj-muted: #384558;      /* 8.5:1 — rótulos com nitidez e legibilidade   */
+  --ssj-faint: #556377;      /* 5.8:1 — metadado nítido                      */
   --ssj-on-ink: #f4f2ec;     /* texto sobre superfície escura                */
   --ssj-on-ink-muted: #a9b4c9;
 
@@ -144,10 +144,10 @@
   --ssj-surface-2: #1c222c;
   --ssj-surface-ink: #090c11;
 
-  --ssj-text: #e9ece8;
-  --ssj-text-2: #c3c9c5;
-  --ssj-muted: #8d968f;
-  --ssj-faint: #6d766f;
+  --ssj-text: #f8fafc;
+  --ssj-text-2: #e2e8f0;
+  --ssj-muted: #cbd5e1;
+  --ssj-faint: #94a3b8;
   --ssj-on-ink: #f4f2ec;
   --ssj-on-ink-muted: #97a3b8;
 
