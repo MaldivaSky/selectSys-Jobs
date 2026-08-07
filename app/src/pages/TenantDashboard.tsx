@@ -30,6 +30,9 @@ import {
 import { useTheme } from '../theme/theme';
 import { COR_PADRAO, derivarPaleta, normalizarHex } from '../theme/marcaTenant';
 import { useNavigate, useParams } from 'react-router-dom';
+import { gerarFichaExcel, baixarFichaExcel } from '../dados/exportadorExcel';
+import { GaroonIntegrationModal } from '../components/GaroonIntegrationModal';
+import { Database, FileSpreadsheet, Search, Table, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PAINEL DA AGÊNCIA (TENANT)
@@ -127,6 +130,78 @@ export function TenantDashboard() {
   const inputArquivo = useRef<HTMLInputElement | null>(null);
 
   const [modalNovaVaga, setModalNovaVaga] = useState(false);
+  const [garoonModalOpen, setGaroonModalOpen] = useState(false);
+  const [garoonCandidato, setGaroonCandidato] = useState<any>(null);
+  const [exportandoExcel, setExportandoExcel] = useState<string | null>(null);
+
+  const [buscaTexto, setBuscaTexto] = useState('');
+  const [filtroAltura, setFiltroAltura] = useState<'todos' | 'baixo' | 'medio' | 'alto'>('todos');
+  const [filtroIMC, setFiltroIMC] = useState<'todos' | 'abaixo' | 'normal' | 'sobrepeso' | 'obesidade'>('todos');
+  const [filtroGeracao, setFiltroGeracao] = useState<'todos' | 'issei' | 'nissei' | 'sansei' | 'yonsei' | 'nao_descendente'>('todos');
+  const [filtroTatuagem, setFiltroTatuagem] = useState<'todos' | 'sim' | 'nao'>('todos');
+  const [modoVisao, setModoVisao] = useState<'kanban' | 'tabela'>('kanban');
+
+  const candidaturasFiltradas = useMemo(() => {
+    return candidaturas.filter((c) => {
+      const cand = c.candidates as any;
+      
+      if (buscaTexto.trim()) {
+        const termo = buscaTexto.toLowerCase();
+        const nome = String(cand?.nome_completo || '').toLowerCase();
+        const cpf = String(cand?.cpf || '').toLowerCase();
+        const fone = String(cand?.telefone || '').toLowerCase();
+        const cid = String(cand?.cidade || '').toLowerCase();
+        if (!nome.includes(termo) && !cpf.includes(termo) && !fone.includes(termo) && !cid.includes(termo)) {
+          return false;
+        }
+      }
+
+      if (filtroAltura !== 'todos') {
+        const alt = Number(cand?.altura_cm || 0);
+        if (filtroAltura === 'baixo' && (alt === 0 || alt >= 160)) return false;
+        if (filtroAltura === 'medio' && (alt < 160 || alt > 175)) return false;
+        if (filtroAltura === 'alto' && alt <= 175) return false;
+      }
+
+      if (filtroIMC !== 'todos') {
+        const altM = Number(cand?.altura_cm || 0) / 100;
+        const peso = Number(cand?.peso_kg || 0);
+        if (altM <= 0 || peso <= 0) return false;
+        const imc = peso / (altM * altM);
+        if (filtroIMC === 'abaixo' && imc >= 18.5) return false;
+        if (filtroIMC === 'normal' && (imc < 18.5 || imc >= 25)) return false;
+        if (filtroIMC === 'sobrepeso' && (imc < 25 || imc >= 30)) return false;
+        if (filtroIMC === 'obesidade' && imc < 30) return false;
+      }
+
+      if (filtroGeracao !== 'todos') {
+        if (cand?.geracao !== filtroGeracao) return false;
+      }
+
+      if (filtroTatuagem !== 'todos') {
+        const temTat = Boolean(cand?.tem_tatuagem);
+        if (filtroTatuagem === 'sim' && !temTat) return false;
+        if (filtroTatuagem === 'nao' && temTat) return false;
+      }
+
+      return true;
+    });
+  }, [candidaturas, buscaTexto, filtroAltura, filtroIMC, filtroGeracao, filtroTatuagem]);
+
+  const exportarFichaCandidato = async (candidatoData: any) => {
+    try {
+      setExportandoExcel(candidatoData.id || 'demo');
+      const blob = await gerarFichaExcel(candidatoData);
+      const nome = candidatoData.candidates?.nome_completo || candidatoData.nome_completo || 'candidato-fujiarte';
+      baixarFichaExcel(blob, `${nome.toLowerCase().replace(/\s+/g, '-')}-ficha-fujiarte.xlsx`);
+      setAviso({ tipo: 'ok', texto: 'Ficha Cadastral Excel (.xlsx) baixada com sucesso!' });
+    } catch (err: any) {
+      setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${err?.message || 'Falha ao processar'}` });
+    } finally {
+      setExportandoExcel(null);
+    }
+  };
+
   const [criandoVaga, setCriandoVaga] = useState(false);
   const [novaVaga, setNovaVaga] = useState({
     titulo: '',
@@ -778,6 +853,28 @@ export function TenantDashboard() {
           )}
 
           <button
+            onClick={() => {
+              setGaroonCandidato(null);
+              setGaroonModalOpen(true);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 14px',
+              borderRadius: '10px',
+              border: '1px solid rgba(192, 132, 252, 0.4)',
+              background: 'rgba(147, 51, 234, 0.15)',
+              color: '#c084fc',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <Database size={15} /> Integração Garoon
+          </button>
+
+          <button
             onClick={alternarTema}
             title={isDark ? 'Tema claro' : 'Tema escuro'}
             style={{
@@ -1113,42 +1210,173 @@ export function TenantDashboard() {
             </div>
           )}
 
-          {/* ── FUNIL ──────────────────────────────────────────────── */}
+          {/* ── FUNIL DE CANDIDATOS COM FILTRAGEM BIOMÉTRICA E ERGONÔMICA ──────────────── */}
           {aba === 'candidatos' && (
-            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', alignItems: 'flex-start' }}>
-              {ETAPAS.map((etapa, idx) => {
-                const cards = candidaturas.filter((c) => c.status === etapa.id);
-                return (
-                  <div
-                    key={etapa.id}
-                    style={{
-                      background: isDark ? '#12161d' : '#e7e9ec',
-                      minWidth: '272px',
-                      width: '272px',
-                      borderRadius: '14px',
-                      padding: '14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                      border: `1px solid ${cardBorder}`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* Toolbar de Filtros do Recrutador */}
+              <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                {/* Linha Superior: Busca e Alternador de Visão */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  
+                  {/* Busca por Texto */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: isDark ? '#1a202c' : '#edf2f7', padding: '8px 14px', borderRadius: '10px', flex: 1, maxWidth: '380px', border: `1px solid ${cardBorder}` }}>
+                    <Search size={16} color={textSecondary} />
+                    <input
+                      type="text"
+                      placeholder="Buscar por nome, CPF, telefone ou cidade..."
+                      value={buscaTexto}
+                      onChange={e => setBuscaTexto(e.target.value)}
+                      style={{ background: 'transparent', border: 'none', color: textPrimary, fontSize: '13.5px', width: '100%', outline: 'none' }}
+                    />
+                  </div>
+
+                  {/* Contador e Alternador de Visão (Kanban vs Tabela) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: textSecondary }}>
+                      Exibindo <strong style={{ color: p.marcaLegivel }}>{candidaturasFiltradas.length}</strong> de {candidaturas.length} candidatos
+                    </span>
+
+                    <div style={{ display: 'flex', background: isDark ? '#1a202c' : '#edf2f7', padding: '3px', borderRadius: '10px', border: `1px solid ${cardBorder}` }}>
+                      <button
+                        onClick={() => setModoVisao('kanban')}
                         style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '2px',
-                          background: p.rampa[Math.min(p.rampa.length - 1, Math.floor((idx / ETAPAS.length) * p.rampa.length))],
+                          display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: 'none',
+                          background: modoVisao === 'kanban' ? cardBg : 'transparent',
+                          color: modoVisao === 'kanban' ? p.marcaLegivel : textSecondary,
+                          fontWeight: 700, fontSize: '12px', cursor: 'pointer'
                         }}
-                      />
-                      <h3 style={{ flex: 1, fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: textSecondary }}>
-                        {etapa.label}
-                      </h3>
-                      <span style={{ fontSize: '11px', fontWeight: 800, background: cardBg, padding: '2px 8px', borderRadius: '999px' }}>
-                        {cards.length}
-                      </span>
+                      >
+                        <LayoutGrid size={14} /> Funil Kanban
+                      </button>
+                      <button
+                        onClick={() => setModoVisao('tabela')}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: 'none',
+                          background: modoVisao === 'tabela' ? cardBg : 'transparent',
+                          color: modoVisao === 'tabela' ? p.marcaLegivel : textSecondary,
+                          fontWeight: 700, fontSize: '12px', cursor: 'pointer'
+                        }}
+                      >
+                        <Table size={14} /> Tabela Recrutador
+                      </button>
                     </div>
+                  </div>
+
+                </div>
+
+                {/* Linha Inferior: Filtros Biométricos e Operacionais */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', borderTop: `1px solid ${cardBorder}`, paddingTop: '16px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: textSecondary, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <SlidersHorizontal size={14} /> Filtros:
+                  </span>
+
+                  {/* Filtro de Altura */}
+                  <select
+                    value={filtroAltura}
+                    onChange={e => setFiltroAltura(e.target.value as any)}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                  >
+                    <option value="todos">Altura: Todas</option>
+                    <option value="baixo">Baixo (&lt; 160 cm)</option>
+                    <option value="medio">Médio (160 - 175 cm)</option>
+                    <option value="alto">Alto (&gt; 175 cm)</option>
+                  </select>
+
+                  {/* Filtro de IMC */}
+                  <select
+                    value={filtroIMC}
+                    onChange={e => setFiltroIMC(e.target.value as any)}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                  >
+                    <option value="todos">IMC Recrutador: Todos</option>
+                    <option value="abaixo">Abaixo do peso (&lt; 18.5)</option>
+                    <option value="normal">Peso Normal (18.5 - 24.9)</option>
+                    <option value="sobrepeso">Sobrepeso (25 - 29.9)</option>
+                    <option value="obesidade">Obesidade (≥ 30)</option>
+                  </select>
+
+                  {/* Filtro de Geração Nikkei */}
+                  <select
+                    value={filtroGeracao}
+                    onChange={e => setFiltroGeracao(e.target.value as any)}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                  >
+                    <option value="todos">Visto / Descendência: Todos</option>
+                    <option value="issei">Issei (1ª Geração)</option>
+                    <option value="nissei">Nissei (2ª Geração)</option>
+                    <option value="sansei">Sansei (3ª Geração)</option>
+                    <option value="yonsei">Yonsei (4ª Geração)</option>
+                    <option value="nao_descendente">Não descendente</option>
+                  </select>
+
+                  {/* Filtro de Tatuagem */}
+                  <select
+                    value={filtroTatuagem}
+                    onChange={e => setFiltroTatuagem(e.target.value as any)}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                  >
+                    <option value="todos">Tatuagem: Todas</option>
+                    <option value="sim">Possui Tatuagem</option>
+                    <option value="nao">Sem Tatuagem</option>
+                  </select>
+
+                  {/* Limpar Filtros */}
+                  {(buscaTexto || filtroAltura !== 'todos' || filtroIMC !== 'todos' || filtroGeracao !== 'todos' || filtroTatuagem !== 'todos') && (
+                    <button
+                      onClick={() => {
+                        setBuscaTexto('');
+                        setFiltroAltura('todos');
+                        setFiltroIMC('todos');
+                        setFiltroGeracao('todos');
+                        setFiltroTatuagem('todos');
+                      }}
+                      style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'rgba(196,69,43,0.15)', color: '#c4452b', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Limpar Filtros
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+              {/* MODO KANBAN */}
+              {modoVisao === 'kanban' && (
+                <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '16px', alignItems: 'flex-start' }}>
+                  {ETAPAS.map((etapa, idx) => {
+                    const cards = candidaturasFiltradas.filter((c) => c.status === etapa.id);
+                    return (
+                      <div
+                        key={etapa.id}
+                        style={{
+                          background: isDark ? '#12161d' : '#e7e9ec',
+                          minWidth: '272px',
+                          width: '272px',
+                          borderRadius: '14px',
+                          padding: '14px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                          border: `1px solid ${cardBorder}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '2px',
+                              background: p.rampa[Math.min(p.rampa.length - 1, Math.floor((idx / ETAPAS.length) * p.rampa.length))],
+                            }}
+                          />
+                          <h3 style={{ flex: 1, fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: textSecondary }}>
+                            {etapa.label}
+                          </h3>
+                          <span style={{ fontSize: '11px', fontWeight: 800, background: cardBg, padding: '2px 8px', borderRadius: '999px' }}>
+                            {cards.length}
+                          </span>
+                        </div>
 
                     {cards.map((card) => {
                       const dias = Math.floor((Date.now() - new Date(card.updated_at).getTime()) / 86_400_000);
@@ -1176,6 +1404,25 @@ export function TenantDashboard() {
                             {card.candidates?.telefone || '—'}
                             {card.candidates?.cidade ? ` · ${card.candidates.cidade}/${card.candidates.estado ?? ''}` : ''}
                           </div>
+                          {(() => {
+                            const cand = card.candidates as any;
+                            if (cand?.altura_cm && cand?.peso_kg) {
+                              const altM = cand.altura_cm / 100;
+                              const imc = (cand.peso_kg / (altM * altM)).toFixed(1);
+                              const imcNum = parseFloat(imc);
+                              let cat = 'Normal';
+                              let cor = '#10b981';
+                              if (imcNum < 18.5) { cat = 'Abaixo'; cor = '#f59e0b'; }
+                              else if (imcNum >= 25 && imcNum < 30) { cat = 'Sobrepeso'; cor = '#f59e0b'; }
+                              else if (imcNum >= 30) { cat = 'Obesidade'; cor = '#ef4444'; }
+                              return (
+                                <div style={{ fontSize: '11px', fontWeight: 700, color: cor, marginTop: '2px' }}>
+                                  IMC Recrutador: {imc} ({cat})
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           {dias > SLA_DIAS && (
                             <div
                               style={{
@@ -1210,6 +1457,38 @@ export function TenantDashboard() {
                               Avançar → {proxima.label}
                             </button>
                           )}
+
+                          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                            <button
+                              onClick={() => exportarFichaCandidato(card)}
+                              disabled={exportandoExcel === card.id}
+                              style={{
+                                flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#34d399',
+                                fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                              }}
+                            >
+                              <FileSpreadsheet size={13} />
+                              {exportandoExcel === card.id ? 'Gerando...' : 'Ficha .XLS'}
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setGaroonCandidato(card);
+                                setGaroonModalOpen(true);
+                              }}
+                              style={{
+                                flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid rgba(192, 132, 252, 0.4)',
+                                backgroundColor: 'rgba(147, 51, 234, 0.1)', color: '#c084fc',
+                                fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                              }}
+                            >
+                              <Database size={13} />
+                              Garoon
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -1231,6 +1510,123 @@ export function TenantDashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* MODO TABELA DO RECRUTADOR */}
+              {modoVisao === 'tabela' && (
+                <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', overflow: 'hidden' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ background: isDark ? '#1a202c' : '#f7fafc', borderBottom: `1px solid ${cardBorder}`, color: textSecondary, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          <th style={{ padding: '14px 16px' }}>Candidato</th>
+                          <th style={{ padding: '14px 16px' }}>Contato / Local</th>
+                          <th style={{ padding: '14px 16px' }}>Biometria (Fabril)</th>
+                          <th style={{ padding: '14px 16px' }}>IMC Recrutador</th>
+                          <th style={{ padding: '14px 16px' }}>Visto / Descendência</th>
+                          <th style={{ padding: '14px 16px' }}>Status Funil</th>
+                          <th style={{ padding: '14px 16px', textAlign: 'right' }}>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {candidaturasFiltradas.map((card) => {
+                          const cand = card.candidates as any;
+                          const altM = cand?.altura_cm ? cand.altura_cm / 100 : 0;
+                          const imcNum = cand?.altura_cm && cand?.peso_kg ? parseFloat((cand.peso_kg / (altM * altM)).toFixed(1)) : null;
+
+                          let imcLabel = '—';
+                          let imcColor = textSecondary;
+                          if (imcNum !== null) {
+                            if (imcNum < 18.5) { imcLabel = `${imcNum} (Abaixo)`; imcColor = '#f59e0b'; }
+                            else if (imcNum < 25) { imcLabel = `${imcNum} (Normal)`; imcColor = '#10b981'; }
+                            else if (imcNum < 30) { imcLabel = `${imcNum} (Sobrepeso)`; imcColor = '#f59e0b'; }
+                            else { imcLabel = `${imcNum} (Obesidade)`; imcColor = '#ef4444'; }
+                          }
+
+                          const etapaAtual = ETAPAS.find(e => e.id === card.status);
+
+                          return (
+                            <tr key={card.id} style={{ borderBottom: `1px solid ${cardBorder}`, transition: 'background 0.2s' }}>
+                              
+                              {/* Nome & CPF */}
+                              <td style={{ padding: '14px 16px', fontWeight: 700 }}>
+                                <div style={{ color: textPrimary, fontSize: '14px' }}>{cand?.nome_completo || 'Sem Nome'}</div>
+                                <div style={{ fontSize: '11px', color: textSecondary, fontWeight: 500 }}>CPF: {cand?.cpf || 'Não informado'}</div>
+                              </td>
+
+                              {/* Contato */}
+                              <td style={{ padding: '14px 16px', color: textSecondary }}>
+                                <div>{cand?.telefone || '—'}</div>
+                                <div style={{ fontSize: '11px' }}>{[cand?.cidade, cand?.estado].filter(Boolean).join('/')}</div>
+                              </td>
+
+                              {/* Biometria */}
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontWeight: 600 }}>Alt: {cand?.altura_cm ? `${cand.altura_cm}cm` : '—'} | Peso: {cand?.peso_kg ? `${cand.peso_kg}kg` : '—'}</div>
+                                <div style={{ fontSize: '11px', color: textSecondary }}>Pé: {cand?.pe_cm ? `${cand.pe_cm}cm` : '—'} | Cintura: {cand?.cintura_cm ? `${cand.cintura_cm}cm` : '—'}</div>
+                              </td>
+
+                              {/* IMC Badge */}
+                              <td style={{ padding: '14px 16px' }}>
+                                <span style={{ padding: '4px 10px', borderRadius: '12px', background: `${imcColor}20`, color: imcColor, fontWeight: 800, fontSize: '12px' }}>
+                                  {imcLabel}
+                                </span>
+                              </td>
+
+                              {/* Visto / Descendência */}
+                              <td style={{ padding: '14px 16px', color: textSecondary, textTransform: 'capitalize' }}>
+                                <div style={{ fontWeight: 600, color: textPrimary }}>{cand?.geracao ? cand.geracao.replace('_', ' ') : '—'}</div>
+                                <div style={{ fontSize: '11px' }}>Tatuagem: {cand?.tem_tatuagem ? 'Sim (Alerta)' : 'Não'}</div>
+                              </td>
+
+                              {/* Status */}
+                              <td style={{ padding: '14px 16px' }}>
+                                <span style={{ padding: '4px 10px', borderRadius: '999px', background: p.marcaVeu, color: p.marcaLegivel, fontWeight: 700, fontSize: '11.5px' }}>
+                                  {etapaAtual?.label || card.status}
+                                </span>
+                              </td>
+
+                              {/* Ações */}
+                              <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                  <button
+                                    onClick={() => exportarFichaCandidato(card)}
+                                    disabled={exportandoExcel === (card.id || 'demo')}
+                                    title="Exportar Ficha Excel FUJIARTE"
+                                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.1)', color: '#10b981', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <FileSpreadsheet size={13} /> Excel
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setGaroonCandidato(card);
+                                      setGaroonModalOpen(true);
+                                    }}
+                                    title="Sincronizar com Cybozu Garoon Japão"
+                                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(147,51,234,0.4)', background: 'rgba(147,51,234,0.1)', color: '#c084fc', fontWeight: 700, fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    <Database size={13} /> Garoon
+                                  </button>
+                                </div>
+                              </td>
+
+                            </tr>
+                          );
+                        })}
+                        {candidaturasFiltradas.length === 0 && (
+                          <tr>
+                            <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: textSecondary }}>
+                              Nenhum candidato encontrado com os filtros selecionados.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
@@ -1774,6 +2170,13 @@ export function TenantDashboard() {
           </form>
         </div>
       )}
+
+      {/* Modal de Integração Cybozu Garoon */}
+      <GaroonIntegrationModal
+        isOpen={garoonModalOpen}
+        onClose={() => setGaroonModalOpen(false)}
+        candidato={garoonCandidato}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { FichaRenderer } from './components/ficha/FichaRenderer';
 import { AuthPortal } from './pages/AuthPortal';
 import { VagasHub } from './pages/VagasHub';
 import { VagaDetalhe } from './pages/VagaDetalhe';
+import { VagasTenantHub } from './pages/VagasTenantHub';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { PlanoAcaoView } from './pages/PlanoAcaoView';
 import { SuperAdmin } from './pages/SuperAdmin';
@@ -55,6 +56,7 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
             </Route>
             {/* Área do Candidato (B2C) - Roteamento Multi-Tenant */}
             <Route path="/c/:tenantSlug" element={<CandidateWizard lang={lang} />} />
+            <Route path="/c/:tenantSlug/vagas" element={<VagasTenantHub />} />
             <Route path="/candidato" element={<Navigate to="/c/fujiarte" replace />} />
             
             <Route path="/ficha" element={<FichaRenderer />} />
