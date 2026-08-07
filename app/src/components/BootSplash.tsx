@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
-import { BrandMark } from '../brand/BrandMark';
+import { GloboTravessia } from '../brand/GloboTravessia';
 import { BRAND, BRAND_COLORS as C } from '../brand/brand';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ABERTURA DA MARCA · tela de carregamento
-   Aparece uma vez por sessão. A logo se desenha, o ponto atravessa a ponte e a
-   missão entra por último. Clique (ou Esc) pula. Sai com fade — nunca corta.
+   ABERTURA DA MARCA · tela de carregamento com Globo da Travessia
    ═════════════════════════════════════════════════════════════════════════ */
 
-const HOLD_MS = 2600;
+const HOLD_MS = 2800;
 const FADE_MS = 480;
-const SESSION_KEY = 'ssj:splash-visto';
 
 export function BootSplash() {
-  const [state, setState] = useState<'oculto' | 'ativo' | 'saindo'>(() =>
-    sessionStorage.getItem(SESSION_KEY) ? 'oculto' : 'ativo',
-  );
+  const [state, setState] = useState<'oculto' | 'ativo' | 'saindo'>('ativo');
 
   useEffect(() => {
     if (state !== 'ativo') return;
@@ -25,7 +20,6 @@ export function BootSplash() {
 
   useEffect(() => {
     if (state !== 'saindo') return;
-    sessionStorage.setItem(SESSION_KEY, '1');
     const t = setTimeout(() => setState('oculto'), FADE_MS);
     return () => clearTimeout(t);
   }, [state]);
@@ -59,7 +53,7 @@ export function BootSplash() {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 999,
+        zIndex: 9999,
         background: 'radial-gradient(120% 100% at 50% 30%,#1c2331 0%,#0d1016 75%)',
         display: 'flex',
         flexDirection: 'column',
@@ -71,7 +65,7 @@ export function BootSplash() {
         padding: '0 24px',
       }}
     >
-      <BrandMark size={150} tone="light" animated />
+      <GloboTravessia size={220} tone="dark" comRotulos={true} />
 
       <div style={{ marginTop: 14, textAlign: 'center', opacity: 0, animation: 'ssj-fadeUp .7s 1.35s ease forwards' }}>
         <div
