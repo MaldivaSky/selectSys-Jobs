@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · MARCA — 働
+   ---------------------------------------------------------------------------
+   Cópia literal do CSS de brand/SelectSys Jobs App (standalone).html, a arte
+   aprovada pelo CEO. Proporção, gradiente e cores não se ajustam.
+
+   O símbolo é o kanji 働 (hataraku — trabalhar) com o sol japonês no canto.
+   O gradiente do kanji É a travessia, na ordem da viagem:
+
+       #12c257  verde Brasil, a origem
+       #e8a02e  âmbar, o trânsito
+       #ffffff  o clarão da chegada
+       #e8a02e  âmbar
+       #e23b22  vermelho Japão, o destino
+
+   Em vez de PNG, a marca é texto com o gradiente recortado nele. Assim ela
+   é nítida em qualquer densidade de tela, acompanha o tamanho da fonte — e,
+   principalmente, PODE ANIMAR: deslocar o gradiente faz a travessia correr
+   dentro do kanji, que é a animação de carregamento.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.jp {
+  font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
+  font-weight: 700;
+}
+
+/* O selo: quadrado escuro de cantos arredondados. */
+.kseal {
+  position: relative;
+  border-radius: 9px;
+  background: #14181f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* O kanji com o gradiente recortado no traço. */
+.kseal .kj {
+  background: linear-gradient(
+    150deg,
+    #12c257 12%,
+    #e8a02e 40%,
+    #ffffff 52%,
+    #e8a02e 64%,
+    #e23b22 90%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* O sol — 日の丸. Vermelho da bandeira, não o shu dos carimbos. */
+.kseal .sun {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #ff6a4d, #c8102e 66%);
+}
+
+/* Sobre fundo escuro o selo dispensa a caixa: o kanji já tem contraste. */
+.kseal--sem-caixa {
+  background: transparent;
+}
+
+/* ── A batida do selo ─────────────────────────────────────────────────────
+   Entra pequeno e girado, passa do ponto e assenta. É a entrada da marca,
+   usada em confirmação — não em carregamento.                              */
+@keyframes ssj-sealIn {
+  0%   { opacity: 0; transform: scale(0.4) translateY(10px); }
+  70%  { transform: scale(1.12); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARREGAMENTO — a travessia correndo dentro do kanji
+   ---------------------------------------------------------------------------
+   `background-size: 200%` dá ao gradiente o dobro da largura do glifo; animar
+   `background-position` faz o verde entrar por um lado e o vermelho sair pelo
+   outro. O usuário vê a viagem acontecendo enquanto o dado carrega.
+
+   Não confundir com a animação do globo (BrandMark do canvas): aquela é da
+   abertura e continua intocada. Esta é só para dado em trânsito.
+   ═════════════════════════════════════════════════════════════════════════ */
+@keyframes ssj-travessia {
+  to { background-position: 200% 0; }
+}
+
+.ssj-carregando__kanji {
+  background-size: 200% 100%;
+  background-position: 0% 0;
+  animation: ssj-travessia 1.6s linear infinite;
+}
+
+/* O sol pulsa junto, no mesmo compasso. */
+@keyframes ssj-sol-pulsa {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.18); opacity: 0.72; }
+}
+
+.ssj-carregando__sol {
+  animation: ssj-sol-pulsa 1.6s ease-in-out infinite;
+}
+
+/* Bloco de carregamento centralizado. */
+.ssj-carregando {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ssj-muted);
+  font-family: var(--ssj-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.ssj-carregando__texto::after {
+  content: '';
+  animation: ssj-reticencias 1.6s steps(4, end) infinite;
+}
+
+@keyframes ssj-reticencias {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+}
+
+/* Quem pediu menos movimento recebe a marca parada, com o gradiente cheio. */
+@media (prefers-reduced-motion: reduce) {
+  .ssj-carregando__kanji,
+  .ssj-carregando__sol,
+  .ssj-carregando__texto::after {
+    animation: none;
+  }
+}

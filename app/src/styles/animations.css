@@ -69,12 +69,6 @@
   to { background-position: 200% 0; }
 }
 
-/* O ponto da logo percorrendo a ponte. Usado por <BrandMark animated />. */
-.ssj-bridge-dot {
-  offset-path: path('M42 70 Q60 38 78 70');
-  animation: ssj-travel 1.5s 0.35s cubic-bezier(0.5, 0, 0.5, 1) forwards;
-}
-
 /* ── Atalhos de entrada ──────────────────────────────────────────────────
    .ssj-in           → sobe e aparece
    .ssj-in.d1 … .d6  → escalona o atraso numa lista/grade                   */

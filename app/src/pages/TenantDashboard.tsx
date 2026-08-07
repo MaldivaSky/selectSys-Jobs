@@ -1,351 +1,200 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, RefreshCw, LogIn, AlertTriangle, Inbox } from 'lucide-react';
-import { ETAPAS_FUNIL, ORDEM_FUNIL, STATUS, type StatusCandidatura } from '@selectsys/core';
-import { Hanko } from '../brand/Hanko';
-import { temBanco } from '../dados/supabase';
-import {
-  entrar,
-  listarAgencias,
-  listarCandidatos,
-  meuVinculo,
-  moverStatus,
-  resumoFunil,
-  sair,
-  sessaoAtiva,
-  transicoesDe,
-  type Filtros,
-  type LinhaCandidato,
-  type ResumoFunil,
-} from '../dados/painel';
+import { useState, useEffect } from 'react';
+import { supabase } from '../dados/supabase';
+import { Plus, Briefcase, Users, LayoutDashboard, Building2, Calendar, FileText } from 'lucide-react';
 import type { Language } from '../translations';
+import { useTheme } from '../theme/theme';
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PAINEL DE GESTÃO — Épicos C2 e C4 do escopo
-   ---------------------------------------------------------------------------
-   Lê o banco de verdade. Nenhum número é inventado: se a base está vazia, o
-   painel diz que está vazia. Número decorativo em demonstração é o tipo de
-   coisa que o cliente descobre na primeira semana de uso.
+export function TenantDashboard({ lang }: { lang: Language }) {
+  const { escuro: isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<'vagas' | 'candidatos' | 'configuracoes'>('vagas');
+  const [vagas, setVagas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [novaVaga, setNovaVaga] = useState({
+    titulo: '',
+    descricao: '',
+    provincia: '',
+    cidade: '',
+    salario_hora: '',
+    tipo_contrato: 'Haken (Temporário)'
+  });
+  const [modalNovaVaga, setModalNovaVaga] = useState(false);
 
-   Tudo que chega aqui já passou pela RLS — não existe filtro por organização
-   no código do cliente, porque um esquecimento viraria vazamento.
-   ═════════════════════════════════════════════════════════════════════════ */
-
-const tomCor: Record<string, string> = {
-  neutro: 'ssj-pill--mute',
-  andamento: 'ssj-pill--info',
-  positivo: 'ssj-pill--ok',
-  atencao: 'ssj-pill--warn',
-  encerrado: 'ssj-pill--seal',
-};
-
-function Login({ aoEntrar }: { aoEntrar: () => void }) {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState('');
-  const [ocupado, setOcupado] = useState(false);
-
-  const enviar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setOcupado(true);
-    setErro('');
-    const r = await entrar(email, senha);
-    setOcupado(false);
-    if (!r.ok) setErro(r.motivo);
-    else aoEntrar();
-  };
-
-  return (
-    <div className="ssj-container ssj-container--narrow ssj-section">
-      <div className="ssj-card" style={{ maxWidth: 440, margin: '0 auto' }}>
-        <span className="ssj-label">Painel de gestão · 応募者一覧</span>
-        <h1 style={{ marginTop: 8 }}>Entrar</h1>
-        <p className="ssj-lead" style={{ marginTop: 8 }}>
-          Os dados dos candidatos são protegidos no banco. Sem sessão, nada é retornado.
-        </p>
-
-        <form onSubmit={enviar} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 22 }}>
-          <div className="ssj-field">
-            <label htmlFor="email" style={{ fontWeight: 600 }}>E-mail</label>
-            <input id="email" type="email" className="ssj-input" value={email} required
-                   autoComplete="username" onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="ssj-field">
-            <label htmlFor="senha" style={{ fontWeight: 600 }}>Senha</label>
-            <input id="senha" type="password" className="ssj-input" value={senha} required
-                   autoComplete="current-password" onChange={(e) => setSenha(e.target.value)} />
-          </div>
-          {erro && (
-            <span role="alert" style={{ color: 'var(--ssj-shu)', fontSize: 14 }}>{erro}</span>
-          )}
-          <button type="submit" className="ssj-btn ssj-btn--pri ssj-btn--block" disabled={ocupado}>
-            <LogIn size={16} /> {ocupado ? 'Entrando…' : 'Entrar'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-export function TenantDashboard({ lang: _lang }: { lang: Language }) {
-  const [logado, setLogado] = useState<boolean | null>(null);
-  const [vinculo, setVinculo] = useState<Awaited<ReturnType<typeof meuVinculo>>>(null);
-  const [funil, setFunil] = useState<ResumoFunil[]>([]);
-  const [linhas, setLinhas] = useState<LinhaCandidato[]>([]);
-  const [agencias, setAgencias] = useState<string[]>([]);
-  const [filtros, setFiltros] = useState<Filtros>({ status: 'todos', agencia: 'todas' });
-  const [carregando, setCarregando] = useState(false);
-  const [transicoes, setTransicoes] = useState<Record<string, StatusCandidatura[]>>({});
-
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    const [f, l, a, v] = await Promise.all([
-      resumoFunil(),
-      listarCandidatos(filtros),
-      listarAgencias(),
-      meuVinculo(),
-    ]);
-    setFunil(f);
-    setLinhas(l);
-    setAgencias(a);
-    setVinculo(v);
-    setCarregando(false);
-  }, [filtros]);
+  // PALETA DO DASHBOARD (B2B)
+  const pageBg = isDark ? '#0d1016' : '#f0f2f5';
+  const sidebarBg = isDark ? '#161b24' : '#ffffff';
+  const cardBg = isDark ? '#161b24' : '#ffffff';
+  const textPrimary = isDark ? '#e9ece8' : '#14181f';
+  const textSecondary = isDark ? '#8d968f' : '#7a827f';
+  const cardBorder = isDark ? '#29313c' : '#e0e2dc';
+  const accentPri = isDark ? '#7ba4de' : '#294b86';
 
   useEffect(() => {
-    void (async () => {
-      const s = await sessaoAtiva();
-      setLogado(Boolean(s));
-    })();
+    carregarDados();
   }, []);
 
-  useEffect(() => {
-    if (logado) void carregar();
-  }, [logado, carregar]);
-
-  const totalFunil = useMemo(() => funil.reduce((n, f) => n + f.total, 0), [funil]);
-  const atrasados = useMemo(() => funil.reduce((n, f) => n + f.atrasados, 0), [funil]);
-  const emCoe = useMemo(
-    () => funil.filter((f) => STATUS[f.status]?.etapa === 8).reduce((n, f) => n + f.total, 0),
-    [funil],
-  );
-
-  const abrirTransicoes = async (l: LinhaCandidato) => {
-    if (transicoes[l.status]) return;
-    const t = await transicoesDe(l.status);
-    setTransicoes((p) => ({ ...p, [l.status]: t }));
-  };
-
-  if (!temBanco) {
-    return (
-      <div className="ssj-container ssj-section">
-        <div className="ssj-card ssj-card--edge ssj-card--seal">
-          <h1>Painel de gestão</h1>
-          <p className="ssj-lead" style={{ marginTop: 10 }}>
-            Banco não configurado neste ambiente. Defina <code>VITE_SUPABASE_URL</code> e{' '}
-            <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>.
-          </p>
-        </div>
-      </div>
-    );
+  async function carregarDados() {
+    setLoading(true);
+    // Aqui buscaríamos pelo ID da organização da sessão atual.
+    // Como estamos homologando, vamos puxar da FUJIARTE criada no seed.
+    const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
+    
+    if (orgData) {
+      const { data: vagasData } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('organization_id', orgData.id)
+        .order('created_at', { ascending: false });
+      
+      if (vagasData) setVagas(vagasData);
+    }
+    setLoading(false);
   }
 
-  if (logado === null) return <div className="ssj-container ssj-section">Verificando sessão…</div>;
-  if (!logado) return <Login aoEntrar={() => setLogado(true)} />;
+  async function handleCriarVaga(e: React.FormEvent) {
+    e.preventDefault();
+    const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
+    if (!orgData) return alert("Erro: Organização não encontrada.");
+
+    const payload = {
+      ...novaVaga,
+      organization_id: orgData.id,
+      salario_hora: parseFloat(novaVaga.salario_hora),
+      status: 'aberta'
+    };
+
+    const { error } = await supabase.from('jobs').insert(payload);
+    
+    if (error) {
+      alert("Erro ao criar vaga: " + error.message);
+    } else {
+      setModalNovaVaga(false);
+      setNovaVaga({ titulo: '', descricao: '', provincia: '', cidade: '', salario_hora: '', tipo_contrato: 'Haken' });
+      carregarDados(); // Recarrega a lista
+    }
+  }
 
   return (
-    <div className="ssj-container ssj-section">
-      <div className="ssj-pagehead">
-        <div>
-          <span className="ssj-label">Painel de gestão · 応募者一覧</span>
-          <h1 style={{ marginTop: 8 }}>Funil dekassegui</h1>
-          {vinculo && (
-            <p className="ssj-lead" style={{ marginTop: 6 }}>
-              {vinculo.organizations?.nome}
-              {vinculo.organizations?.nome_ja && (
-                <span className="ssj-mono ssj-muted"> · {vinculo.organizations.nome_ja}</span>
-              )}
-              <span className="ssj-muted"> — seu acesso: {vinculo.role}</span>
-            </p>
-          )}
-        </div>
-        <div className="ssj-row" style={{ gap: 8 }}>
-          <button className="ssj-btn ssj-btn--sm" onClick={() => void carregar()} disabled={carregando}>
-            <RefreshCw size={15} /> {carregando ? 'Atualizando…' : 'Atualizar'}
-          </button>
-          <button className="ssj-btn ssj-btn--sm ssj-btn--ghost" onClick={() => void sair().then(() => setLogado(false))}>
-            Sair
-          </button>
-        </div>
-      </div>
-
-      {/* Indicadores — todos calculados sobre o que existe no banco */}
-      <div className="ssj-grid" style={{ marginTop: 24 }}>
-        <div className="ssj-card">
-          <span className="ssj-label">No funil</span>
-          <div className="ssj-metric" style={{ marginTop: 6 }}>{totalFunil}</div>
-        </div>
-        <div className="ssj-card">
-          <span className="ssj-label">Em autorização de visto · 在留資格認定証明書</span>
-          <div className="ssj-metric" style={{ marginTop: 6 }}>{emCoe}</div>
-        </div>
-        <div className="ssj-card">
-          <span className="ssj-label">Fora do prazo</span>
-          <div className="ssj-metric" style={{ marginTop: 6, color: atrasados ? 'var(--ssj-shu)' : undefined }}>
-            {atrasados}
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: pageBg, color: textPrimary }}>
+      
+      {/* SIDEBAR B2B */}
+      <aside style={{ width: '280px', backgroundColor: sidebarBg, borderRight: `1px solid ${cardBorder}`, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '24px', borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: accentPri, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Building2 size={18} color="#fff" />
           </div>
+          <div style={{ fontWeight: 700, fontSize: '16px' }}>FUJIARTE</div>
         </div>
-        <div className="ssj-card">
-          <span className="ssj-label">Agências ativas</span>
-          <div className="ssj-metric" style={{ marginTop: 6 }}>{agencias.length}</div>
-        </div>
-      </div>
-
-      {atrasados > 0 && (
-        <div className="ssj-card ssj-card--edge ssj-card--seal" style={{ marginTop: 18 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-            <AlertTriangle size={17} style={{ color: 'var(--ssj-shu)' }} />
-            {atrasados} candidato(s) parados além do prazo da etapa
-          </span>
-        </div>
-      )}
-
-      {/* As 11 etapas */}
-      <h2 style={{ marginTop: 36 }}>As 11 etapas</h2>
-      <div className="ssj-scroll-x" style={{ display: 'flex', gap: 12, paddingBlock: 18 }}>
-        {ETAPAS_FUNIL.map((e) => {
-          const total = funil
-            .filter((f) => STATUS[f.status]?.etapa === e.n)
-            .reduce((n, f) => n + f.total, 0);
-          return (
-            <div key={e.n} className="ssj-card" style={{ minWidth: 168, padding: 16 }}>
-              <div className="ssj-row" style={{ gap: 10 }}>
-                <Hanko estado={total > 0 ? 'aprovado' : 'futuro'} texto={String(e.n)} size={30} title={e.pt} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14.5, lineHeight: 1.25 }}>{e.pt}</div>
-                  <div className="ssj-mono ssj-muted" style={{ fontSize: 12.5 }}>{e.ja}</div>
-                </div>
-              </div>
-              <div className="ssj-metric" style={{ marginTop: 12, fontSize: 26 }}>{total}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Busca e filtros */}
-      <div className="ssj-row ssj-wrap" style={{ gap: 12, marginTop: 24 }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
-          <Search size={16} style={{ position: 'absolute', left: 14, top: 15, color: 'var(--ssj-muted)' }} />
-          <input
-            className="ssj-input"
-            style={{ paddingLeft: 40 }}
-            placeholder="Buscar por nome"
-            value={filtros.busca ?? ''}
-            onChange={(e) => setFiltros((f) => ({ ...f, busca: e.target.value }))}
-          />
-        </div>
-        <select
-          className="ssj-select"
-          style={{ maxWidth: 280 }}
-          value={filtros.status}
-          onChange={(e) => setFiltros((f) => ({ ...f, status: e.target.value as Filtros['status'] }))}
-        >
-          <option value="todos">Todas as etapas</option>
-          {ORDEM_FUNIL.map((s) => (
-            <option key={s} value={s}>{STATUS[s].pt} · {STATUS[s].ja}</option>
+        
+        <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[
+            { id: 'vagas', icon: <Briefcase size={20} />, label: 'Gestão de Vagas' },
+            { id: 'candidatos', icon: <Users size={20} />, label: 'Funil de Candidatos' },
+            { id: 'configuracoes', icon: <LayoutDashboard size={20} />, label: 'Configurações' }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as any)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px',
+                border: 'none', backgroundColor: activeTab === item.id ? (isDark ? '#202836' : '#f0f4f9') : 'transparent',
+                color: activeTab === item.id ? accentPri : textSecondary,
+                fontWeight: activeTab === item.id ? 700 : 600,
+                cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease'
+              }}
+            >
+              {item.icon} {item.label}
+            </button>
           ))}
-        </select>
-        <select
-          className="ssj-select"
-          style={{ maxWidth: 220 }}
-          value={filtros.agencia}
-          onChange={(e) => setFiltros((f) => ({ ...f, agencia: e.target.value }))}
-        >
-          <option value="todas">Todas as agências</option>
-          {agencias.map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-      </div>
-
-      {/* Lista */}
-      {linhas.length === 0 ? (
-        <div className="ssj-card" style={{ marginTop: 22, textAlign: 'center', padding: 48 }}>
-          <Inbox size={34} style={{ color: 'var(--ssj-muted)', margin: '0 auto 14px' }} />
-          <h3>Nenhum candidato ainda</h3>
-          <p className="ssj-lead" style={{ marginTop: 8 }}>
-            As candidaturas aparecem aqui assim que a primeira ficha for enviada pelo
-            link da agência.
-          </p>
         </div>
-      ) : (
-        <div className="ssj-card ssj-scroll-x" style={{ marginTop: 22, padding: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 880 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--ssj-rule)' }}>
-                {['Candidato', 'Idade', 'Origem', 'Geração', 'Agência', 'Etapa', 'Parado', 'Mover para'].map((h) => (
-                  <th key={h} className="ssj-label" style={{ textAlign: 'left', padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                    {h}
-                  </th>
+      </aside>
+
+      {/* ÁREA PRINCIPAL */}
+      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+        
+        {activeTab === 'vagas' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Mural de Vagas (B2C)</h1>
+                <p style={{ color: textSecondary, marginTop: '4px' }}>Crie vagas para publicar automaticamente no Vagas Hub e indexar no Google Jobs.</p>
+              </div>
+              <button 
+                onClick={() => setModalNovaVaga(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '10px',
+                  backgroundColor: accentPri, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer'
+                }}
+              >
+                <Plus size={18} /> Publicar Nova Vaga
+              </button>
+            </div>
+
+            {loading ? (
+              <div>Carregando vagas...</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                {vagas.map(v => (
+                  <div key={v.id} style={{ backgroundColor: cardBg, padding: '24px', borderRadius: '16px', border: `1px solid ${cardBorder}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>{v.titulo}</h3>
+                      <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '4px', backgroundColor: isDark ? '#12291e' : '#e2f0e9', color: isDark ? '#4fc287' : '#1f7a4d' }}>
+                        ATIVA
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: textSecondary }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={16}/> ¥ {v.salario_hora}/hora</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={16}/> {new Date(v.created_at).toLocaleDateString()}</div>
+                    </div>
+                  </div>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((l) => {
-                const def = STATUS[l.status];
-                return (
-                  <tr key={l.application_id} style={{ borderBottom: '1px solid var(--ssj-rule-2)' }}>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontWeight: 600 }}>{l.nome_completo}</div>
-                      {l.parecer && (
-                        <div className="ssj-muted" style={{ fontSize: 13, marginTop: 3 }}>{l.parecer}</div>
-                      )}
-                    </td>
-                    <td className="ssj-mono" style={{ padding: '14px 16px' }}>{l.idade ?? '—'}</td>
-                    <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                      {l.cidade ? `${l.cidade}/${l.estado ?? ''}` : '—'}
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>{l.geracao ?? '—'}</td>
-                    <td style={{ padding: '14px 16px' }}>{l.agencia ?? 'direta'}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span className={`ssj-pill ${tomCor[def?.tom ?? 'neutro']}`} title={def?.descricao}>
-                        {def?.pt}
-                      </span>
-                      <div className="ssj-mono ssj-muted" style={{ fontSize: 12, marginTop: 4 }}>{def?.ja}</div>
-                    </td>
-                    <td className="ssj-mono" style={{ padding: '14px 16px' }}>
-                      <span style={{ color: def?.slaDias && l.dias_parado > def.slaDias ? 'var(--ssj-shu)' : undefined }}>
-                        {l.dias_parado}d
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <select
-                        className="ssj-select"
-                        style={{ minWidth: 190, minHeight: 40 }}
-                        value=""
-                        onFocus={() => void abrirTransicoes(l)}
-                        onChange={async (e) => {
-                          const para = e.target.value as StatusCandidatura;
-                          if (!para) return;
-                          const r = await moverStatus(l.application_id, l.status, para);
-                          if (r.ok) void carregar();
-                        }}
-                      >
-                        <option value="">Mover…</option>
-                        {(transicoes[l.status] ?? []).map((s) => (
-                          <option key={s} value={s}>{STATUS[s]?.pt ?? s}</option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                {vagas.length === 0 && <div style={{ color: textSecondary }}>Nenhuma vaga cadastrada.</div>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'candidatos' && (
+          <div>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Funil de Candidatos</h1>
+            <p style={{ color: textSecondary, marginTop: '8px' }}>O Kanban de Triagem aparecerá aqui conectando os currículos recebidos pelo DeepSeek.</p>
+          </div>
+        )}
+
+      </main>
+
+      {/* MODAL DE CRIAÇÃO DE VAGA */}
+      {modalNovaVaga && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <form onSubmit={handleCriarVaga} style={{ backgroundColor: cardBg, padding: '32px', borderRadius: '24px', border: `1px solid ${cardBorder}`, width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, borderBottom: `1px solid ${cardBorder}`, paddingBottom: '16px' }}>Criar Nova Vaga</h2>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              <input required placeholder="Título da Vaga (ex: Operador de AutoPeças)" value={novaVaga.titulo} onChange={e => setNovaVaga({...novaVaga, titulo: e.target.value})} style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }} />
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <input required placeholder="Província (ex: Aichi)" value={novaVaga.provincia} onChange={e => setNovaVaga({...novaVaga, provincia: e.target.value})} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }} />
+                <input required placeholder="Cidade (ex: Nagoya)" value={novaVaga.cidade} onChange={e => setNovaVaga({...novaVaga, cidade: e.target.value})} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }} />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <input required type="number" step="50" placeholder="Salário/hora (¥)" value={novaVaga.salario_hora} onChange={e => setNovaVaga({...novaVaga, salario_hora: e.target.value})} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }} />
+                <select value={novaVaga.tipo_contrato} onChange={e => setNovaVaga({...novaVaga, tipo_contrato: e.target.value})} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }}>
+                  <option>Haken (Temporário)</option>
+                  <option>Seishain (Efetivo)</option>
+                </select>
+              </div>
+
+              <textarea required placeholder="Descrição completa da vaga e benefícios..." value={novaVaga.descricao} onChange={e => setNovaVaga({...novaVaga, descricao: e.target.value})} style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary, minHeight: '120px' }} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+              <button type="button" onClick={() => setModalNovaVaga(false)} style={{ padding: '12px 24px', borderRadius: '10px', backgroundColor: 'transparent', color: textSecondary, border: `1px solid ${cardBorder}`, fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
+              <button type="submit" style={{ padding: '12px 24px', borderRadius: '10px', backgroundColor: accentPri, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>Publicar Vaga</button>
+            </div>
+          </form>
         </div>
       )}
-
-      <p className="ssj-mono ssj-muted" style={{ marginTop: 16, fontSize: 13 }}>
-        As transições oferecidas vêm de <code>pipeline_transitions</code> — o cliente
-        ajusta o fluxo sem deploy. Cada mudança grava evento com autor e horário.
-      </p>
     </div>
   );
 }

@@ -201,7 +201,7 @@ CREATE OR REPLACE FUNCTION candidate_idade(nasc date) RETURNS int
 CREATE INDEX idx_candidates_org        ON candidates (organization_id);
 CREATE INDEX idx_candidates_agency     ON candidates (organization_id, agency_id);
 CREATE INDEX idx_candidates_nascimento ON candidates (organization_id, data_nascimento);
-CREATE INDEX idx_candidates_nome_trgm  ON candidates USING gin (unaccent(nome_completo) gin_trgm_ops);
+CREATE INDEX idx_candidates_nome_trgm  ON candidates USING gin (nome_completo gin_trgm_ops);
 
 -- Histórico profissional 1:N (Japão e Brasil). A ficha limita a 4+2 por falta
 -- de espaço físico na folha; o sistema não herda essa limitação — trunca só na exportação.

@@ -39,24 +39,18 @@ export const BRAND_COLORS = {
   ring: '#3a4560',
 } as const;
 
-/** Caminho da ponte, compartilhado por logo, favicon e animação de abertura. */
-/** Caminho oficial da ponte. Copia literal de
- *  prototipo/SelectSys Jobs App (standalone).html — a fonte da marca.
- *  Compartilhado por logo, favicon, icones e animacao de abertura. */
-export const BRIDGE_PATH = 'M42 70 Q60 38 78 70';
+/* ── Marca 働 ──────────────────────────────────────────────────────────────
+   O gradiente do kanji, na ordem da viagem. Espelha .kseal .kj em
+   app/src/styles/marca.css, que e a copia literal da arte do CEO.          */
+export const KANJI = '働';
 
-/** Recorte do viewBox nos limites do desenho.
- *  O arquivo da marca e um ICONE: o simbolo ocupa metade do quadro porque o
- *  resto e o fundo quadrado escuro. Usado como logo ao lado do texto, esse
- *  vazio faz o simbolo parecer encolhido. Recortar o viewBox mantem as
- *  proporcoes exatas (anel : ponte : pontos) e so tira a margem morta.
- *    anel cx60 cy58 r30 + traco 2.4  ->  x 28.8..91.2 · y 26.8..89.2 */
-export const MARK_VIEWBOX = '28.8 26.8 62.4 62.4';
+export const KANJI_GRADIENTE = [
+  { cor: '#12c257', em: '12%' },   // verde Brasil — a origem
+  { cor: '#e8a02e', em: '40%' },   // ambar — o transito
+  { cor: '#ffffff', em: '52%' },   // o clarao da chegada
+  { cor: '#e8a02e', em: '64%' },
+  { cor: '#e23b22', em: '90%' },   // vermelho Japao — o destino
+] as const;
 
-/** Geometria oficial do simbolo, em viewBox 120. Nao ajustar. */
-export const MARK_GEO = {
-  anel: { cx: 60, cy: 58, r: 30, w: 2.4 },
-  ponte: { w: 4 },
-  origem: { cx: 42, cy: 70, r: 5 },
-  destino: { cx: 78, cy: 70, r: 5.5 },
-} as const;
+/** Vermelho do sol e do logotipo: o da bandeira, nao o shu dos carimbos. */
+export const HINOMARU = '#c8102e';

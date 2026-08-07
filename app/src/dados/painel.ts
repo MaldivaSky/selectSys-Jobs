@@ -213,3 +213,18 @@ export async function listarAgencias(): Promise<string[]> {
   const { data } = await supabase.from('agencies').select('nome').eq('ativo', true);
   return ((data ?? []) as { nome: string }[]).map((a) => a.nome);
 }
+
+/** 
+ * Busca os dados de saúde descriptografados (LGPD Art. 11).
+ * O acesso a isso gera log de auditoria no banco.
+ */
+export async function obterDadosSaude(candidateId: string) {
+  if (!temBanco || !supabase) return { ok: false as const, motivo: 'Banco não configurado.' };
+  
+  const { data, error } = await supabase.rpc('obter_dados_saude', {
+    p_candidate_id: candidateId
+  });
+  
+  if (error) return { ok: false as const, motivo: error.message };
+  return { ok: true as const, dados: data };
+}

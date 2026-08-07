@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { BrandMark } from '../brand/BrandMark';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TRANSIÇÃO DE PÁGINA
@@ -33,17 +34,17 @@ export function PageTransition({ children }: { children: ReactNode }) {
   );
 }
 
-/* ── Estado de carregando reutilizável ─────────────────────────────────────
-   Para dados em trânsito dentro de uma página (fetch, import, cálculo).    */
+/* ── Carregando ────────────────────────────────────────────────────────────
+   A marca nova em movimento: o gradiente atravessa o kanji 働 do verde Brasil
+   ao vermelho Japão enquanto o dado vem. É a mesma travessia da identidade,
+   agora indicando espera.
+
+   Só para dado em trânsito. A abertura continua sendo o globo, intocado.   */
 export function Loader({ texto = 'carregando' }: { texto?: string }) {
   return (
-    <div className="ssj-loader" role="status" aria-live="polite">
-      <span className="ssj-loader__dots" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <span>{texto}</span>
+    <div className="ssj-carregando" role="status" aria-live="polite" aria-busy="true">
+      <BrandMark size={30} carregando />
+      <span className="ssj-carregando__texto">{texto}</span>
     </div>
   );
 }

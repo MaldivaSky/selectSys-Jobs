@@ -3,6 +3,7 @@ import { Shield, Key, Mail, Lock, UserCheck, Smartphone, CheckCircle2, ArrowRigh
 import { BrandLockup } from '../brand/BrandMark';
 import { Hanko } from '../brand/Hanko';
 import { GloboTravessia } from '../brand/GloboTravessia';
+import { supabase } from '../dados/supabase';
 
 export function AuthPortal() {
   const [tab, setTab] = useState<'candidato' | 'staff'>('candidato');
@@ -12,10 +13,37 @@ export function AuthPortal() {
   const [magicSent, setMagicSent] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'ANALISTA' | 'ENTREVISTADOR' | 'AGENCIA' | 'ADMIN'>('ANALISTA');
 
-  const handleMagicLink = (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+
+    if (supabase) {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/candidato`
+        }
+      });
+      if (error) {
+        alert('Erro ao enviar Magic Link: ' + error.message);
+        return;
+      }
+    }
+    
     setMagicSent(true);
+  };
+
+  const handleGoogleOAuth = async () => {
+    if (supabase) {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/candidato`
+        }
+      });
+    } else {
+      alert('Banco de dados não configurado (Supabase nulo).');
+    }
   };
 
   const handleStaffLogin = (e: React.FormEvent) => {
@@ -74,41 +102,7 @@ export function AuthPortal() {
               {/* Botão SSO Google Real */}
               <button
                 type="button"
-                onClick={() => {
-                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-                  if (!googleClientId) {
-                    alert('Login Google ainda não configurado. Defina VITE_GOOGLE_CLIENT_ID no ambiente.');
-                    return;
-                  }
-                  if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-                    (window as any).google.accounts.id.initialize({
-                      client_id: googleClientId,
-                      callback: () => {
-                        alert('Autenticado com sucesso via Google OAuth!');
-                        window.location.href = '/candidato';
-                      }
-                    });
-                    (window as any).google.accounts.id.prompt();
-                  } else {
-                    const script = document.createElement('script');
-                    script.src = 'https://accounts.google.com/gsi/client';
-                    script.async = true;
-                    script.defer = true;
-                    script.onload = () => {
-                      if ((window as any).google?.accounts?.id) {
-                        (window as any).google.accounts.id.initialize({
-                          client_id: googleClientId,
-                          callback: () => {
-                            alert('Autenticado com sucesso via Google OAuth!');
-                            window.location.href = '/candidato';
-                          }
-                        });
-                        (window as any).google.accounts.id.prompt();
-                      }
-                    };
-                    document.head.appendChild(script);
-                  }
-                }}
+                onClick={handleGoogleOAuth}
                 className="ssj-btn ssj-btn--ghost"
                 style={{
                   width: '100%',

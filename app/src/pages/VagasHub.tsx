@@ -1,166 +1,138 @@
-import { useState } from 'react';
-import { Globe, ArrowRight } from 'lucide-react';
-import { translations } from '../translations';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { MapPin, Briefcase, Search, Building2, JapaneseYen, Clock, ArrowRight } from 'lucide-react';
+import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
-import type { JobVacancy } from '../types';
-
-const mockVacancies: JobVacancy[] = [
-  {
-    id: 'v1',
-    title: 'Operador de Prensa e Solda de Autopeças (Fornecedor Toyota)',
-    titleJp: '自動車部品プレス・溶接オペレーター（トヨタ系）',
-    province: 'aichi',
-    provinceName: 'Aichi (愛知県)',
-    city: 'Toyota-shi / Okazaki',
-    industry: 'Autopeças (自動車部品)',
-    salaryJpy: '¥ 1,450 ~ ¥ 1,700 / hora',
-    salaryBrlEst: '~ R$ 16.500 / mês',
-    nikkeiEligible: 'Nissei, Sansei, Yonsei ou Cônjuge',
-    shift: 'Alternado (2 turnos 8h + Zangyo)',
-    overtimeHours: '30 ~ 45 hrs/mês',
-  },
-  {
-    id: 'v2',
-    title: 'Montagem e Inspeção de Painéis Eletrônicos (Fornecedor Suzuki)',
-    titleJp: '電子基板組み立て・検査（スズキ系）',
-    province: 'shizuoka',
-    provinceName: 'Shizuoka (静岡県)',
-    city: 'Hamamatsu-shi',
-    industry: 'Eletrônicos (電子機器)',
-    salaryJpy: '¥ 1,350 ~ ¥ 1,550 / hora',
-    salaryBrlEst: '~ R$ 14.800 / mês',
-    nikkeiEligible: 'Nissei, Sansei, Yonsei',
-    shift: 'Diurno / Alternado',
-    overtimeHours: '20 ~ 30 hrs/mês',
-  },
-  {
-    id: 'v3',
-    title: 'Processamento e Embalagem Alimentícia Industrial',
-    titleJp: '食品加工・包装ライン（三重工場）',
-    province: 'mie',
-    provinceName: 'Mie (三重県)',
-    city: 'Yokkaichi / Suzuka',
-    industry: 'Alimentício (食品)',
-    salaryJpy: '¥ 1,300 ~ ¥ 1,450 / hora',
-    salaryBrlEst: '~ R$ 13.900 / mês',
-    nikkeiEligible: 'Nissei, Sansei, Yonsei ou Cônjuge',
-    shift: '2 Turnos rotativos',
-    overtimeHours: '15 ~ 25 hrs/mês',
-  },
-  {
-    id: 'v4',
-    title: 'Linha de Usinagem e Autopeças de Precisão (Subaru Supplier)',
-    titleJp: '精密部品加工・マシニング（スバル系）',
-    province: 'gunma',
-    provinceName: 'Gunma (群馬県)',
-    city: 'Ota-shi',
-    industry: 'Autopeças (自動車部品)',
-    salaryJpy: '¥ 1,400 ~ ¥ 1,650 / hora',
-    salaryBrlEst: '~ R$ 15.600 / mês',
-    nikkeiEligible: 'Nissei, Sansei, Yonsei',
-    shift: 'Alternado com adicionais',
-    overtimeHours: '30 ~ 40 hrs/mês',
-  },
-  {
-    id: 'v5',
-    title: 'Operação Logística de Moldes e Moldagem por Injeção Plastic',
-    titleJp: 'プラスチック成形・物流オペレーター（神奈川）',
-    province: 'kanagawa',
-    provinceName: 'Kanagawa (神奈川県)',
-    city: 'Atsugi / Sagamihara',
-    industry: 'Plásticos & Logística',
-    salaryJpy: '¥ 1,400 ~ ¥ 1,600 / hora',
-    salaryBrlEst: '~ R$ 15.200 / mês',
-    nikkeiEligible: 'Nissei, Sansei, Yonsei',
-    shift: '2 Turnos',
-    overtimeHours: '25 ~ 35 hrs/mês',
-  }
-];
+import { useTheme } from '../theme/theme';
 
 export function VagasHub({ lang }: { lang: Language }) {
-  const t = translations[lang];
-  const [selectedProvince, setSelectedProvince] = useState<string>('all');
+  const { escuro: isDark } = useTheme();
+  const [vagas, setVagas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filtroProvincia, setFiltroProvincia] = useState('Todas');
+  
+  const pageBg = isDark ? '#0d1016' : '#f4f5f2';
+  const cardBg = isDark ? '#161b24' : '#ffffff';
+  const textPrimary = isDark ? '#e9ece8' : '#14181f';
+  const textSecondary = isDark ? '#8d968f' : '#7a827f';
+  const cardBorder = isDark ? '#29313c' : '#e0e2dc';
+  const accentIndigo = isDark ? '#7ba4de' : '#294b86';
 
-  const filteredVacancies = selectedProvince === 'all' 
-    ? mockVacancies 
-    : mockVacancies.filter(v => v.province === selectedProvince);
+  useEffect(() => {
+    async function carregarVagas() {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          id, titulo, descricao, provincia, cidade, salario_hora, tipo_contrato, horario,
+          organizations ( nome )
+        `)
+        .eq('status', 'aberta')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setVagas(data);
+      }
+      setLoading(false);
+    }
+    carregarVagas();
+  }, []);
+
+  const provincias = ['Todas', ...Array.from(new Set(vagas.map(v => v.provincia)))];
+  const vagasFiltradas = filtroProvincia === 'Todas' ? vagas : vagas.filter(v => v.provincia === filtroProvincia);
 
   return (
-    <div className="py-10 px-4 lg:px-8 max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-sky-300 bg-sky-950/40 border border-sky-800/40 px-3 py-1 rounded-full">
-          <Globe className="w-3.5 h-3.5" />
-          {t.geoSeo.tag}
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
-          {t.geoSeo.title}
+    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: pageBg, color: textPrimary, padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      
+      {/* HEADER B2C */}
+      <div style={{ maxWidth: '1000px', width: '100%', textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '16px' }}>
+          Vagas de Trabalho no Japão
         </h1>
-        <p className="text-slate-300 text-sm sm:text-base max-w-3xl leading-relaxed">
-          {t.geoSeo.subtitle}
+        <p style={{ fontSize: '1.2rem', color: textSecondary, maxWidth: '600px', margin: '0 auto' }}>
+          Encontre oportunidades nas melhores empreiteiras, com suporte completo para o visto COE e passagens.
         </p>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'all', label: t.geoSeo.provinces.all },
-          { id: 'aichi', label: t.geoSeo.provinces.aichi },
-          { id: 'shizuoka', label: t.geoSeo.provinces.shizuoka },
-          { id: 'mie', label: t.geoSeo.provinces.mie },
-          { id: 'gunma', label: t.geoSeo.provinces.gunma },
-          { id: 'kanagawa', label: t.geoSeo.provinces.kanagawa },
-        ].map(p => (
-          <button
-            key={p.id}
-            onClick={() => setSelectedProvince(p.id)}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-              selectedProvince === p.id 
-                ? 'bg-sky-500 text-slate-950 shadow-lg' 
-                : 'clean-card text-slate-300 hover:text-white'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* FILTROS */}
+      <div style={{ maxWidth: '1000px', width: '100%', display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '12px', flex: 1, minWidth: '250px' }}>
+          <Search size={18} color={textSecondary} />
+          <input 
+            type="text" 
+            placeholder="Buscar por cargo (ex: Autopeças, Solda...)" 
+            style={{ border: 'none', background: 'transparent', outline: 'none', color: textPrimary, width: '100%', fontSize: '15px' }}
+          />
+        </div>
+        
+        <select 
+          value={filtroProvincia}
+          onChange={e => setFiltroProvincia(e.target.value)}
+          style={{ padding: '12px 24px', backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '12px', color: textPrimary, fontSize: '15px', fontWeight: 600, outline: 'none', minWidth: '180px' }}
+        >
+          {provincias.map(p => (
+            <option key={p} value={p}>{p === 'Todas' ? '📍 Todas as Províncias' : p}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVacancies.map(job => (
-          <div key={job.id} className="clean-card p-6 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="badge-jp">{job.provinceName}</span>
-                <span className="text-[11px] text-emerald-400 font-mono bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
-                  Google Jobs
-                </span>
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-white leading-snug">{job.title}</h3>
-                <p className="text-xs text-slate-400 font-mono mt-1">{job.titleJp}</p>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Salário / 𡈽給:</span>
-                  <span className="font-bold text-sky-300">{job.salaryJpy}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">BRL Est.:</span>
-                  <span className="font-semibold text-emerald-400">{job.salaryBrlEst}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Elegibilidade:</span>
-                  <span className="text-slate-200">{job.nikkeiEligible}</span>
-                </div>
-              </div>
-            </div>
-            <a href="/candidato" className="btn-cyan text-xs text-center justify-center py-2.5 w-full no-underline">
-              Candidatar-se via Form Stepper
-              <ArrowRight className="w-4 h-4" />
-            </a>
+      {/* LISTAGEM DE VAGAS */}
+      <div style={{ maxWidth: '1000px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: textSecondary }}>Carregando vagas...</div>
+        ) : vagasFiltradas.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 40px', backgroundColor: cardBg, borderRadius: '16px', border: `1px dashed ${cardBorder}` }}>
+            <h3 style={{ fontSize: '1.2rem', color: textSecondary }}>Nenhuma vaga encontrada no momento.</h3>
           </div>
-        ))}
+        ) : (
+          vagasFiltradas.map(vaga => (
+            <Link 
+              key={vaga.id} 
+              to={`/vagas/${vaga.id}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <div style={{ 
+                backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', padding: '24px',
+                display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: textSecondary, fontSize: '13px', fontWeight: 600 }}>
+                    <Building2 size={16} /> <span>{vaga.organizations?.nome || 'Empreiteira Oficial'}</span>
+                  </div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: textPrimary, marginBottom: '12px' }}>
+                    {vaga.titulo}
+                  </h2>
+                  
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
+                      <MapPin size={14} color={accentIndigo} /> {vaga.cidade}, {vaga.provincia}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
+                      <JapaneseYen size={14} color="#1f7a4d" /> ¥ {vaga.salario_hora}/hora
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
+                      <Clock size={14} /> {vaga.tipo_contrato}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ color: accentIndigo, fontWeight: 700, fontSize: '14px' }}>Ver detalhes</span>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: isDark ? '#1c222c' : '#f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ArrowRight size={18} color={accentIndigo} />
+                  </div>
+                </div>
+
+              </div>
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

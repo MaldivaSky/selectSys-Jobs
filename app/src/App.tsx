@@ -12,9 +12,11 @@ import { CandidateWizard } from './pages/CandidateWizard';
 import { FichaRenderer } from './components/ficha/FichaRenderer';
 import { AuthPortal } from './pages/AuthPortal';
 import { VagasHub } from './pages/VagasHub';
+import { VagaDetalhe } from './pages/VagaDetalhe';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { PlanoAcaoView } from './pages/PlanoAcaoView';
 import { SuperAdmin } from './pages/SuperAdmin';
+import { RegisterTenant } from './pages/RegisterTenant';
 import type { Language } from './translations';
 
 export function App() {
@@ -39,10 +41,12 @@ export function App() {
               {/* Ficha completa: 7 etapas geradas do schema versionado */}
               <Route path="/ficha" element={<FichaRenderer />} />
               <Route path="/vagas" element={<VagasHub lang={lang} />} />
+              <Route path="/vagas/:id" element={<VagaDetalhe lang={lang} />} />
               <Route path="/fujiarte" element={<FujiarteCase lang={lang} />} />
               <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />
               <Route path="/admin" element={<TenantDashboard lang={lang} />} />
               <Route path="/superadmin" element={<SuperAdmin lang={lang} />} />
+              <Route path="/signup/admin" element={<RegisterTenant />} />
             </Routes>
           </PageTransition>
         </main>

@@ -1,115 +1,78 @@
-import { BRAND, BRAND_COLORS as C, BRIDGE_PATH, MARK_GEO as G, MARK_VIEWBOX } from './brand';
+import { BRAND, BRAND_COLORS as C } from './brand';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SELECTSYS JOBS · LOGO
-   Único lugar onde a logo é desenhada. Ninguém redesenha o símbolo à mão.
+   SELECTSYS JOBS · LOGO — 働
+   ---------------------------------------------------------------------------
+   Único lugar onde a marca é desenhada. Arte aprovada pelo CEO; a geometria e
+   o gradiente vêm de app/src/styles/marca.css, cópia literal do arquivo em
+   brand/. Ninguém redesenha o símbolo.
 
-     <BrandMark />                  símbolo
-     <BrandMark tone="light" />     símbolo sobre fundo escuro
-     <BrandMark animated />         símbolo que se desenha (abertura/loading)
-     <BrandLockup />                símbolo + logotipo
+     <BrandMark />                símbolo
+     <BrandMark tone="light" />   sobre fundo escuro (dispensa a caixa)
+     <BrandMark carregando />     a travessia correndo dentro do kanji
+     <BrandLockup />              símbolo + logotipo
 
-   Leitura do símbolo: o círculo é o mundo; a ponte liga os dois lados; o ponto
-   verde é o Brasil (origem) e o vermelho é o Japão (destino).
+   Leitura: 働 é "trabalhar". O gradiente atravessa o glifo do verde Brasil ao
+   vermelho Japão, e o sol 日の丸 marca o destino no canto.
+
+   NÃO confundir com o globo (GloboTravessia.tsx): aquele é a animação de
+   abertura e continua como estava.
    ═════════════════════════════════════════════════════════════════════════ */
 
 type Tone = 'auto' | 'ink' | 'light';
 
-/** O traço acompanha o tema: nunca some sobre fundo escuro. */
-function tracos(tone: Tone) {
-  if (tone === 'light') return { stroke: C.cream, ring: C.ring };
-  if (tone === 'ink') return { stroke: C.ink, ring: C.ink };
-  return { stroke: 'var(--ssj-text)', ring: 'var(--ssj-text)' };
-}
-
 interface MarkProps {
-  /** Lado do símbolo em px. Mínimo legível: 20. */
+  /** Lado do selo em px. Abaixo de 20 o kanji vira mancha. */
   size?: number;
-  /** `auto` segue o tema (padrão). `light` força fundo escuro; `ink`, claro. */
+  /** `light` sobre fundo escuro dispensa a caixa; `auto` e `ink` mantêm. */
   tone?: Tone;
-  /** Desenha o traço e faz o ponto atravessar a ponte. */
-  animated?: boolean;
-  /** Some com os pontos de origem/destino (uso em marca-d'água). */
-  bare?: boolean;
+  /** Gradiente em movimento — use só em carregamento de dados. */
+  carregando?: boolean;
+  /** Entrada da marca com a batida do selo. */
+  animado?: boolean;
   className?: string;
 }
 
-export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = false, className }: MarkProps) {
-  const { stroke, ring } = tracos(tone);
+export function BrandMark({
+  size = 34,
+  tone = 'auto',
+  carregando = false,
+  animado = false,
+  className,
+}: MarkProps) {
+  const semCaixa = tone === 'light';
+  const sol = Math.max(6, Math.round(size * 0.235));
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={MARK_VIEWBOX}
-      fill="none"
-      className={className}
+    <span
+      className={`kseal${semCaixa ? ' kseal--sem-caixa' : ''}${className ? ' ' + className : ''}`}
       role="img"
       aria-label={BRAND.name}
-      style={{ flex: 'none' }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.max(6, Math.round(size * 0.28)),
+        animation: animado ? 'ssj-sealIn .8s cubic-bezier(.3,1.25,.5,1) both' : undefined,
+      }}
     >
-      <circle
-        cx={G.anel.cx}
-        cy={G.anel.cy}
-        r={G.anel.r}
-        stroke={ring}
-        strokeWidth={G.anel.w}
-        pathLength={1}
-        strokeDasharray={animated ? 1 : undefined}
-        style={animated ? { strokeDashoffset: 1, animation: 'ssj-draw 1s .1s ease forwards' } : undefined}
+      <span
+        className={`jp kj${carregando ? ' ssj-carregando__kanji' : ''}`}
+        style={{ fontSize: Math.round(size * 0.63), lineHeight: 1 }}
+        aria-hidden="true"
+      >
+        働
+      </span>
+      <span
+        className={`sun${carregando ? ' ssj-carregando__sol' : ''}`}
+        aria-hidden="true"
+        style={{
+          top: Math.round(size * 0.16),
+          right: Math.round(size * 0.16),
+          width: sol,
+          height: sol,
+        }}
       />
-
-      {animated && (
-        <line
-          x1={G.origem.cx}
-          y1={G.origem.cy}
-          x2={G.destino.cx}
-          y2={G.destino.cy}
-          stroke={stroke}
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          pathLength={1}
-          strokeDasharray="1"
-          style={{ strokeDashoffset: 1, animation: 'ssj-draw .7s .35s ease forwards' }}
-        />
-      )}
-
-      <path
-        d={BRIDGE_PATH}
-        stroke={stroke}
-        strokeWidth={G.ponte.w}
-        strokeLinecap="round"
-        pathLength={1}
-        strokeDasharray={animated ? 1 : undefined}
-        style={animated ? { strokeDashoffset: 1, animation: 'ssj-draw 1s .3s ease forwards' } : undefined}
-      />
-
-      {!bare && (
-        <>
-          <circle
-            cx={G.origem.cx}
-            cy={G.origem.cy}
-            r={G.origem.r}
-            fill={C.verde}
-            style={animated ? { opacity: 0, animation: 'ssj-pop .4s .35s ease forwards' } : undefined}
-          />
-          <circle
-            cx={G.destino.cx}
-            cy={G.destino.cy}
-            r={G.destino.r}
-            fill={C.shu}
-            style={
-              animated
-                ? { opacity: 0, transformOrigin: `${G.destino.cx}px ${G.destino.cy}px`, animation: 'ssj-pop .5s 1.25s cubic-bezier(.3,1.4,.5,1) forwards' }
-                : undefined
-            }
-          />
-        </>
-      )}
-
-      {/* O ponto que faz a travessia: verde → âmbar → vermelho. */}
-      {animated && <circle className="ssj-bridge-dot" r={G.origem.r} fill={C.verde} />}
-    </svg>
+    </span>
   );
 }
 
@@ -121,12 +84,12 @@ interface LockupProps {
   className?: string;
 }
 
-/** Símbolo + logotipo, na proporção correta. Use no cabeçalho e no rodapé. */
-export function BrandLockup({ size = 32, tone = 'auto', withTagline = false, className }: LockupProps) {
+/** Símbolo + logotipo, na proporção do lockup oficial. */
+export function BrandLockup({ size = 40, tone = 'auto', withTagline = false, className }: LockupProps) {
   const fg = tone === 'light' ? C.cream : 'var(--ssj-text)';
 
   return (
-    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.36 }}>
+    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.34 }}>
       <BrandMark size={size} tone={tone} />
       <span style={{ display: 'flex', flexDirection: 'column', gap: 2, lineHeight: 1 }}>
         <span
@@ -140,13 +103,14 @@ export function BrandLockup({ size = 32, tone = 'auto', withTagline = false, cla
           }}
         >
           {BRAND.wordmark.strong}
-          <span style={{ color: tone === 'light' ? C.shu : 'var(--ssj-shu)' }}> {BRAND.wordmark.light}</span>
+          {/* O vermelho do logotipo é o da bandeira, igual ao sol do selo. */}
+          <span style={{ color: '#c8102e' }}> {BRAND.wordmark.light}</span>
         </span>
         {withTagline && (
           <span
             style={{
               fontFamily: 'var(--ssj-font-mono)',
-              fontSize: Math.max(12, size * 0.32),
+              fontSize: Math.max(12, size * 0.28),
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
               color: tone === 'light' ? C.ring : 'var(--ssj-muted)',
