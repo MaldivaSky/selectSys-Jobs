@@ -64,24 +64,21 @@
   --ssj-font-sans: 'IBM Plex Sans', 'IBM Plex Sans JP', system-ui, -apple-system, sans-serif;
   --ssj-font-mono: 'IBM Plex Mono', 'IBM Plex Sans JP', ui-monospace, monospace;
 
-  /* Escala fluida: o mesmo componente serve mobile e desktop sem media query.
-     PISO DE ACESSIBILIDADE: nada de texto abaixo de 12px no produto. Corpo em
-     16px (padrão do navegador) — o público lê no celular, muitas vezes com a
-     vista cansada depois do turno. Legibilidade vence densidade, sempre. */
-  --ssj-t-display: clamp(30px, 6vw, 48px);
-  --ssj-t-h1: clamp(26px, 4.6vw, 38px);
-  --ssj-t-h2: clamp(21px, 3.2vw, 28px);
-  --ssj-t-h3: clamp(17px, 2.2vw, 21px);
-  --ssj-t-body: 16px;      /* corpo                                          */
-  --ssj-t-sm: 14px;        /* apoio, botões, navegação                       */
-  --ssj-t-xs: 12.5px;      /* metadado — PISO absoluto                       */
-  --ssj-t-label: 12px;     /* rótulo mono em caixa alta                      */
+  /* Escala de legibilidade aumentada (mínimo de 13px/14px para apoio) */
+  --ssj-t-display: clamp(32px, 6vw, 52px);
+  --ssj-t-h1: clamp(28px, 4.6vw, 42px);
+  --ssj-t-h2: clamp(22px, 3.2vw, 30px);
+  --ssj-t-h3: clamp(18px, 2.2vw, 22px);
+  --ssj-t-body: 17px;      /* corpo ultra-legível                               */
+  --ssj-t-sm: 15px;        /* apoio, botões, navegação                           */
+  --ssj-t-xs: 13.5px;      /* metadado — PISO absoluto                           */
+  --ssj-t-label: 13px;     /* rótulo mono                                       */
 
-  --ssj-lh-body: 1.65;     /* respiro para leitura longa                     */
+  --ssj-lh-body: 1.65;     /* respiro para leitura longa                         */
   --ssj-lh-tight: 1.25;
 
-  --ssj-track-display: -0.022em;  /* títulos respiram menos                  */
-  --ssj-track-label: 0.14em;      /* rótulos mono respiram mais              */
+  --ssj-track-display: -0.02em;
+  --ssj-track-label: 0.1em;
 
   /* ── Espaçamento (escala de 4) ───────────────────────────────────────── */
   --ssj-s1: 4px;
