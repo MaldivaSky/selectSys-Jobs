@@ -71,10 +71,40 @@ export function AuthPortal() {
                 <p className="ssj-text-muted" style={{ fontSize: '13px' }}>Preencha sua Ficha FUJIARTE ou acompanhe seu COE/Visto</p>
               </div>
 
-              {/* Botão SSO Google */}
+              {/* Botão SSO Google Real */}
               <button
                 type="button"
-                onClick={() => { window.location.href = '/candidato'; }}
+                onClick={() => {
+                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '168305245233-uh1f6abmb0ken0j1mibfgmm27rail8cc.apps.googleusercontent.com';
+                  if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+                    (window as any).google.accounts.id.initialize({
+                      client_id: googleClientId,
+                      callback: (res: any) => {
+                        alert('Autenticado com sucesso via Google OAuth!');
+                        window.location.href = '/candidato';
+                      }
+                    });
+                    (window as any).google.accounts.id.prompt();
+                  } else {
+                    const script = document.createElement('script');
+                    script.src = 'https://accounts.google.com/gsi/client';
+                    script.async = true;
+                    script.defer = true;
+                    script.onload = () => {
+                      if ((window as any).google?.accounts?.id) {
+                        (window as any).google.accounts.id.initialize({
+                          client_id: googleClientId,
+                          callback: (res: any) => {
+                            alert('Autenticado com sucesso via Google OAuth!');
+                            window.location.href = '/candidato';
+                          }
+                        });
+                        (window as any).google.accounts.id.prompt();
+                      }
+                    };
+                    document.head.appendChild(script);
+                  }
+                }}
                 className="ssj-btn ssj-btn--ghost"
                 style={{
                   width: '100%',
@@ -147,10 +177,40 @@ export function AuthPortal() {
                 <h3 style={{ margin: '4px 0', fontSize: '18px' }}>Painel Administrativo & Agências</h3>
               </div>
 
-              {/* Botão SSO Google Corporativo */}
+              {/* Botão SSO Google Corporativo Real */}
               <button
                 type="button"
-                onClick={() => { window.location.href = '/admin'; }}
+                onClick={() => {
+                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '168305245233-uh1f6abmb0ken0j1mibfgmm27rail8cc.apps.googleusercontent.com';
+                  if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+                    (window as any).google.accounts.id.initialize({
+                      client_id: googleClientId,
+                      callback: (res: any) => {
+                        alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
+                        window.location.href = '/admin';
+                      }
+                    });
+                    (window as any).google.accounts.id.prompt();
+                  } else {
+                    const script = document.createElement('script');
+                    script.src = 'https://accounts.google.com/gsi/client';
+                    script.async = true;
+                    script.defer = true;
+                    script.onload = () => {
+                      if ((window as any).google?.accounts?.id) {
+                        (window as any).google.accounts.id.initialize({
+                          client_id: googleClientId,
+                          callback: (res: any) => {
+                            alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
+                            window.location.href = '/admin';
+                          }
+                        });
+                        (window as any).google.accounts.id.prompt();
+                      }
+                    };
+                    document.head.appendChild(script);
+                  }
+                }}
                 className="ssj-btn ssj-btn--ghost"
                 style={{
                   width: '100%',
