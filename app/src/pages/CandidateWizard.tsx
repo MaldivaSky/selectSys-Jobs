@@ -48,32 +48,28 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   const [aiFeedback, setAiFeedback] = useState('');
   
   // Tenant Context
-  const [tenantInfo, setTenantInfo] = useState<{ id: string, nome: string, logo_url: string, cor_primaria: string } | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<{ id: string; nome: string; cor_primaria: string } | null>(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
 
   useEffect(() => {
     async function fetchTenant() {
-      if (!tenantSlug) {
-        setLoadingTenant(false);
-        return;
-      }
-      
-      if (!supabase) {
+      if (!tenantSlug || !supabase) {
         setLoadingTenant(false);
         return;
       }
 
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, nome, logo_url, cor_primaria')
+        .select('id, nome, features')
         .eq('slug', tenantSlug)
         .single();
-      
+
       if (error || !data) {
         alert('Agência não encontrada ou link inválido.');
         navigate('/login');
       } else {
-        setTenantInfo(data);
+        const cor = (data.features as Record<string, string>)?.cor_primaria ?? '#294b86';
+        setTenantInfo({ id: data.id, nome: data.nome, cor_primaria: cor });
         setFormData(prev => ({ ...prev, agenciaCodigo: data.id }));
       }
       setLoadingTenant(false);
@@ -331,8 +327,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {tenantInfo?.logo_url ? (
-                  <img src={tenantInfo.logo_url} alt={tenantInfo.nome} style={{ height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
+                {false ? (
+                  <img src="" alt={tenantInfo?.nome} style={{ height: '48px', borderRadius: '8px', objectFit: 'contain' }} />
                 ) : (
                   <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Building2 size={24} color="#fff" />
