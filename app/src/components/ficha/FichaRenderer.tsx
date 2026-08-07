@@ -11,6 +11,8 @@ import {
   type Texto,
 } from '@selectsys/core';
 import { Hanko } from '../../brand/Hanko';
+import { enviarCandidatura, lerLocal, limparLocal, salvarLocal } from '../../dados/candidaturas';
+import { temBanco } from '../../dados/supabase';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RENDERER DIRIGIDO POR SCHEMA — o coração do produto (docs/02 §4)
@@ -29,8 +31,6 @@ import { Hanko } from '../../brand/Hanko';
 
 type Valores = Record<string, unknown>;
 type Linhas = Record<string, Valores[]>;
-
-const CHAVE_RASCUNHO = 'ssj:ficha:rascunho';
 
 const txt = (t: Texto) => t['pt-BR'];
 
@@ -329,21 +329,18 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
   const [salvo, setSalvo] = useState(false);
   const [cepInfo, setCepInfo] = useState('');
   const [enviado, setEnviado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [resultado, setResultado] = useState<{ erro?: string; demo?: boolean } | null>(null);
   const primeiroRender = useRef(true);
 
   // Retomada: fechar o navegador e voltar não pode custar 130 campos (A2).
   useEffect(() => {
-    try {
-      const bruto = localStorage.getItem(CHAVE_RASCUNHO);
-      if (!bruto) return;
-      const r = JSON.parse(bruto);
-      setValores(r.valores ?? {});
-      setLinhas(r.linhas ?? {});
-      setConsentimentos(r.consentimentos ?? {});
-      setEtapa(r.etapa ?? 0);
-    } catch {
-      /* rascunho corrompido: começa limpo, sem travar o candidato */
-    }
+    const r = lerLocal();
+    if (!r) return;
+    setValores(r.valores ?? {});
+    setLinhas(r.linhas ?? {});
+    setConsentimentos(r.consentimentos ?? {});
+    setEtapa(r.etapa ?? 0);
   }, []);
 
   // Autosave a cada 3s, com indicador visível (A2).
@@ -353,7 +350,7 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
       return;
     }
     const t = setTimeout(() => {
-      localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ valores, linhas, consentimentos, etapa }));
+      salvarLocal({ valores, linhas, consentimentos, etapa });
       setSalvo(true);
       setTimeout(() => setSalvo(false), 1600);
     }, 3000);
@@ -434,9 +431,27 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
     if (etapa < etapas.length - 1) {
       setEtapa(etapa + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setEnviado(true);
+      return;
     }
+    void enviar();
+  };
+
+  /* O envio é uma transação só no banco: candidato, histórico, consentimentos,
+     candidatura e triagem entram juntos ou não entram. Reenviar atualiza — a
+     chave (organization_id, cpf) impede candidato duplicado. */
+  const enviar = async () => {
+    setEnviando(true);
+    setResultado(null);
+    const agencia = new URLSearchParams(window.location.search).get('c');
+    const r = await enviarCandidatura({ valores, linhas, consentimentos, etapa }, { agenciaCodigo: agencia });
+    setEnviando(false);
+    if (!r.ok) {
+      setResultado({ erro: r.motivo ?? 'Não foi possível enviar agora.' });
+      return;
+    }
+    limparLocal();
+    setResultado({ demo: r.demonstracao });
+    setEnviado(true);
   };
 
   const totalCampos = useMemo(
@@ -465,6 +480,11 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
         <p className="ssj-mono ssj-muted" style={{ marginTop: 18 }}>
           {preenchidos} de {totalCampos} campos preenchidos
         </p>
+        {resultado?.demo && (
+          <p className="ssj-pill ssj-pill--warn" style={{ marginTop: 14 }}>
+            modo demonstração — sem banco configurado, nada foi gravado
+          </p>
+        )}
       </div>
     );
   }
@@ -493,6 +513,12 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
           ✓ Salvo
         </span>
       </div>
+
+      {!temBanco && (
+        <div className="ssj-pill ssj-pill--warn" style={{ marginTop: 14 }}>
+          modo demonstração — banco não configurado, o envio não será gravado
+        </div>
+      )}
 
       <div className="ssj-track" style={{ marginTop: 18 }}>
         <i style={{ maxWidth: `${progresso}%`, animation: 'none', transform: 'scaleX(1)' }} />
@@ -599,6 +625,16 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
         </div>
       )}
 
+      {resultado?.erro && (
+        <div className="ssj-card ssj-card--edge ssj-card--seal" style={{ marginTop: 20 }} role="alert">
+          <strong>Não foi possível enviar.</strong>
+          <p style={{ marginTop: 6 }}>{resultado.erro}</p>
+          <p className="ssj-mono ssj-muted" style={{ fontSize: 13, marginTop: 8 }}>
+            Seu preenchimento continua salvo neste aparelho — nada foi perdido.
+          </p>
+        </div>
+      )}
+
       {/* Navegação */}
       <div
         className="ssj-row ssj-spread"
@@ -620,8 +656,8 @@ export function FichaRenderer({ definicao = FICHA_FUJIARTE_2024_06 }: { definica
           {preenchidos} de {totalCampos} campos
         </span>
 
-        <button type="button" className="ssj-btn ssj-btn--pri" onClick={avancar}>
-          {etapa === etapas.length - 1 ? 'Enviar candidatura' : 'Continuar'}
+        <button type="button" className="ssj-btn ssj-btn--pri" onClick={avancar} disabled={enviando}>
+          {enviando ? 'Enviando…' : etapa === etapas.length - 1 ? 'Enviar candidatura' : 'Continuar'}
           <ChevronRight size={16} />
         </button>
       </div>
