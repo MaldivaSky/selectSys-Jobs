@@ -28,7 +28,7 @@ export function FujiarteCase({ lang }: { lang: Language }) {
       minHeight: '100vh',
       backgroundColor: '#f4f5f2',
       color: '#14181f',
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: 'var(--ssj-font-sans)',
       padding: '48px 32px',
       display: 'flex',
       flexDirection: 'column',
@@ -215,7 +215,7 @@ export function FujiarteCase({ lang }: { lang: Language }) {
         </div>
 
         {/* Excel Table Mockup */}
-        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #e0e2dc', backgroundColor: '#ffffff', fontFamily: 'monospace' }}>
+        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #e0e2dc', backgroundColor: '#ffffff', fontFamily: 'var(--ssj-font-mono)' }}>
           <div style={{ padding: '12px 20px', backgroundColor: '#294b86', color: '#ffffff', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
             【 応募者カルテ 】 FUJIARTE Co., Ltd. — FICHA CADASTRAL DE CANDIDATO
           </div>
@@ -299,7 +299,7 @@ export function FujiarteCase({ lang }: { lang: Language }) {
         </div>
 
         {showAuditLog ? (
-          <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#f7f8f5', border: '1px solid #e0e2dc', display: 'flex', flexDirection: 'column', gap: '12px', fontFamily: 'monospace', fontSize: '13px' }}>
+          <div style={{ padding: '24px', borderRadius: '16px', backgroundColor: '#f7f8f5', border: '1px solid #e0e2dc', display: 'flex', flexDirection: 'column', gap: '12px', fontFamily: 'var(--ssj-font-mono)', fontSize: '13px' }}>
             <div style={{ color: '#1f7a4d', fontWeight: 700 }}>
               ✓ AUDIT LOG EMITIDO EM TEMPO REAL:
             </div>

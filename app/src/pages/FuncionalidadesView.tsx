@@ -98,7 +98,7 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
       minHeight: '100vh',
       backgroundColor: '#f7f8f5',
       color: '#14181f',
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: 'var(--ssj-font-sans)',
       padding: '48px 32px',
       display: 'flex',
       flexDirection: 'column',

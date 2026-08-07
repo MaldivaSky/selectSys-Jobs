@@ -24,7 +24,7 @@ export function PlanoAcaoView({ lang }: { lang: Language }) {
       minHeight: '100vh',
       backgroundColor: '#f4f5f2',
       color: '#14181f',
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: 'var(--ssj-font-sans)',
       padding: '48px 32px',
       display: 'flex',
       flexDirection: 'column',

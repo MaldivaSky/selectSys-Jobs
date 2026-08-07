@@ -69,7 +69,7 @@ export function HomePage({ lang: _lang }: { lang: Language }) {
       minHeight: '100vh',
       backgroundColor: pageBg,
       color: textPrimary,
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: 'var(--ssj-font-sans)',
       padding: 'clamp(28px,5vw,56px) 0',
       display: 'flex',
       flexDirection: 'column',

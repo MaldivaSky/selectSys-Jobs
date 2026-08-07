@@ -84,7 +84,7 @@ export function ClaudeFUJIARTEWalkthrough() {
       minHeight: 'auto',
       backgroundColor: isDark ? '#0d1016' : '#f4f5f2',
       color: textPrimary,
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+      fontFamily: 'var(--ssj-font-sans)',
       display: 'flex',
       flexDirection: 'column'
     }}>
@@ -212,7 +212,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)' }}>
                   <span>9:41</span>
                   <span>selectsys.com.br/c/NKT</span>
                   <span>100%</span>
@@ -226,7 +226,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                   <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: subCardBg, border: `1px solid ${cardBorder}`, textAlign: 'left' }}>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: textSecondary, textTransform: 'uppercase' }}>Você foi indicado por</div>
                     <div style={{ fontSize: '1rem', fontWeight: 700, color: textPrimary, marginTop: '4px' }}>Agência Nikkei Tour SP</div>
-                    <div style={{ fontSize: '11px', color: '#294b86', fontFamily: 'monospace', marginTop: '2px' }}>tenant_id: NKT</div>
+                    <div style={{ fontSize: '11px', color: '#294b86', fontFamily: 'var(--ssj-font-mono)', marginTop: '2px' }}>tenant_id: NKT</div>
                   </div>
 
                   <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -268,7 +268,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)' }}>
                   <span>9:41</span>
                   <span>selectsys.com.br</span>
                   <span>Passo 1/7</span>
@@ -276,7 +276,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${cardBorder}`, paddingBottom: '12px' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: textPrimary }}>Identificação · 本人確認</span>
-                    <span style={{ fontSize: '10px', color: '#1f7a4d', fontWeight: 700, fontFamily: 'monospace' }}>● Salvo</span>
+                    <span style={{ fontSize: '10px', color: '#1f7a4d', fontWeight: 700, fontFamily: 'var(--ssj-font-mono)' }}>● Salvo</span>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -344,7 +344,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)' }}>
                   <span>9:41</span>
                   <span>selectsys.com.br</span>
                   <span>Passo 3/7</span>
@@ -400,7 +400,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>
+                <div style={{ padding: '12px 20px', backgroundColor: subCardBg, borderBottom: `1px solid ${cardBorder}`, display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)' }}>
                   <span>9:41</span>
                   <span>selectsys.com.br</span>
                   <span>Passo 6/7</span>
@@ -440,7 +440,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                     </div>
                     <div>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: textPrimary }}>{candidateName}</div>
-                      <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace' }}>06/08/2026 14:41</div>
+                      <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)' }}>06/08/2026 14:41</div>
                     </div>
                   </div>
 
@@ -518,7 +518,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                       {filteredCandidates.map((c, i) => (
                         <tr key={i} style={{ borderBottom: `1px solid ${cardBorder}` }}>
                           <td style={{ padding: '14px 16px', fontWeight: 700, color: textPrimary }}>{c.n}</td>
-                          <td style={{ padding: '14px 16px', fontFamily: 'monospace' }}>{c.i}</td>
+                          <td style={{ padding: '14px 16px', fontFamily: 'var(--ssj-font-mono)' }}>{c.i}</td>
                           <td style={{ padding: '14px 16px' }}>{c.c}/{c.uf}</td>
                           <td style={{ padding: '14px 16px' }}>{c.jp}</td>
                           <td style={{ padding: '14px 16px' }}>
@@ -551,7 +551,7 @@ export function ClaudeFUJIARTEWalkthrough() {
               }}>
                 <div style={{ borderBottom: `1px solid ${cardBorder}`, paddingBottom: '16px' }}>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: textPrimary }}>{candidateName}</h2>
-                  <div style={{ fontSize: '12px', color: textSecondary, fontFamily: 'monospace', marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)', marginTop: '4px' }}>
                     #1042 · Sansei · {currentAge} anos · Guarulhos/SP · Agência Nikkei Tour
                   </div>
                 </div>
@@ -559,7 +559,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ fontSize: '14px', fontWeight: 700, color: '#c4452b' }}>Dados de Saúde Criptografados (LGPD Art. 11)</div>
                   {healthDisclosed ? (
-                    <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: subCardBg, border: `1px solid ${cardBorder}`, fontFamily: 'monospace', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: subCardBg, border: `1px solid ${cardBorder}`, fontFamily: 'var(--ssj-font-mono)', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <div style={{ color: '#1f7a4d', fontWeight: 700 }}>✓ AUDIT LOG EMITIDO: yamada@fujiarte.co.jp (06/08/2026)</div>
                       <div style={{ color: textPrimary, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', paddingTop: '8px' }}>
                         <div>Acidente / Operação: Não</div>
@@ -604,7 +604,7 @@ export function ClaudeFUJIARTEWalkthrough() {
                   </button>
                 </div>
 
-                <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: subCardBg, border: `1px solid ${cardBorder}`, fontFamily: 'monospace' }}>
+                <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: subCardBg, border: `1px solid ${cardBorder}`, fontFamily: 'var(--ssj-font-mono)' }}>
                   <div style={{ color: '#294b86', fontWeight: 700, fontSize: '14px', textAlign: 'center', marginBottom: '16px' }}>
                     【 応募者カルテ 】 FUJIARTE Co., Ltd. — FICHA CADASTRAL
                   </div>
@@ -650,7 +650,7 @@ export function ClaudeFUJIARTEWalkthrough() {
               <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: textPrimary }}>
                 {steps[activeStep].title}
               </h3>
-              <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'monospace', marginTop: '2px' }}>
+              <div style={{ fontSize: '11px', color: textSecondary, fontFamily: 'var(--ssj-font-mono)', marginTop: '2px' }}>
                 {steps[activeStep].ja}
               </div>
             </div>

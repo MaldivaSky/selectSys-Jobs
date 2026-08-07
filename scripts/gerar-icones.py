@@ -62,36 +62,44 @@ def _ponte(d: ImageDraw.ImageDraw, x0, y0, x1, y1, cx, cy, largura, cor):
         d.ellipse([px - r, py - r, px + r, py + r], fill=cor)
 
 
-def marca(lado: int, fundo=INK, raio_cantos: float = 0.22, com_anel=True) -> Image.Image:
-    """Desenha o símbolo num quadrado de `lado` px."""
+def marca(lado: int, fundo=INK, raio_cantos: float = 0.0, com_anel=True,
+          margem: float = 0.0) -> Image.Image:
+    """Desenha o símbolo oficial num quadrado de `lado` px."""
     S = lado * SUPER
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
 
     if fundo is not None:
-        r = int(S * raio_cantos)
-        d.rounded_rectangle([0, 0, S - 1, S - 1], radius=r, fill=fundo)
+        if raio_cantos > 0:
+            d.rounded_rectangle([0, 0, S - 1, S - 1], radius=int(S * raio_cantos), fill=fundo)
+        else:
+            d.rectangle([0, 0, S - 1, S - 1], fill=fundo)
 
-    # Proporções tiradas do favicon.svg (viewBox 120)
+    # viewBox 120 da marca, encaixado no quadro com margem uniforme.
+    util = S * (1 - 2 * margem)
+    off = S * margem
+
     def p(v):
-        return v / 120 * S
+        return off + v / 120 * util
 
-    # Proporção pensada para 16px: a ponte precisa dominar o quadro, senão
-    # vira um borrão cinza na aba do navegador. O anel é suporte, não o assunto.
+    def esp(v):          # espessura de traco na mesma escala
+        return max(1.0, v / 120 * util)
+
+    # GEOMETRIA OFICIAL — copia literal do arquivo da marca:
+    #   prototipo/SelectSys Jobs App (standalone).html
+    #   circle cx=60 cy=58 r=30    stroke #3a4560  w=2.4
+    #   path   M42 70 Q60 38 78 70 stroke #f4f2ec  w=4
+    #   circle cx=42 cy=70 r=5     #1f9d57  (Brasil)
+    #   circle cx=78 cy=70 r=5.5   #c4452b  (Japao)
+    # Proporcao, cor e espessura NAO se ajustam. A marca e a marca.
     if com_anel:
-        d.ellipse([p(11), p(11), p(109), p(109)], outline=ANEL, width=int(p(3.0)))
+        d.ellipse([p(60 - 30), p(58 - 30), p(60 + 30), p(58 + 30)],
+                  outline=ANEL, width=max(1, int(round(esp(2.4)))))
 
-    # Tabuleiro da ponte
-    d.line([(p(30), p(74)), (p(90), p(74))], fill=CREME, width=int(p(4.6)))
-    for x in (p(30), p(90)):
-        d.ellipse([x - p(2.3), p(74) - p(2.3), x + p(2.3), p(74) + p(2.3)], fill=CREME)
+    _ponte(d, p(42), p(70), p(78), p(70), p(60), p(38), esp(4), CREME)
 
-    # Arco
-    _ponte(d, p(33), p(74), p(87), p(74), p(60), p(21), p(11), CREME)
-
-    # Origem (Brasil) e destino (Japão)
-    d.ellipse([p(33) - p(10), p(74) - p(10), p(33) + p(10), p(74) + p(10)], fill=VERDE)
-    d.ellipse([p(87) - p(10.8), p(74) - p(10.8), p(87) + p(10.8), p(74) + p(10.8)], fill=SHU)
+    d.ellipse([p(42 - 5), p(70 - 5), p(42 + 5), p(70 + 5)], fill=VERDE)
+    d.ellipse([p(78 - 5.5), p(70 - 5.5), p(78 + 5.5), p(70 + 5.5)], fill=SHU)
 
     return img.resize((lado, lado), Image.LANCZOS)
 
