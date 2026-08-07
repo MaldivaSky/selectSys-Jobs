@@ -8,6 +8,7 @@ export function TenantDashboard({ lang }: { lang: Language }) {
   const { escuro: isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'vagas' | 'candidatos' | 'configuracoes'>('vagas');
   const [vagas, setVagas] = useState<any[]>([]);
+  const [candidaturas, setCandidaturas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [novaVaga, setNovaVaga] = useState({
@@ -40,6 +41,7 @@ export function TenantDashboard({ lang }: { lang: Language }) {
     const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
     
     if (orgData) {
+      // Busca vagas
       const { data: vagasData } = await supabase
         .from('jobs')
         .select('*')
@@ -47,6 +49,18 @@ export function TenantDashboard({ lang }: { lang: Language }) {
         .order('created_at', { ascending: false });
       
       if (vagasData) setVagas(vagasData);
+
+      // Busca candidaturas reais para o Kanban
+      const { data: candidaturasData } = await supabase
+        .from('applications')
+        .select(`
+          id, status, updated_at, 
+          candidates (nome_completo, telefone, cidade, estado),
+          jobs (titulo)
+        `)
+        .eq('organization_id', orgData.id);
+        
+      if (candidaturasData) setCandidaturas(candidaturasData);
     }
     setLoading(false);
   }
@@ -155,9 +169,78 @@ export function TenantDashboard({ lang }: { lang: Language }) {
         )}
 
         {activeTab === 'candidatos' && (
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Funil de Candidatos</h1>
-            <p style={{ color: textSecondary, marginTop: '8px' }}>O Kanban de Triagem aparecerá aqui conectando os currículos recebidos pelo DeepSeek.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Funil de Candidatos</h1>
+              <p style={{ color: textSecondary, marginTop: '4px' }}>Gerencie os candidatos dekasseguis através das etapas do COE e Visto.</p>
+            </div>
+
+            {loading ? (
+              <div>Carregando Kanban...</div>
+            ) : (
+              <div style={{ 
+                display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '16px', flex: 1, alignItems: 'flex-start'
+              }}>
+                {[
+                  { id: 'recebida', label: 'Triagem / Recebida' },
+                  { id: 'verificacao_documentos', label: 'Documentos Pendentes' },
+                  { id: 'aguardando_entrevista', label: 'Entrevista' },
+                  { id: 'coe_andamento', label: 'COE em Andamento' },
+                  { id: 'visto_andamento', label: 'Emissão de Visto' },
+                  { id: 'aprovado_oferta', label: 'Pronto para Embarque' }
+                ].map(coluna => {
+                  const cards = candidaturas.filter(c => c.status === coluna.id);
+                  return (
+                    <div key={coluna.id} style={{ 
+                      backgroundColor: isDark ? '#1a212d' : '#e4e6e9', 
+                      minWidth: '280px', borderRadius: '12px', padding: '16px',
+                      display: 'flex', flexDirection: 'column', gap: '12px',
+                      maxHeight: '100%', overflowY: 'auto'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', color: textSecondary }}>{coluna.label}</h3>
+                        <span style={{ fontSize: '12px', fontWeight: 700, backgroundColor: cardBg, padding: '2px 8px', borderRadius: '12px' }}>{cards.length}</span>
+                      </div>
+
+                      {cards.map(card => (
+                        <div key={card.id} style={{ 
+                          backgroundColor: cardBg, padding: '16px', borderRadius: '8px', 
+                          border: `1px solid ${cardBorder}`, boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          cursor: 'grab'
+                        }}>
+                          <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
+                            {card.candidates?.nome_completo || 'Sem Nome'}
+                          </div>
+                          {card.jobs?.titulo && (
+                            <div style={{ fontSize: '12px', color: accentPri, fontWeight: 600, marginBottom: '8px' }}>
+                              Vaga: {card.jobs.titulo}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '12px', color: textSecondary, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span>📞 {card.candidates?.telefone || '-'}</span>
+                            <span>📍 {card.candidates?.cidade} - {card.candidates?.estado}</span>
+                          </div>
+                          
+                          {/* SLA Simulado (vermelho se não foi atualizado há > 15 dias) */}
+                          {(() => {
+                            const dias = Math.floor((new Date().getTime() - new Date(card.updated_at).getTime()) / (1000 * 3600 * 24));
+                            if (dias > 15) {
+                              return <div style={{ marginTop: '12px', fontSize: '11px', color: '#c4452b', fontWeight: 700, display: 'inline-block', backgroundColor: 'rgba(196,69,43,0.1)', padding: '4px 8px', borderRadius: '4px' }}>⚠️ SLA Atrasado ({dias} dias)</div>;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      ))}
+                      {cards.length === 0 && (
+                        <div style={{ padding: '20px', textAlign: 'center', color: textSecondary, fontSize: '13px', border: `2px dashed ${cardBorder}`, borderRadius: '8px' }}>
+                          Vazio
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
