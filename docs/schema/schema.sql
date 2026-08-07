@@ -8,12 +8,23 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 
--- Contexto de tenant/usuário, definido pela aplicação a cada transação:
---   SET LOCAL app.current_org  = '<uuid>';
---   SET LOCAL app.current_user = '<uuid>';
---   SET LOCAL app.current_role = 'recrutador';
+-- Contexto de tenant/usuário. Dois caminhos, nesta ordem:
+--   1. Worker server-side define o GUC por transação:
+--        SET LOCAL app.current_org  = '<uuid>';
+--        SET LOCAL app.current_user = '<uuid>';
+--   2. Cliente no navegador (supabase-js) NÃO define GUC nenhum — cai para o
+--      vínculo em memberships do usuário autenticado. Sem esse fallback toda
+--      política tenant_isolation vira falsa para o app e nada é lido/gravado.
+--   Sem sessão, auth.uid() é NULL e a política continua negando o anon key.
 CREATE OR REPLACE FUNCTION app_current_org() RETURNS uuid
-  LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('app.current_org', true), '')::uuid $$;
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_catalog AS $$
+    SELECT COALESCE(
+      nullif(current_setting('app.current_org', true), '')::uuid,
+      (SELECT m.organization_id FROM public.memberships m
+        WHERE m.user_id = auth.uid() AND m.ativo
+        ORDER BY m.created_at LIMIT 1)
+    )
+  $$;
 
 CREATE OR REPLACE FUNCTION app_current_user() RETURNS uuid
   LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('app.current_user', true), '')::uuid $$;
@@ -44,7 +55,8 @@ CREATE TYPE application_status AS ENUM (
 CREATE TYPE document_status  AS ENUM ('nao_solicitado','solicitado','enviado','conferido','rejeitado');
 CREATE TYPE screening_outcome AS ENUM ('aprovar','reprovar','revisao_manual','encerrar_fluxo');
 CREATE TYPE geracao_nikkei   AS ENUM ('issei','nissei','sansei','yonsei','nao_descendente');
-CREATE TYPE setor_fabril     AS ENUM ('eletronica','autopecas','alimenticio','outros');
+-- setor_fabril foi aposentado: setor da vaga virou taxonomia do tenant
+-- (organizations.setores), como departamento/categoria em ATS de mercado.
 CREATE TYPE turno_trabalho   AS ENUM ('diurno','noturno','alternado');
 
 -- =============================================================================
@@ -57,8 +69,12 @@ CREATE TABLE organizations (
   nome         text NOT NULL,
   nome_ja      text,
   logo_url     text,
-  cor_primaria text DEFAULT '#294b86',
-  config_ficha jsonb DEFAULT '{}'::jsonb,
+  cor_primaria text DEFAULT '#294b86'
+    CHECK (cor_primaria IS NULL OR cor_primaria ~* '^#[0-9a-f]{6}$'),
+  config_ficha jsonb NOT NULL DEFAULT '{}'::jsonb,
+  -- Taxonomia de setores da agência, editável no painel.
+  setores      text[] NOT NULL DEFAULT
+    ARRAY['Autopeças','Eletrônica','Alimentício','Metalurgia','Plásticos','Logística'],
   locale       text NOT NULL DEFAULT 'pt-BR',
   timezone     text NOT NULL DEFAULT 'America/Sao_Paulo',
   plano        text NOT NULL DEFAULT 'founder',
@@ -271,7 +287,7 @@ CREATE TABLE jobs (
   empresa_japonesa text,
   provincia       text,
   cidade          text,
-  setor           setor_fabril,
+  setor           text,   -- valor livre, vindo de organizations.setores
   turnos          turno_trabalho[],
   horas_extras_dia int,
   salario_hora_jpy int,
