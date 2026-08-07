@@ -33,15 +33,15 @@ export function App() {
         <main className="ssj-main">
           <PageTransition>
             <Routes>
-              <Route path="/" element={<HomePage lang={lang} />} />
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<AuthPortal />} />
               <Route path="/funcionalidades" element={<FuncionalidadesView lang={lang} />} />
               <Route path="/prototipo" element={<ClaudeFUJIARTEWalkthrough />} />
               <Route path="/candidato" element={<CandidateWizard lang={lang} />} />
               {/* Ficha completa: 7 etapas geradas do schema versionado */}
               <Route path="/ficha" element={<FichaRenderer />} />
-              <Route path="/vagas" element={<VagasHub lang={lang} />} />
-              <Route path="/vagas/:id" element={<VagaDetalhe lang={lang} />} />
+              <Route path="/vagas" element={<VagasHub />} />
+              <Route path="/vagas/:id" element={<VagaDetalhe />} />
               <Route path="/fujiarte" element={<FujiarteCase lang={lang} />} />
               <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />
               <Route path="/admin" element={<TenantDashboard lang={lang} />} />

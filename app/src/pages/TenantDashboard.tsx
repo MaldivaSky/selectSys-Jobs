@@ -35,6 +35,7 @@ export function TenantDashboard({ lang }: { lang: Language }) {
   }, []);
 
   async function carregarDados() {
+    if (!supabase) return;
     setLoading(true);
     // Aqui buscaríamos pelo ID da organização da sessão atual.
     // Como estamos homologando, vamos puxar da FUJIARTE criada no seed.
@@ -67,6 +68,8 @@ export function TenantDashboard({ lang }: { lang: Language }) {
 
   async function handleCriarVaga(e: React.FormEvent) {
     e.preventDefault();
+    if (!supabase) return alert("Erro: Conexão Supabase ausente.");
+    
     const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
     if (!orgData) return alert("Erro: Organização não encontrada.");
 
