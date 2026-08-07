@@ -202,16 +202,17 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   return (
     <div className="ssj-section" style={{
       minHeight: '100vh',
-      background: 'var(--ssj-paper)',
-      padding: '32px 0'
+      background: 'linear-gradient(135deg, rgba(28,35,49,1) 0%, rgba(41,75,134,0.9) 45%, rgba(196,69,43,0.85) 100%)',
+      padding: '40px 0',
+      transition: 'background 0.5s ease'
     }}>
       <div className="ssj-container" style={{ maxWidth: '920px', margin: '0 auto' }}>
         
         {/* Ficha Cadastral FUJIARTE - Form Container */}
-        <div className="ssj-card" style={{
+        <div className="ssj-card ssj-in" style={{
           borderRadius: '16px',
-          boxShadow: 'var(--ssj-shadow)',
-          border: '1px solid var(--ssj-rule)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           overflow: 'hidden',
           background: 'var(--ssj-surface)',
           color: 'var(--ssj-text)'
