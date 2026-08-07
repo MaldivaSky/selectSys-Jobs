@@ -96,8 +96,8 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      backgroundColor: '#f7f8f5',
-      color: '#14181f',
+      backgroundColor: 'var(--ssj-paper)',
+      color: 'var(--ssj-text)',
       fontFamily: 'var(--ssj-font-sans)',
       padding: '48px 32px',
       display: 'flex',
@@ -120,9 +120,9 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
         <div style={{
           fontSize: '12px',
           fontWeight: 700,
-          color: '#294b86',
-          backgroundColor: '#eef2fb',
-          border: '1px solid #cfd9ee',
+          color: 'var(--ssj-indigo)',
+          backgroundColor: 'var(--ssj-indigo-wash)',
+          border: '1px solid var(--ssj-indigo-line)',
           padding: '6px 16px',
           borderRadius: '20px',
           textTransform: 'uppercase',
@@ -131,11 +131,11 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
           Funcionalidades & Arquitetura de Software
         </div>
 
-        <h1 style={{ fontSize: '3rem', fontWeight: 700, color: '#14181f', letterSpacing: '-0.03em' }}>
+        <h1 style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--ssj-text)', letterSpacing: '-0.03em' }}>
           Matriz de Recursos do SelectSys Jobs V2
         </h1>
 
-        <p style={{ fontSize: '1.1rem', color: '#5f6b6a', maxWidth: '800px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '1.1rem', color: 'var(--ssj-faint)', maxWidth: '800px', lineHeight: 1.6 }}>
           Clique em qualquer card abaixo para abrir a especificação técnica detalhada e o impacto de negócio de cada módulo.
         </p>
       </div>
@@ -158,9 +158,9 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
               style={{
                 padding: '32px',
                 borderRadius: '20px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e0e2dc',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                backgroundColor: 'var(--ssj-surface)',
+                border: '1px solid var(--ssj-rule)',
+                boxShadow: 'var(--ssj-shadow-sm)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -170,13 +170,13 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(37,99,235,0.12)';
-                e.currentTarget.style.borderColor = '#294b86';
+                e.currentTarget.style.boxShadow = 'var(--ssj-shadow)';
+                e.currentTarget.style.borderColor = 'var(--ssj-indigo)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.04)';
-                e.currentTarget.style.borderColor = '#e0e2dc';
+                e.currentTarget.style.boxShadow = 'var(--ssj-shadow-sm)';
+                e.currentTarget.style.borderColor = 'var(--ssj-rule)';
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -184,8 +184,8 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                   width: '48px',
                   height: '48px',
                   borderRadius: '14px',
-                  backgroundColor: '#eef2fb',
-                  color: '#294b86',
+                  backgroundColor: 'var(--ssj-indigo-wash)',
+                  color: 'var(--ssj-indigo)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -195,9 +195,9 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#1f7a4d',
-                  backgroundColor: '#e9f4ee',
-                  border: '1px solid #cfe6da',
+                  color: 'var(--ssj-verde-ink)',
+                  backgroundColor: 'var(--ssj-verde-wash)',
+                  border: '1px solid var(--ssj-verde-line)',
                   padding: '4px 10px',
                   borderRadius: '12px'
                 }}>
@@ -206,15 +206,15 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
               </div>
 
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#7a827f', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ssj-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {feat.category}
                 </span>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#14181f', marginTop: '4px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ssj-text)', marginTop: '4px' }}>
                   {feat.title}
                 </h3>
               </div>
 
-              <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#5f6b6a' }}>
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--ssj-faint)' }}>
                 {feat.shortDesc}
               </p>
 
@@ -225,9 +225,9 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 gap: '6px',
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#294b86',
+                color: 'var(--ssj-indigo)',
                 paddingTop: '12px',
-                borderTop: '1px solid #f0f1ed'
+                borderTop: '1px solid var(--ssj-rule-2)'
               }}>
                 <span>Ver Detalhes Técnicos</span>
                 <Info style={{ width: '16px', height: '16px' }} />
@@ -244,18 +244,18 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
         margin: '0 auto',
         padding: '40px',
         borderRadius: '24px',
-        backgroundColor: '#ffffff',
-        border: '1px solid #e0e2dc',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+        backgroundColor: 'var(--ssj-surface)',
+        border: '1px solid var(--ssj-rule)',
+        boxShadow: 'var(--ssj-shadow-sm)',
         display: 'flex',
         flexDirection: 'column',
         gap: '32px'
       }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#294b86', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ssj-indigo)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Comparativo Técnico & Operacional
           </span>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#14181f' }}>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--ssj-text)' }}>
             Processo Manual vs SelectSys Jobs V2
           </h2>
         </div>
@@ -263,10 +263,10 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f7f8f5', borderBottom: '2px solid #cdd0c8', color: '#5f6b6a' }}>
+              <tr style={{ backgroundColor: 'var(--ssj-surface-2)', borderBottom: '2px solid var(--ssj-rule-3)', color: 'var(--ssj-faint)' }}>
                 <th style={{ padding: '16px 20px', fontWeight: 700 }}>Funcionalidade / Recurso</th>
-                <th style={{ padding: '16px 20px', fontWeight: 700, color: '#c4452b', textAlign: 'center' }}>Processo Manual Tradicional</th>
-                <th style={{ padding: '16px 20px', fontWeight: 700, color: '#1f7a4d', textAlign: 'center' }}>SelectSys Jobs V2 (SaaS)</th>
+                <th style={{ padding: '16px 20px', fontWeight: 700, color: 'var(--ssj-shu)', textAlign: 'center' }}>Processo Manual Tradicional</th>
+                <th style={{ padding: '16px 20px', fontWeight: 700, color: 'var(--ssj-verde-ink)', textAlign: 'center' }}>SelectSys Jobs V2 (SaaS)</th>
               </tr>
             </thead>
             <tbody>
@@ -278,17 +278,17 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 { f: 'Atribuição Automática de Agências', m: 'NÃO (Dúvidas em Comissões)', s: 'SIM (Link Exclusivo tenant_id)' },
                 { f: 'Tempo Médio de Preenchimento', m: '15 a 20 Dias por Correio/E-mail', s: '7 a 10 Minutos no Celular' }
               ].map((row, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f0f1ed' }}>
-                  <td style={{ padding: '18px 20px', fontWeight: 700, color: '#14181f' }}>{row.f}</td>
-                  <td style={{ padding: '18px 20px', textAlign: 'center', color: '#c4452b', backgroundColor: '#fbf1ee', fontWeight: 700 }}>
+                <tr key={idx} style={{ borderBottom: '1px solid var(--ssj-rule)' }}>
+                  <td style={{ padding: '18px 20px', fontWeight: 700, color: 'var(--ssj-text)' }}>{row.f}</td>
+                  <td style={{ padding: '18px 20px', textAlign: 'center', color: 'var(--ssj-shu-2)', backgroundColor: 'var(--ssj-shu-wash-2)', fontWeight: 700 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <XCircle style={{ width: '18px', height: '18px', color: '#c4452b' }} />
+                      <XCircle style={{ width: '18px', height: '18px', color: 'var(--ssj-shu-2)' }} />
                       <span>{row.m}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '18px 20px', textAlign: 'center', color: '#1f7a4d', backgroundColor: '#e9f4ee', fontWeight: 700 }}>
+                  <td style={{ padding: '18px 20px', textAlign: 'center', color: 'var(--ssj-verde-ink)', backgroundColor: 'var(--ssj-verde-wash)', fontWeight: 700 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <Check style={{ width: '18px', height: '18px', color: '#1f7a4d' }} />
+                      <Check style={{ width: '18px', height: '18px', color: 'var(--ssj-verde-ink)' }} />
                       <span>{row.s}</span>
                     </div>
                   </td>
@@ -318,14 +318,15 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
           <div style={{
             width: '100%',
             maxWidth: '650px',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--ssj-surface)',
             borderRadius: '24px',
             padding: '36px',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            boxShadow: 'var(--ssj-shadow-lg)',
             display: 'flex',
             flexDirection: 'column',
             gap: '24px',
-            position: 'relative'
+            position: 'relative',
+            color: 'var(--ssj-text)'
           }}>
             <button
               onClick={() => setSelectedFeature(null)}
@@ -336,13 +337,13 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                backgroundColor: '#f0f1ed',
-                border: 'none',
+                backgroundColor: 'var(--ssj-surface-2)',
+                border: '1px solid var(--ssj-rule)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#7a827f'
+                color: 'var(--ssj-faint)'
               }}
             >
               <X style={{ width: '20px', height: '20px' }} />
@@ -353,8 +354,8 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 width: '52px',
                 height: '52px',
                 borderRadius: '16px',
-                backgroundColor: '#eef2fb',
-                color: '#294b86',
+                backgroundColor: 'var(--ssj-indigo-wash)',
+                color: 'var(--ssj-indigo)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -362,34 +363,34 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                 <selectedFeature.icon style={{ width: '28px', height: '28px' }} />
               </div>
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#294b86', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ssj-indigo)', textTransform: 'uppercase' }}>
                   {selectedFeature.category}
                 </span>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#14181f', marginTop: '2px' }}>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ssj-text)', marginTop: '2px' }}>
                   {selectedFeature.title}
                 </h3>
               </div>
             </div>
 
-            <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#3a4048', fontWeight: 500 }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--ssj-faint)', fontWeight: 500 }}>
               {selectedFeature.fullDesc}
             </p>
 
-            <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: '#f7f8f5', border: '1px solid #e0e2dc', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ padding: '20px', borderRadius: '16px', backgroundColor: 'var(--ssj-surface-2)', border: '1px solid var(--ssj-rule)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#7a827f', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ssj-muted)', textTransform: 'uppercase' }}>
                   Especificação Técnica
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#14181f', marginTop: '4px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ssj-text)', marginTop: '4px' }}>
                   {selectedFeature.techDetail}
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px solid #e0e2dc', paddingTop: '12px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#1f7a4d', textTransform: 'uppercase' }}>
-                  Impacto de Negócio Directo
+              <div style={{ borderTop: '1px solid var(--ssj-rule)', paddingTop: '12px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ssj-verde)', textTransform: 'uppercase' }}>
+                  Impacto de Negócio Direto
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#175335', marginTop: '4px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ssj-verde-ink)', marginTop: '4px' }}>
                   {selectedFeature.businessImpact}
                 </div>
               </div>
@@ -403,8 +404,8 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
                   borderRadius: '10px',
                   fontSize: '14px',
                   fontWeight: 700,
-                  backgroundColor: '#294b86',
-                  color: '#ffffff',
+                  backgroundColor: 'var(--ssj-fill-pri)',
+                  color: 'var(--ssj-on-fill-pri)',
                   border: 'none',
                   cursor: 'pointer'
                 }}
@@ -416,13 +417,12 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
         </div>
       )}
 
-      {/* Footer CTA Banner */}
-      <section style={{
+      <section className="ssj-section--ink" style={{
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
-        backgroundColor: '#14181f',
-        color: '#ffffff',
+        backgroundColor: 'var(--ssj-surface)',
+        color: 'var(--ssj-text)',
         borderRadius: '24px',
         padding: '48px',
         textAlign: 'center',
@@ -431,29 +431,29 @@ export function FuncionalidadesView({ lang }: { lang: Language }) {
         alignItems: 'center',
         gap: '20px'
       }}>
-        <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#ffffff' }}>
+        <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: 'var(--ssj-text)' }}>
           Pronto para testar todas as funcionalidades na prática?
         </h2>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <Link to="/prototipo" style={{
+          <Link to="/c/fujiarte" style={{
             padding: '14px 32px',
             borderRadius: '12px',
             fontSize: '14px',
             fontWeight: 700,
-            backgroundColor: '#294b86',
-            color: '#ffffff',
+            backgroundColor: 'var(--ssj-fill-pri)',
+            color: 'var(--ssj-on-fill-pri)',
             textDecoration: 'none'
           }}>
-            Ver Protótipo Interativo ➔
+            Ver Protótipo B2C ➔
           </Link>
-          <Link to="/fujiarte" style={{
+          <Link to="/admin" style={{
             padding: '14px 32px',
             borderRadius: '12px',
             fontSize: '14px',
             fontWeight: 700,
-            backgroundColor: '#232a33',
-            color: '#ffffff',
-            border: '1px solid #3a4048',
+            backgroundColor: 'var(--ssj-surface-2)',
+            color: 'var(--ssj-text)',
+            border: '1px solid var(--ssj-rule)',
             textDecoration: 'none'
           }}>
             Ver Case Piloto FUJIARTE
