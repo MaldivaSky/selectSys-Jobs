@@ -1,294 +1,397 @@
-import { useState } from 'react';
 import {
-  FileSpreadsheet, ShieldCheck, Cpu,
-  Download, CheckCircle2, DollarSign, Calendar, Globe
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  CalendarCheck,
+  FileSpreadsheet,
+  Globe,
+  Layers,
+  Lock,
+  Mail,
+  MessageCircle,
+  Palette,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Language } from '../translations';
 
-export function PlanoAcaoView({ lang }: { lang: Language }) {
-  console.log('Language active:', lang);
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROPOSTA COMERCIAL — SelectSys Jobs
+   ---------------------------------------------------------------------------
+   Esta página é a peça de venda do produto e, ao mesmo tempo, a proposta que o
+   primeiro assinante aceita. Três decisões estruturam o texto:
 
-  const [downloadedPdf, setDownloadedPdf] = useState<boolean>(false);
+   1. VENDE RESULTADO, NÃO CRONOGRAMA. Prazo por semana não pertence a uma
+      página comercial — vira compromisso antes de existir contrato. Prazo é
+      assunto de reunião e de anexo de escopo.
 
-  const handleSimulatePdfDownload = () => {
-    setDownloadedPdf(true);
-    setTimeout(() => { setDownloadedPdf(false); }, 4000);
-  };
+   2. PREÇO SOB CONSULTA PARA O MERCADO, condição de fundador nomeada para o
+      primeiro assinante. Publicar mensalidade baixa em página aberta ancora o
+      produto por baixo e derruba a margem de todo cliente seguinte.
+
+   3. SÓ PROMETE O QUE JÁ RODA. O que depende de terceiro (aprovação da Meta
+      para o WhatsApp oficial) não entra: promessa não cumprida em proposta
+      comercial é passivo de contrato, não é marketing.
+
+   Nenhuma cor literal aqui. A página inteira sai dos tokens e responde a tema
+   claro e escuro — a versão anterior era `#f4f5f2` chumbado e ficava ilegível
+   no escuro.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+const WHATSAPP = '5511919889233';
+const WHATSAPP_TEXTO = encodeURIComponent(
+  'Olá, Rafael. Vi a proposta do SelectSys Jobs e quero conversar sobre implantar na minha agência.',
+);
+const EMAIL = 'rafaelmaldivas@miseon.app.br';
+
+const ENTREGAS = [
+  {
+    icone: <FileSpreadsheet size={22} />,
+    titulo: 'A sua ficha, digital',
+    texto:
+      'Você entrega a planilha que já usa. Devolvemos ela como formulário guiado, campo por campo — e a exportação sai no layout idêntico ao arquivo original. Ninguém no Japão precisa aprender formato novo.',
+  },
+  {
+    icone: <Sparkles size={22} />,
+    titulo: 'Autopreenchimento por IA',
+    texto:
+      'O candidato envia currículo, RG ou documento e a ficha se preenche sozinha. Cada campo lido aparece para conferência antes de entrar — a inteligência propõe, a pessoa decide.',
+  },
+  {
+    icone: <Palette size={22} />,
+    titulo: 'A marca é sua, não a nossa',
+    texto:
+      'Logo e cor da agência governam o painel e a página do candidato. Quem se cadastra vê a sua empresa do começo ao fim.',
+  },
+  {
+    icone: <Search size={22} />,
+    titulo: 'Visibilidade no Google Jobs',
+    texto:
+      'Cada vaga publicada entra no índice de empregos do Google com dados estruturados. Captação orgânica, sem verba de mídia.',
+  },
+  {
+    icone: <Workflow size={22} />,
+    titulo: 'Funil até o embarque',
+    texto:
+      'Da triagem ao COE, do visto à chegada. Cada etapa com prazo visível e alerta de atraso, para nenhum candidato parar sem ninguém perceber.',
+  },
+  {
+    icone: <Layers size={22} />,
+    titulo: 'Integração com o Garoon',
+    texto:
+      'O que a operação no Japão já usa continua valendo. A plataforma conversa com o ambiente existente em vez de exigir substituição.',
+  },
+];
+
+const ETAPAS = [
+  {
+    n: '01',
+    titulo: 'Você entrega o formulário',
+    texto: 'A planilha ou ficha que a agência usa hoje, do jeito que está. É o único material necessário para começar.',
+  },
+  {
+    n: '02',
+    titulo: 'Implantamos personalizado',
+    texto: 'Campos, regras, marca e link de captação configurados para a sua operação. Sem obrigar a agência a mudar o processo.',
+  },
+  {
+    n: '03',
+    titulo: 'Entra no ar com a sua marca',
+    texto: 'Equipe treinada, link de captação ativo e as vagas indexadas. A partir daí é mensalidade, sem fidelidade.',
+  },
+];
+
+const CONFIANCA = [
+  { icone: <Lock size={18} />, titulo: 'Dados de saúde criptografados', texto: 'Criptografia individual no banco, conforme o Art. 11 da LGPD.' },
+  { icone: <ShieldCheck size={18} />, titulo: 'Isolamento por agência', texto: 'Garantido no próprio banco de dados, não apenas na aplicação.' },
+  { icone: <BadgeCheck size={18} />, titulo: 'Triagem explicável', texto: 'Toda decisão automática gera parecer auditável, com revisão humana.' },
+  { icone: <CalendarCheck size={18} />, titulo: 'Trilha de auditoria', texto: 'Cada leitura e exportação de ficha fica registrada com autor e data.' },
+];
+
+const DUVIDAS = [
+  {
+    p: 'Preciso mudar a ficha que já uso?',
+    r: 'Não. A ficha da agência é o ponto de partida da implantação, e a exportação continua saindo no mesmo layout que o Japão já recebe hoje.',
+  },
+  {
+    p: 'E os candidatos que não têm computador?',
+    r: 'A ficha foi desenhada para o celular primeiro. O candidato pode inclusive fotografar o documento e deixar a ficha se preencher.',
+  },
+  {
+    p: 'Existe fidelidade?',
+    r: 'Não há contrato de permanência. A implantação é paga uma vez e a assinatura é mensal, cancelável.',
+  },
+  {
+    p: 'Quem é o dono dos dados?',
+    r: 'A agência. Os dados são seus, exportáveis a qualquer momento, e nenhuma outra organização na plataforma tem acesso a eles.',
+  },
+];
+
+export function PlanoAcaoView({ lang: _lang }: { lang?: Language }) {
+  const zap = `https://wa.me/${WHATSAPP}?text=${WHATSAPP_TEXTO}`;
 
   return (
-    <div style={{
-      width: '100%',
-      minHeight: '100vh',
-      backgroundColor: '#f4f5f2',
-      color: '#14181f',
-      fontFamily: 'var(--ssj-font-sans)',
-      padding: '48px 32px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '56px'
-    }}>
+    <div className="ssj-prop">
+      {/* ── ABERTURA ──────────────────────────────────────────────────── */}
+      <section className="ssj-prop-hero">
+        <div className="ssj-container ssj-pilha ssj-pilha--md ssj-centro">
+          <span className="ssj-prop-selo">
+            <Building2 size={14} /> Proposta comercial · Agências de recrutamento dekassegui
+          </span>
 
-      {/* HERO */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        backgroundColor: '#14181f', color: '#ffffff', borderRadius: '24px',
-        padding: '56px 48px', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', textAlign: 'center', gap: '24px',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
-      }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          padding: '8px 20px', borderRadius: '30px', backgroundColor: '#294b86',
-          border: '1px solid #7ba4de', color: '#ffffff', fontSize: '12px',
-          fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em'
-        }}>
-          <span>PROPOSTA COMERCIAL &amp; PLANO DE IMPLANTAÇÃO HOMOLOGADO</span>
-        </div>
+          <h1 className="ssj-titulo-hero">
+            Você não perde candidato por falta de vaga.
+            <br />
+            <span className="ssj-prop-realce">Perde no cadastro, no documento e na espera.</span>
+          </h1>
 
-        <h1 style={{
-          fontSize: '3.2rem', fontWeight: 700, lineHeight: 1.15,
-          letterSpacing: '-0.03em', maxWidth: '960px', color: '#ffffff'
-        }}>
-          Plano Master de Transformação Digital <span style={{ color: '#e8785d' }}>SelectSys Jobs</span>
-        </h1>
+          <p className="ssj-lead">
+            Conhecemos o processo dekassegui de ponta a ponta — da ficha de 130 campos ao COE, do visto ao embarque.
+            O SelectSys Jobs pega a ficha que a sua agência já usa e devolve uma plataforma completa de captação e
+            acompanhamento, com a sua marca, no celular do candidato.
+          </p>
 
-        <p style={{
-          fontSize: '1.15rem', lineHeight: 1.6, maxWidth: '840px',
-          color: '#8d968f', fontWeight: 500
-        }}>
-          Documento executivo comercial para validação da diretoria no Japão referente à automação
-          multitenant do fluxo de vistos e recrutamento Dekassegui — <strong style={{ color: '#ffffff' }}>FUJIARTE Co., Ltd.</strong>
-        </p>
-
-        <div style={{ paddingTop: '8px' }}>
-          <button
-            onClick={handleSimulatePdfDownload}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '10px',
-              padding: '16px 36px', borderRadius: '12px', fontSize: '15px',
-              fontWeight: 700, backgroundColor: '#c4452b', color: '#ffffff',
-              border: 'none', cursor: 'pointer', boxShadow: '0 6px 20px rgba(196,69,43,0.4)'
-            }}
-          >
-            <Download style={{ width: '18px', height: '18px' }} />
-            <span>Baixar Proposta Comercial em PDF (Para Assinatura)</span>
-          </button>
-        </div>
-
-        {downloadedPdf && (
-          <div style={{
-            padding: '12px 24px', borderRadius: '10px', backgroundColor: '#e2f0e9',
-            border: '1px solid #1f7a4d', color: '#1f7a4d', fontSize: '13px',
-            fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px'
-          }}>
-            <CheckCircle2 style={{ width: '18px', height: '18px', color: '#1f7a4d' }} />
-            <span>Proposta Comercial PDF gerada e pronta para download executivo!</span>
+          <div className="ssj-prop-acoes">
+            <a href={zap} target="_blank" rel="noreferrer" className="ssj-btn ssj-btn--pri ssj-btn--lg">
+              <MessageCircle size={18} /> Falar no WhatsApp
+            </a>
+            <Link to="/funcionalidades" className="ssj-btn ssj-btn--lg">
+              Ver a plataforma <ArrowRight size={17} />
+            </Link>
           </div>
-        )}
+
+          <p className="ssj-prop-nota">Implantação única + assinatura mensal · sem fidelidade</p>
+        </div>
       </section>
 
-      {/* OS 4 PILARES */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        display: 'flex', flexDirection: 'column', gap: '32px'
-      }}>
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#14181f' }}>
-            Os 4 Pilares da Plataforma SelectSys Jobs
-          </h2>
-          <p style={{ fontSize: '15px', color: '#7a827f', maxWidth: '700px', margin: '0 auto' }}>
-            Infraestrutura de tecnologia desenhada exclusivamente para as regras operacionais entre Brasil e Japão.
+      {/* ── AUTORIDADE NO DOMÍNIO ─────────────────────────────────────────
+          Vocabulário é prova. Uma agência reconhece em três segundos quem já
+          viu um koseki e quem está vendendo software genérico com a palavra
+          "recrutamento" trocada. */}
+      <section className="ssj-section ssj-prop-fundo">
+        <div className="ssj-container ssj-pilha ssj-pilha--lg">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+            <h2 className="ssj-titulo">Não vamos te explicar o seu próprio negócio</h2>
+            <p className="ssj-lead">
+              A plataforma nasceu dentro de uma operação real, sobre uma ficha real. Ela já entende o que a sua
+              equipe faz todo dia.
+            </p>
+          </header>
+
+          <div className="ssj-prop-dominio">
+            {[
+              { t: 'Geração nikkei', d: 'Issei, nissei, sansei, yonsei e cônjuge — porque é isso que define a elegibilidade do visto.' },
+              { t: 'Documentos que vencem', d: 'Passaporte, visto, reentry permit e koseki, com alerta antes de virar problema no consulado.' },
+              { t: 'COE e visto', d: 'Etapas próprias no funil, com prazo medido. É onde o processo trava e ninguém percebe.' },
+              { t: 'Biometria para EPI', d: 'Altura, cintura e número do pé — a fábrica precisa disso antes de fechar a vaga.' },
+              { t: 'Tatuagem e saúde', d: 'Perguntas que pesam na seleção japonesa, tratadas com o cuidado legal que exigem.' },
+              { t: 'Histórico no Japão', d: 'Empreiteira, fábrica, província e motivo de saída — o que o cliente japonês olha primeiro.' },
+            ].map((i) => (
+              <div key={i.t} className="ssj-prop-dominio-item">
+                <strong>{i.t}</strong>
+                <span>{i.d}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="ssj-prop-missao">
+            Nossa missão é simples: <strong>tirar a burocracia do caminho de quem quer trabalhar no Japão</strong> — e
+            devolver à agência o tempo que hoje some em redigitação, cobrança de documento e planilha perdida.
           </p>
         </div>
+      </section>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px', width: '100%' }}>
-          {[
-            {
-              icon: <FileSpreadsheet style={{ width: '24px', height: '24px' }} />,
-              bg: '#e4eaf4', fg: '#294b86',
-              title: '1. Exportador .XLS Fiel',
-              desc: 'Ficha cadastral digitalizada (~130 campos) gerando arquivos .xls exatamente no formato oficial de cada empreiteira parceira (ex: modelo FUJIARTE).'
-            },
-            {
-              icon: <Cpu style={{ width: '24px', height: '24px' }} />,
-              bg: '#f7e6e2', fg: '#c4452b',
-              title: '2. Visão Computacional por IA',
-              desc: 'DeepSeek V3 integrando OCR inteligente com custo de $0.14 por 1M tokens (95% de economia OpEx em relação a modelos legados).'
-            },
-            {
-              icon: <ShieldCheck style={{ width: '24px', height: '24px' }} />,
-              bg: '#e2f0e9', fg: '#1f7a4d',
-              title: '3. Compliance LGPD & APPI',
-              desc: 'Criptografia colunar de dados sensíveis de saúde (pgcrypto PostgreSQL) e parecer explicável automatizado para o Artigo 20 da LGPD.'
-            },
-            {
-              icon: <Globe style={{ width: '24px', height: '24px' }} />,
-              bg: '#e4eaf4', fg: '#294b86',
-              title: '4. Painel de Gestão Multitenant',
-              desc: 'Visualização executiva para acompanhar o funil de 11 etapas de recrutamento, emissão de vistos COE e gestão de agências indicadoras no Brasil.'
-            }
-          ].map((p, i) => (
-            <div key={i} style={{
-              padding: '32px', borderRadius: '20px', backgroundColor: '#ffffff',
-              border: '1px solid #e0e2dc', boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-              display: 'flex', flexDirection: 'column', gap: '16px'
-            }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: p.bg, color: p.fg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {p.icon}
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#14181f' }}>{p.title}</h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.6, color: '#7a827f' }}>{p.desc}</p>
-            </div>
-          ))}
+      {/* ── O PROBLEMA ────────────────────────────────────────────────── */}
+      <section className="ssj-section">
+        <div className="ssj-container ssj-prop-contraste">
+          <article className="ssj-prop-lado">
+            <span className="ssj-prop-rotulo">Hoje</span>
+            <ul className="ssj-prop-lista">
+              <li>Ficha em papel e planilha, redigitada mais de uma vez</li>
+              <li>Candidato desiste no meio do cadastro e ninguém sabe por quê</li>
+              <li>Processo parado no COE ou no visto sem alerta nenhum</li>
+              <li>Dado sensível de saúde circulando em arquivo solto</li>
+              <li>Captação dependendo de indicação e de anúncio pago</li>
+            </ul>
+          </article>
+
+          <article className="ssj-prop-lado ssj-prop-lado--depois">
+            <span className="ssj-prop-rotulo">Com o SelectSys Jobs</span>
+            <ul className="ssj-prop-lista">
+              <li>Ficha preenchida uma vez, pelo celular, com apoio de IA</li>
+              <li>Cada etapa medida — dá para ver onde o candidato para</li>
+              <li>Prazo por etapa com alerta automático de atraso</li>
+              <li>Dados de saúde criptografados e acesso auditado</li>
+              <li>Vagas no Google Jobs e link próprio de captação</li>
+            </ul>
+          </article>
         </div>
       </section>
 
-      {/* FORMULÁRIO REAL — LINK DIRETO PARA O CLIENTE VER */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        padding: '40px', borderRadius: '24px', backgroundColor: '#eef2fb',
-        border: '2px solid #294b86', display: 'flex', flexDirection: 'column',
-        gap: '20px', alignItems: 'center', textAlign: 'center'
-      }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#294b86', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Demonstração ao Vivo — Formulário Real FUJIARTE
-        </span>
-        <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#14181f' }}>
-          Veja como o candidato preenche a Ficha Cadastral
-        </h2>
-        <p style={{ fontSize: '15px', color: '#7a827f', maxWidth: '680px', lineHeight: 1.6 }}>
-          Clique abaixo para abrir o formulário real de cadastro, gerado a partir da planilha oficial
-          <strong> 白紙 FUJIARTE Ficha Cadastral (Jun2024)</strong>. É exatamente o que o candidato vê no celular.
-        </p>
-        <Link to="/c/fujiarte" style={{
-          display: 'inline-flex', alignItems: 'center', gap: '10px',
-          padding: '18px 40px', borderRadius: '14px', fontSize: '16px',
-          fontWeight: 700, backgroundColor: '#294b86', color: '#ffffff',
-          textDecoration: 'none', boxShadow: '0 8px 24px rgba(41,75,134,0.35)'
-        }}>
-          Abrir Formulário FUJIARTE (Visão Candidato) →
-        </Link>
+      {/* ── O QUE ESTÁ INCLUÍDO ───────────────────────────────────────── */}
+      <section className="ssj-section ssj-prop-fundo">
+        <div className="ssj-container ssj-pilha ssj-pilha--lg">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+            <h2 className="ssj-titulo">O que está incluído</h2>
+            <p className="ssj-lead">
+              Não é uma lista de funcionalidades para o futuro. É o que a plataforma entrega na implantação.
+            </p>
+          </header>
+
+          <div className="ssj-auto">
+            {ENTREGAS.map((e) => (
+              <article key={e.titulo} className="ssj-card ssj-prop-cartao">
+                <span className="ssj-prop-icone">{e.icone}</span>
+                <h3 className="ssj-subtitulo">{e.titulo}</h3>
+                <p className="ssj-texto">{e.texto}</p>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ROADMAP */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        padding: '40px', borderRadius: '24px', backgroundColor: '#ffffff',
-        border: '1px solid #e0e2dc', boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-        display: 'flex', flexDirection: 'column', gap: '32px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Calendar style={{ width: '28px', height: '28px', color: '#294b86' }} />
-          <div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#294b86', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Cronograma de Go-to-Market
+      {/* ── COMO FUNCIONA ─────────────────────────────────────────────── */}
+      <section className="ssj-section">
+        <div className="ssj-container ssj-pilha ssj-pilha--lg">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+            <h2 className="ssj-titulo">Do jeito mais simples possível</h2>
+            <p className="ssj-lead">
+              A implantação foi desenhada para exigir o mínimo da sua equipe. O trabalho pesado é nosso.
+            </p>
+          </header>
+
+          <ol className="ssj-prop-passos">
+            {ETAPAS.map((et) => (
+              <li key={et.n} className="ssj-prop-passo">
+                <span className="ssj-prop-passo-n">{et.n}</span>
+                <h3 className="ssj-subtitulo">{et.titulo}</h3>
+                <p className="ssj-texto">{et.texto}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── INVESTIMENTO ──────────────────────────────────────────────── */}
+      <section className="ssj-section ssj-prop-fundo">
+        <div className="ssj-container ssj-pilha ssj-pilha--lg">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+            <h2 className="ssj-titulo">Investimento</h2>
+            <p className="ssj-lead">
+              Modelo simples: um valor de implantação, uma vez, e uma assinatura mensal. Sem taxa por candidato, sem
+              cobrança por usuário, sem fidelidade.
+            </p>
+          </header>
+
+          <div className="ssj-prop-precos">
+            <article className="ssj-card ssj-prop-preco">
+              <span className="ssj-prop-rotulo">Implantação</span>
+              <p className="ssj-prop-valor">Valor único</p>
+              <p className="ssj-texto">
+                Configuração da sua ficha, identidade visual da agência, link de captação, publicação das vagas e
+                treinamento da equipe.
+              </p>
+            </article>
+
+            <article className="ssj-card ssj-prop-preco">
+              <span className="ssj-prop-rotulo">Assinatura</span>
+              <p className="ssj-prop-valor">Mensal</p>
+              <p className="ssj-texto">
+                Plataforma no ar, hospedagem, atualizações, correções e suporte direto com quem construiu o sistema.
+              </p>
+            </article>
+          </div>
+
+          <p className="ssj-centro ssj-texto">
+            Os valores são apresentados em reunião, junto ao escopo fechado da sua operação.
+          </p>
+
+          {/* Condição de fundador: nomeada, com prazo, e justificada pela troca
+              real — quem entra primeiro dá referência de mercado e retorno de
+              produto, e isso tem valor. */}
+          <aside className="ssj-prop-fundador">
+            <span className="ssj-prop-selo ssj-prop-selo--fundador">
+              <BadgeCheck size={14} /> Condição fundador · primeiros assinantes
             </span>
-            <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#14181f', marginTop: '2px' }}>
-              Roadmap de Entrega (4 Semanas)
-            </h2>
-          </div>
+            <h3 className="ssj-subtitulo">Para quem entra agora</h3>
+            <p className="ssj-texto">
+              As primeiras agências a adotar a plataforma recebem condição de implantação e mensalidade diferenciadas,
+              congeladas por doze meses, em troca de participação próxima na evolução do produto. É uma janela de
+              lançamento, não uma tabela permanente.
+            </p>
+            <a href={zap} target="_blank" rel="noreferrer" className="ssj-btn ssj-btn--seal">
+              <MessageCircle size={17} /> Consultar a condição
+            </a>
+          </aside>
         </div>
+      </section>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {[
-            { sem: 'Semana 1', title: 'Apresentação & Homologação MVP', desc: 'Validação da Ficha Cadastral com a diretoria do Japão e lote piloto de 50 candidatos.', status: 'CONCLUÍDO' },
-            { sem: 'Semana 2', title: 'Integração Multitenant & Agências Brasil', desc: 'Ativação dos subdomínios e links exclusivos por agência de captação (SP, PR, SC, MS).', status: 'EM ANDAMENTO' },
-            { sem: 'Semana 3', title: 'Automatização do Visto COE & Imigração', desc: 'Integração do acompanhamento do Certificado de Elegibilidade com alertas via WhatsApp.', status: 'PLANEJADO' },
-            { sem: 'Semana 4', title: 'Lançamento Comercial Enterprise', desc: 'Rollout global para 100% dos embarques e contratações do grupo.', status: 'PLANEJADO' }
-          ].map((s, idx) => (
-            <div key={idx} style={{
-              padding: '24px', borderRadius: '16px', backgroundColor: '#f7f8f5',
-              border: '1px solid #e0e2dc', display: 'flex', alignItems: 'center',
-              justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div style={{ padding: '8px 16px', borderRadius: '10px', backgroundColor: '#294b86', color: '#ffffff', fontWeight: 700, fontSize: '14px' }}>
-                  {s.sem}
-                </div>
+      {/* ── CONFIANÇA ─────────────────────────────────────────────────── */}
+      <section className="ssj-section">
+        <div className="ssj-container ssj-pilha ssj-pilha--lg">
+          <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+            <h2 className="ssj-titulo">Dado de candidato é dado sensível</h2>
+            <p className="ssj-lead">
+              Ficha de dekassegui carrega documento, endereço, família e saúde. A arquitetura foi construída partindo
+              disso, não adaptada depois.
+            </p>
+          </header>
+
+          <div className="ssj-auto ssj-auto--sm">
+            {CONFIANCA.map((c) => (
+              <article key={c.titulo} className="ssj-prop-confianca">
+                <span className="ssj-prop-icone ssj-prop-icone--sm">{c.icone}</span>
                 <div>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#14181f' }}>{s.title}</h3>
-                  <p style={{ fontSize: '13px', color: '#7a827f', marginTop: '2px' }}>{s.desc}</p>
+                  <h3 className="ssj-prop-confianca-titulo">{c.titulo}</h3>
+                  <p className="ssj-texto">{c.texto}</p>
                 </div>
-              </div>
-              <span style={{
-                fontSize: '11px', fontWeight: 700, padding: '6px 14px', borderRadius: '12px',
-                backgroundColor: s.status === 'CONCLUÍDO' ? '#e2f0e9' : s.status === 'EM ANDAMENTO' ? '#f7e6e2' : '#ffffff',
-                color: s.status === 'CONCLUÍDO' ? '#1f7a4d' : s.status === 'EM ANDAMENTO' ? '#c4452b' : '#7a827f',
-                border: `1px solid ${s.status === 'CONCLUÍDO' ? '#1f7a4d' : s.status === 'EM ANDAMENTO' ? '#c4452b' : '#e0e2dc'}`
-              }}>
-                {s.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* MODELO FINANCEIRO */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        padding: '40px', borderRadius: '24px', backgroundColor: '#ffffff',
-        border: '1px solid #e0e2dc', boxShadow: '0 10px 40px rgba(0,0,0,0.06)',
-        display: 'flex', flexDirection: 'column', gap: '32px'
-      }}>
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', backgroundColor: '#e4eaf4', color: '#294b86', fontSize: '12px', fontWeight: 700, margin: '0 auto' }}>
-            <DollarSign style={{ width: '16px', height: '16px' }} />
-            MODELO FINANCEIRO MULTITENANT
+              </article>
+            ))}
           </div>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: '#14181f' }}>Estrutura Comercial SaaS</h2>
         </div>
+      </section>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-          {[
-            { label: 'Licença Empreiteira (Enterprise)', color: '#294b86', value: 'Mensal Fixa', desc: 'Acesso ilimitado ao Painel de gestão, exportador oficial de planilhas .xls, gestão de vistos COE e suporte com SLA de 2 horas.' },
-            { label: 'Leitura por IA (Pass-Through)', color: '#c4452b', value: '$0.14 / 1M Tokens', desc: 'Repasse a preço de custo do motor DeepSeek V3 para extração de OCR de documentos de candidatos.' },
-            { label: 'Agências Indicadoras (Brasil)', color: '#1f7a4d', value: '100% Gratuito', desc: 'Sem custo de licença para agências parceiras no Brasil utilizarem os links parametrizados de indicação.' }
-          ].map((item, i) => (
-            <div key={i} style={{ padding: '32px', borderRadius: '20px', backgroundColor: '#f7f8f5', border: '1px solid #e0e2dc', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: item.color, textTransform: 'uppercase' }}>{item.label}</div>
-              <div style={{ fontSize: '2.2rem', fontWeight: 700, color: '#14181f' }}>{item.value}</div>
-              <p style={{ fontSize: '13px', color: '#7a827f', lineHeight: 1.6 }}>{item.desc}</p>
-            </div>
+      {/* ── DÚVIDAS ───────────────────────────────────────────────────── */}
+      <section className="ssj-section ssj-prop-fundo">
+        <div className="ssj-container ssj-pilha ssj-pilha--md" style={{ maxWidth: 760 }}>
+          <h2 className="ssj-titulo ssj-centro">Perguntas que sempre aparecem</h2>
+          {DUVIDAS.map((d) => (
+            <details key={d.p} className="ssj-prop-duvida">
+              <summary>{d.p}</summary>
+              <p className="ssj-texto">{d.r}</p>
+            </details>
           ))}
         </div>
       </section>
 
-      {/* FOOTER CTA */}
-      <section style={{
-        width: '100%', maxWidth: '1200px', margin: '0 auto',
-        backgroundColor: '#14181f', color: '#ffffff', borderRadius: '24px',
-        padding: '56px 40px', textAlign: 'center', display: 'flex',
-        flexDirection: 'column', alignItems: 'center', gap: '24px',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
-      }}>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: '#e4eaf4', backgroundColor: '#294b86', padding: '6px 16px', borderRadius: '20px' }}>
-          FUJIARTE Co., Ltd. · Homologação Técnica
-        </span>
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.02em' }}>
-          Pronto para transformar o fluxo Dekassegui?
-        </h2>
-        <p style={{ fontSize: '15px', color: '#8d968f', maxWidth: '650px', lineHeight: 1.6 }}>
-          Acesse o formulário ao vivo ou entre em contato para agendar a demonstração executiva para a diretoria no Japão.
-        </p>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link to="/c/fujiarte" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '10px',
-            padding: '16px 36px', borderRadius: '12px', fontSize: '15px',
-            fontWeight: 700, backgroundColor: '#c4452b', color: '#ffffff',
-            textDecoration: 'none', boxShadow: '0 6px 20px rgba(196,69,43,0.4)'
-          }}>
-            Abrir Formulário FUJIARTE →
-          </Link>
-          <Link to="/fujiarte" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '10px',
-            padding: '16px 36px', borderRadius: '12px', fontSize: '15px',
-            fontWeight: 700, backgroundColor: 'rgba(255,255,255,0.1)',
-            color: '#ffffff', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)'
-          }}>
-            Ver Case Técnico FUJIARTE
-          </Link>
+      {/* ── FECHAMENTO ────────────────────────────────────────────────── */}
+      <section className="ssj-section">
+        <div className="ssj-container">
+          <div className="ssj-prop-fechamento">
+            <div className="ssj-pilha ssj-pilha--sm">
+              <h2 className="ssj-titulo">Vamos conversar sobre a sua operação</h2>
+              <p className="ssj-lead">
+                Uma conversa de trinta minutos é o suficiente para entender a sua ficha, o seu volume e o que faz
+                sentido implantar. Sem compromisso e sem apresentação genérica.
+              </p>
+            </div>
+
+            <div className="ssj-prop-contatos">
+              <a href={zap} target="_blank" rel="noreferrer" className="ssj-btn ssj-btn--pri ssj-btn--lg">
+                <MessageCircle size={18} /> WhatsApp (11) 91988-9233
+              </a>
+              <a href={`mailto:${EMAIL}?subject=SelectSys%20Jobs%20—%20proposta%20comercial`} className="ssj-btn ssj-btn--lg">
+                <Mail size={17} /> {EMAIL}
+              </a>
+            </div>
+
+            <p className="ssj-prop-assinatura">
+              <Globe size={14} /> Rafael Maldivas · Responsável técnico e comercial · SelectSys Jobs
+            </p>
+          </div>
         </div>
       </section>
     </div>

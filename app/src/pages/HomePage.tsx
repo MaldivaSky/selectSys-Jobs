@@ -100,7 +100,7 @@ export function HomePage() {
       `}</style>
 
       {/* DYNAMIC BACKGROUND ORBS */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+      <div style={{ position: 'fixed', inset: 0, overflow: 'clip', pointerEvents: 'none', zIndex: 0, contain: 'strict' }}>
         <div style={{
           position: 'absolute', top: '-10%', left: '50%', transform: `translate(-50%, ${scrollY * 0.2}px)`,
           width: '80vw', height: '80vw', maxWidth: '800px', maxHeight: '800px',
@@ -116,18 +116,18 @@ export function HomePage() {
       </div>
 
       {/* HERO SECTION */}
-      <section style={{ position: 'relative', zIndex: 1, paddingTop: '160px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
+      <section style={{ position: 'relative', zIndex: 1, paddingTop: 'clamp(56px, 14vw, 160px)', paddingBottom: 'clamp(40px, 10vw, 100px)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingLeft: 'var(--ssj-gutter)', paddingRight: 'var(--ssj-gutter)' }}>
         
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', borderRadius: '100px', background: glassBg, border: `1px solid ${glassBorder}`, marginBottom: '40px', backdropFilter: 'blur(10px)' }}>
           <ShieldCheck size={16} color="#c4452b" />
           <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Portal Oficial de Recrutamento</span>
         </div>
 
-        <h1 className="hero-title" style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.04em', maxWidth: '1000px', margin: '0 auto 32px' }}>
+        <h1 className="hero-title" style={{ fontSize: 'var(--ssj-t-display)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.04em', maxWidth: '1000px', margin: '0 auto clamp(16px, 4vw, 32px)' }}>
           O caminho mais rápido <br /> para o <span style={{ background: gradientPrimary, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Japão.</span>
         </h1>
 
-        <p style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', color: textSec, maxWidth: '650px', lineHeight: 1.6, marginBottom: '48px', fontWeight: 400 }}>
+        <p style={{ fontSize: 'clamp(15px, 2.2vw, 18px)', color: textSec, maxWidth: '650px', lineHeight: 1.6, marginBottom: 'clamp(24px, 6vw, 48px)', fontWeight: 400 }}>
           Descubra oportunidades verificadas nas melhores empreiteiras, com suporte completo para visto e embarque. Sem taxas ocultas.
         </p>
 
@@ -181,21 +181,21 @@ export function HomePage() {
       </div>
 
       {/* FEATURES / HOW IT WORKS */}
-      <section style={{ position: 'relative', zIndex: 1, padding: '120px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <section style={{ position: 'relative', zIndex: 1, padding: 'clamp(48px, 12vw, 120px) var(--ssj-gutter)', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '80px' }}>
           <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.02em' }}>
             Simples. Rápido. <span style={{ color: '#c4452b' }}>Seguro.</span>
           </h2>
-          <p style={{ fontSize: '1.2rem', color: textSec, maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 'clamp(15px, 2.2vw, 18px)', color: textSec, maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
             Nossa plataforma utiliza tecnologia de ponta para garantir que sua jornada até o Japão seja livre de complicações.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 'clamp(16px, 4vw, 32px)' }}>
           
           <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(196, 69, 43, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(196, 69, 43, 0.1)', color: '#c4452b', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(196, 69, 43, 0.1)', color: '#c4452b', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'clamp(16px, 4vw, 32px)' }}>
               <Search size={32} />
             </div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Encontre a Vaga Ideal</h3>
@@ -206,7 +206,7 @@ export function HomePage() {
 
           <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(41, 75, 134, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(41, 75, 134, 0.1)', color: '#294b86', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(41, 75, 134, 0.1)', color: '#294b86', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'clamp(16px, 4vw, 32px)' }}>
               <Briefcase size={32} />
             </div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Cadastro por IA</h3>
@@ -217,7 +217,7 @@ export function HomePage() {
 
           <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(31, 122, 77, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(31, 122, 77, 0.1)', color: '#1f7a4d', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(31, 122, 77, 0.1)', color: '#1f7a4d', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'clamp(16px, 4vw, 32px)' }}>
               <PlaneTakeoff size={32} />
             </div>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Suporte COE & Visto</h3>
@@ -230,14 +230,14 @@ export function HomePage() {
       </section>
 
       {/* ENTERPRISE CALLOUT */}
-      <section style={{ position: 'relative', zIndex: 1, padding: '80px 20px', background: `linear-gradient(to right, ${glassBg}, transparent)` }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
+      <section style={{ position: 'relative', zIndex: 1, padding: 'clamp(40px, 9vw, 80px) var(--ssj-gutter)', background: `linear-gradient(to right, ${glassBg}, transparent)` }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'clamp(20px, 5vw, 40px)' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: textSec, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px' }}>
               <Globe size={18} /> Para Empreiteiras e Agências
             </div>
             <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '16px' }}>Portal B2B & Gestão de Talentos</h2>
-            <p style={{ fontSize: '1.1rem', color: textSec, maxWidth: '500px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'clamp(15px, 2vw, 17px)', color: textSec, maxWidth: '500px', lineHeight: 1.6 }}>
               Acesse nosso dashboard avançado para gerenciar candidatos, acompanhar SLAs de COE e exportar fichas diretamente no padrão Excel.
             </p>
           </div>

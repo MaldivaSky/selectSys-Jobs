@@ -1,137 +1,204 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Search, Building2, JapaneseYen, Clock, ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2, JapaneseYen, MapPin, Search, SearchX, Users } from 'lucide-react';
 import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
-import { useTheme } from '../theme/theme';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VAGAS HUB (B2C)
+   ---------------------------------------------------------------------------
+   Reescrita sobre os primitivos. Esta página não declara nenhum pixel: respiro,
+   tipografia e grade vêm de `primitivos.css`, cor vem dos tokens. Antes ela
+   carregava a própria paleta em constantes e `fontSize: '3rem'` no título —
+   que no celular ocupava três linhas e empurrava o conteúdo para baixo da
+   dobra.
+
+   A consulta também estava contra colunas inexistentes (`descricao`,
+   `salario_hora`, `tipo_contrato`, `horario`, `status`), então a lista voltava
+   vazia sempre e a tela mostrava "nenhuma vaga" mesmo com vaga publicada.
+   Agora bate com o schema real (docs/schema/schema.sql).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+interface VagaPublica {
+  id: string;
+  titulo: string;
+  empresa_japonesa: string | null;
+  provincia: string | null;
+  cidade: string | null;
+  setor: string | null;
+  salario_hora_jpy: number | null;
+  vagas_total: number;
+  vagas_preenchidas: number;
+  organizations: { nome: string } | null;
+}
 
 export function VagasHub({ lang: _lang }: { lang?: Language }) {
-  const { escuro: isDark } = useTheme();
-  const [vagas, setVagas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filtroProvincia, setFiltroProvincia] = useState('Todas');
-  
-  const pageBg = isDark ? '#0d1016' : '#f4f5f2';
-  const cardBg = isDark ? '#161b24' : '#ffffff';
-  const textPrimary = isDark ? '#e9ece8' : '#14181f';
-  const textSecondary = isDark ? '#8d968f' : '#7a827f';
-  const cardBorder = isDark ? '#29313c' : '#e0e2dc';
-  const accentIndigo = isDark ? '#7ba4de' : '#294b86';
+  const [vagas, setVagas] = useState<VagaPublica[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState('');
+  const [provincia, setProvincia] = useState('Todas');
 
   useEffect(() => {
-    async function carregarVagas() {
-      if (!supabase) return;
-      const { data, error } = await supabase
+    async function carregar() {
+      if (!supabase) {
+        setCarregando(false);
+        return;
+      }
+      const { data } = await supabase
         .from('jobs')
-        .select(`
-          id, titulo, descricao, provincia, cidade, salario_hora, tipo_contrato, horario,
-          organizations ( nome )
-        `)
-        .eq('status', 'aberta')
+        .select(
+          'id, titulo, empresa_japonesa, provincia, cidade, setor, salario_hora_jpy, vagas_total, vagas_preenchidas, organizations(nome)',
+        )
+        .eq('publicada', true)
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setVagas(data);
-      }
-      setLoading(false);
+      setVagas((data as unknown as VagaPublica[]) ?? []);
+      setCarregando(false);
     }
-    carregarVagas();
+    void carregar();
   }, []);
 
-  const provincias = ['Todas', ...Array.from(new Set(vagas.map(v => v.provincia)))];
-  const vagasFiltradas = filtroProvincia === 'Todas' ? vagas : vagas.filter(v => v.provincia === filtroProvincia);
+  const provincias = useMemo(
+    () => ['Todas', ...Array.from(new Set(vagas.map((v) => v.provincia).filter(Boolean) as string[]))],
+    [vagas],
+  );
+
+  const filtradas = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return vagas.filter((v) => {
+      if (provincia !== 'Todas' && v.provincia !== provincia) return false;
+      if (!termo) return true;
+      return [v.titulo, v.setor, v.cidade, v.empresa_japonesa]
+        .filter(Boolean)
+        .some((c) => (c as string).toLowerCase().includes(termo));
+    });
+  }, [vagas, busca, provincia]);
+
+  const temFiltro = busca.trim() !== '' || provincia !== 'Todas';
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: pageBg, color: textPrimary, padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      
-      {/* HEADER B2C */}
-      <div style={{ maxWidth: '1000px', width: '100%', textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '16px' }}>
-          Vagas de Trabalho no Japão
-        </h1>
-        <p style={{ fontSize: '1.2rem', color: textSecondary, maxWidth: '600px', margin: '0 auto' }}>
-          Encontre oportunidades nas melhores empreiteiras, com suporte completo para o visto COE e passagens.
-        </p>
-      </div>
+    <div className="ssj-page">
+      <div className="ssj-container ssj-pilha ssj-pilha--lg" style={{ maxWidth: 1000 }}>
+        <header className="ssj-centro ssj-pilha ssj-pilha--sm">
+          <h1 className="ssj-titulo-hero">Vagas de trabalho no Japão</h1>
+          <p className="ssj-lead">
+            Oportunidades em empreiteiras verificadas, com acompanhamento do COE, do visto e da passagem.
+          </p>
+        </header>
 
-      {/* FILTROS */}
-      <div style={{ maxWidth: '1000px', width: '100%', display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '12px', flex: 1, minWidth: '250px' }}>
-          <Search size={18} color={textSecondary} />
-          <input 
-            type="text" 
-            placeholder="Buscar por cargo (ex: Autopeças, Solda...)" 
-            style={{ border: 'none', background: 'transparent', outline: 'none', color: textPrimary, width: '100%', fontSize: '15px' }}
-          />
+        {/* Filtros: a linha quebra sozinha quando não cabe, sem media query. */}
+        <div className="ssj-linha">
+          <label className="ssj-campo-busca ssj-flex-1">
+            <Search size={18} aria-hidden />
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por cargo, setor ou cidade"
+              aria-label="Buscar vagas"
+            />
+          </label>
+
+          <select
+            className="ssj-input ssj-filtro-provincia"
+            value={provincia}
+            onChange={(e) => setProvincia(e.target.value)}
+            aria-label="Filtrar por província"
+          >
+            {provincias.map((p) => (
+              <option key={p} value={p}>
+                {p === 'Todas' ? 'Todas as províncias' : p}
+              </option>
+            ))}
+          </select>
         </div>
-        
-        <select 
-          value={filtroProvincia}
-          onChange={e => setFiltroProvincia(e.target.value)}
-          style={{ padding: '12px 24px', backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '12px', color: textPrimary, fontSize: '15px', fontWeight: 600, outline: 'none', minWidth: '180px' }}
-        >
-          {provincias.map(p => (
-            <option key={p} value={p}>{p === 'Todas' ? '📍 Todas as Províncias' : p}</option>
-          ))}
-        </select>
-      </div>
 
-      {/* LISTAGEM DE VAGAS */}
-      <div style={{ maxWidth: '1000px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: textSecondary }}>Carregando vagas...</div>
-        ) : vagasFiltradas.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 40px', backgroundColor: cardBg, borderRadius: '16px', border: `1px dashed ${cardBorder}` }}>
-            <h3 style={{ fontSize: '1.2rem', color: textSecondary }}>Nenhuma vaga encontrada no momento.</h3>
+        {carregando ? (
+          /* Esqueleto no lugar de "Carregando...": segura a altura do conteúdo
+             real e evita o salto de layout quando os dados chegam. */
+          <div className="ssj-pilha ssj-pilha--sm" aria-busy="true" aria-label="Carregando vagas">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="ssj-esqueleto ssj-esqueleto--cartao" />
+            ))}
+          </div>
+        ) : filtradas.length === 0 ? (
+          <div className="ssj-vazio">
+            <SearchX size={30} className="ssj-vazio__icone" aria-hidden />
+            <h2 className="ssj-subtitulo">
+              {temFiltro ? 'Nenhuma vaga com esses filtros' : 'Ainda não há vagas publicadas'}
+            </h2>
+            <p className="ssj-texto">
+              {temFiltro
+                ? 'Tente ampliar a busca ou ver todas as províncias.'
+                : 'Cadastre-se agora: assim que uma vaga abrir, sua ficha já estará na fila da agência.'}
+            </p>
+            {temFiltro ? (
+              <button
+                type="button"
+                className="ssj-btn ssj-btn--ghost"
+                onClick={() => {
+                  setBusca('');
+                  setProvincia('Todas');
+                }}
+              >
+                Limpar filtros
+              </button>
+            ) : (
+              <Link to="/candidato" className="ssj-btn ssj-btn--pri">
+                Cadastrar minha ficha
+              </Link>
+            )}
           </div>
         ) : (
-          vagasFiltradas.map(vaga => (
-            <Link 
-              key={vaga.id} 
-              to={`/vagas/${vaga.id}`}
-              style={{ textDecoration: 'none' }}
-            >
-              <div style={{ 
-                backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', padding: '24px',
-                display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', justifyContent: 'space-between',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.05)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-              >
-                
-                <div style={{ flex: 1, minWidth: '300px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: textSecondary, fontSize: '13px', fontWeight: 600 }}>
-                    <Building2 size={16} /> <span>{vaga.organizations?.nome || 'Empreiteira Oficial'}</span>
-                  </div>
-                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: textPrimary, marginBottom: '12px' }}>
-                    {vaga.titulo}
-                  </h2>
-                  
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
-                      <MapPin size={14} color={accentIndigo} /> {vaga.cidade}, {vaga.provincia}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
-                      <JapaneseYen size={14} color="#1f7a4d" /> ¥ {vaga.salario_hora}/hora
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: textSecondary, backgroundColor: isDark ? '#1c222c' : '#f4f5f2', padding: '6px 12px', borderRadius: '8px' }}>
-                      <Clock size={14} /> {vaga.tipo_contrato}
-                    </span>
-                  </div>
-                </div>
+          <>
+            <p className="ssj-texto" aria-live="polite">
+              {filtradas.length} {filtradas.length === 1 ? 'vaga encontrada' : 'vagas encontradas'}
+            </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ color: accentIndigo, fontWeight: 700, fontSize: '14px' }}>Ver detalhes</span>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: isDark ? '#1c222c' : '#f4f5f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ArrowRight size={18} color={accentIndigo} />
-                  </div>
-                </div>
+            <div className="ssj-pilha ssj-pilha--sm">
+              {filtradas.map((vaga) => {
+                const restantes = Math.max(0, vaga.vagas_total - vaga.vagas_preenchidas);
+                return (
+                  <Link key={vaga.id} to={`/vagas/${vaga.id}`} className="ssj-vaga-cartao">
+                    <div className="ssj-flex-1 ssj-pilha ssj-pilha--xs">
+                      <span className="ssj-vaga-agencia">
+                        <Building2 size={15} aria-hidden />
+                        {vaga.empresa_japonesa || vaga.organizations?.nome || 'Empreiteira parceira'}
+                      </span>
 
-              </div>
-            </Link>
-          ))
+                      <h2 className="ssj-subtitulo">{vaga.titulo}</h2>
+
+                      <div className="ssj-linha ssj-vaga-tags">
+                        {(vaga.cidade || vaga.provincia) && (
+                          <span className="ssj-tag">
+                            <MapPin size={14} aria-hidden />
+                            {[vaga.cidade, vaga.provincia].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                        {vaga.salario_hora_jpy && (
+                          <span className="ssj-tag ssj-tag--valor">
+                            <JapaneseYen size={14} aria-hidden />
+                            {vaga.salario_hora_jpy.toLocaleString('ja-JP')}/hora
+                          </span>
+                        )}
+                        {restantes > 0 && (
+                          <span className="ssj-tag">
+                            <Users size={14} aria-hidden />
+                            {restantes} {restantes === 1 ? 'posto' : 'postos'}
+                          </span>
+                        )}
+                        {vaga.setor && <span className="ssj-tag">{vaga.setor}</span>}
+                      </div>
+                    </div>
+
+                    <span className="ssj-vaga-seta" aria-hidden>
+                      <ArrowRight size={18} />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -57,20 +57,20 @@ const MEDIDAS = [
 ];
 
 const TAB_ICONS: ReactNode[] = [
-  <svg width="21" height="21" viewBox="0 0 120 120" fill="none">
+  <svg key="0" width="21" height="21" viewBox="0 0 120 120" fill="none">
     <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="7" />
     <path d="M33 78 Q60 36 87 78" stroke="currentColor" strokeWidth="9" strokeLinecap="round" />
   </svg>,
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+  <svg key="1" width="21" height="21" viewBox="0 0 24 24" fill="none">
     <circle cx="6" cy="6" r="2.4" fill="currentColor" />
     <circle cx="6" cy="18" r="2.4" fill="currentColor" />
     <path d="M11 6h8M11 18h8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
   </svg>,
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+  <svg key="2" width="21" height="21" viewBox="0 0 24 24" fill="none">
     <rect x="5" y="3" width="14" height="18" rx="2.5" stroke="currentColor" strokeWidth="2" />
     <path d="M9 9h6M9 13h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>,
-  <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+  <svg key="3" width="21" height="21" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="2" />
     <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>,
