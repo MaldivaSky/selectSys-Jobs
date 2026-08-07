@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Sun, Moon, LogIn } from 'lucide-react';
+import { Menu, X, Sun, Moon, LogIn } from 'lucide-react';
 import { BrandLockup } from '../brand/BrandMark';
 import { BRAND } from '../brand/brand';
 import { useTheme } from '../theme/theme';
@@ -11,23 +11,7 @@ interface NavbarProps {
   setLang?: (l: Language) => void;
 }
 
-const DEMOS = [
-  {
-    path: '/prototipo',
-    label: 'Protótipo interativo',
-    desc: 'O processo inteiro, do lado de quem contrata e do lado de quem viaja',
-  },
-  {
-    path: '/candidato',
-    label: 'Ficha FUJIARTE (~130 campos)',
-    desc: 'Formulário oficial da FUJIARTE com biometria e LGPD em 7 etapas',
-  },
-  {
-    path: '/admin',
-    label: 'Kanban do Pipeline',
-    desc: 'Visão do analista e empreiteira com os 17 estados do funil',
-  },
-];
+
 
 export function Navbar({ lang: _lang }: NavbarProps) {
   const { pathname } = useLocation();
@@ -57,7 +41,7 @@ export function Navbar({ lang: _lang }: NavbarProps) {
     };
   }, [menu]);
 
-  const emDemo = DEMOS.some((d) => d.path === pathname);
+
 
   return (
     <header className={`ssj-nav${gaveta ? ' ssj-nav--open' : ''}`}>
@@ -72,38 +56,10 @@ export function Navbar({ lang: _lang }: NavbarProps) {
               Plataforma
             </NavLink>
 
-            <div className="ssj-menu" ref={menuRef}>
-              <button
-                className="ssj-nav__link"
-                onClick={() => setMenu((v) => !v)}
-                aria-expanded={menu}
-                aria-haspopup="true"
-                style={{
-                  gap: 6,
-                  cursor: 'pointer',
-                  color: emDemo ? 'var(--ssj-text)' : undefined,
-                  fontWeight: emDemo ? 600 : undefined,
-                  background: emDemo ? 'var(--ssj-surface-2)' : undefined,
-                }}
-              >
-                Demonstrações
-                <ChevronDown size={15} style={{ transform: menu ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} />
-              </button>
 
-              {menu && (
-                <div className="ssj-menu__panel" role="menu">
-                  {DEMOS.map((d) => (
-                    <Link key={d.path} to={d.path} className="ssj-menu__item" role="menuitem">
-                      <strong>{d.label}</strong>
-                      <span>{d.desc}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <NavLink to="/fujiarte" className="ssj-nav__link">
-              Case FUJIARTE
+            <NavLink to="/vagas" className="ssj-nav__link">
+              Ver Vagas
             </NavLink>
           </nav>
 
@@ -144,16 +100,9 @@ export function Navbar({ lang: _lang }: NavbarProps) {
             <NavLink to="/funcionalidades" className="ssj-nav__link">
               Plataforma
             </NavLink>
-            <span className="ssj-label" style={{ padding: '14px 14px 6px' }}>
-              Demonstrações
-            </span>
-            {DEMOS.map((d) => (
-              <NavLink key={d.path} to={d.path} className="ssj-nav__link">
-                {d.label}
-              </NavLink>
-            ))}
-            <NavLink to="/fujiarte" className="ssj-nav__link">
-              Case FUJIARTE
+
+            <NavLink to="/vagas" className="ssj-nav__link">
+              Ver Vagas
             </NavLink>
             <Link to="/login" className="ssj-btn ssj-btn--ghost ssj-btn--block" style={{ marginTop: 8 }}>
               Entrar no Portal

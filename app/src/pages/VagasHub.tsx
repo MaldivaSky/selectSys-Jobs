@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Briefcase, Search, Building2, JapaneseYen, Clock, ArrowRight } from 'lucide-react';
+import { MapPin, Search, Building2, JapaneseYen, Clock, ArrowRight } from 'lucide-react';
 import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
 import { useTheme } from '../theme/theme';
 
-export function VagasHub({ lang }: { lang: Language }) {
+export function VagasHub({ lang: _lang }: { lang?: Language }) {
   const { escuro: isDark } = useTheme();
   const [vagas, setVagas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

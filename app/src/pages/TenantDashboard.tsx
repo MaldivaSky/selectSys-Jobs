@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../dados/supabase';
-import { Plus, Briefcase, Users, LayoutDashboard, Building2, Calendar, FileText } from 'lucide-react';
-import type { Language } from '../translations';
+import { Plus, Users, LayoutDashboard, Building2, Calendar, FileText, Briefcase } from 'lucide-react';
 import { useTheme } from '../theme/theme';
 
-export function TenantDashboard({ lang }: { lang: Language }) {
+export function TenantDashboard() {
   const { escuro: isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'vagas' | 'candidatos' | 'configuracoes'>('vagas');
   const [vagas, setVagas] = useState<any[]>([]);
   const [candidaturas, setCandidaturas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tenantName, setTenantName] = useState<string>('Carregando...');
+  const [tenantId, setTenantId] = useState<string | null>(null);
   
   const [novaVaga, setNovaVaga] = useState({
     titulo: '',
@@ -20,6 +21,11 @@ export function TenantDashboard({ lang }: { lang: Language }) {
     tipo_contrato: 'Haken (Temporário)'
   });
   const [modalNovaVaga, setModalNovaVaga] = useState(false);
+
+  // Estados de Configuração da Agência
+  const [configLogo, setConfigLogo] = useState('');
+  const [configCor, setConfigCor] = useState('#294b86');
+  const [tenantSlug, setTenantSlug] = useState('');
 
   // PALETA DO DASHBOARD (B2B)
   const pageBg = isDark ? '#0d1016' : '#f0f2f5';
@@ -37,45 +43,67 @@ export function TenantDashboard({ lang }: { lang: Language }) {
   async function carregarDados() {
     if (!supabase) return;
     setLoading(true);
-    // Aqui buscaríamos pelo ID da organização da sessão atual.
-    // Como estamos homologando, vamos puxar da FUJIARTE criada no seed.
-    const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
     
-    if (orgData) {
-      // Busca vagas
-      const { data: vagasData } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('organization_id', orgData.id)
-        .order('created_at', { ascending: false });
-      
-      if (vagasData) setVagas(vagasData);
-
-      // Busca candidaturas reais para o Kanban
-      const { data: candidaturasData } = await supabase
-        .from('applications')
-        .select(`
-          id, status, updated_at, 
-          candidates (nome_completo, telefone, cidade, estado),
-          jobs (titulo)
-        `)
-        .eq('organization_id', orgData.id);
-        
-      if (candidaturasData) setCandidaturas(candidaturasData);
+    // 1. Pegar usuário logado
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setTenantName("Acesso Negado");
+      setLoading(false);
+      return;
     }
+
+    // 2. Descobrir qual organização ele pertence
+    const { data: membership } = await supabase
+      .from('memberships')
+      .select('organization_id, organizations(id, nome, slug, logo_url, cor_primaria)')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!membership || !membership.organizations) {
+      setTenantName("Sem Organização Associada");
+      setLoading(false);
+      return;
+    }
+
+    const orgId = (membership.organizations as any).id;
+    setTenantId(orgId);
+    setTenantName((membership.organizations as any).nome);
+    setTenantSlug((membership.organizations as any).slug || '');
+    setConfigLogo((membership.organizations as any).logo_url || '');
+    setConfigCor((membership.organizations as any).cor_primaria || '#294b86');
+    
+    // 3. Busca vagas
+    const { data: vagasData } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false });
+    
+    if (vagasData) setVagas(vagasData);
+
+    // 4. Busca candidaturas
+    const { data: candidaturasData } = await supabase
+      .from('applications')
+      .select(`
+        id, status, updated_at, 
+        candidates (nome_completo, telefone, cidade, estado),
+        jobs (titulo)
+      `)
+      .eq('organization_id', orgId);
+      
+    if (candidaturasData) setCandidaturas(candidaturasData);
+    
     setLoading(false);
   }
 
   async function handleCriarVaga(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return alert("Erro: Conexão Supabase ausente.");
-    
-    const { data: orgData } = await supabase.from('organizations').select('id').eq('slug', 'fujiarte').single();
-    if (!orgData) return alert("Erro: Organização não encontrada.");
+    if (!tenantId) return alert("Erro: Organização não identificada.");
 
     const payload = {
       ...novaVaga,
-      organization_id: orgData.id,
+      organization_id: tenantId,
       salario_hora: parseFloat(novaVaga.salario_hora),
       status: 'aberta'
     };
@@ -97,10 +125,14 @@ export function TenantDashboard({ lang }: { lang: Language }) {
       {/* SIDEBAR B2B */}
       <aside style={{ width: '280px', backgroundColor: sidebarBg, borderRight: `1px solid ${cardBorder}`, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '24px', borderBottom: `1px solid ${cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: accentPri, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Building2 size={18} color="#fff" />
-          </div>
-          <div style={{ fontWeight: 700, fontSize: '16px' }}>FUJIARTE</div>
+          {configLogo ? (
+            <img src={configLogo} alt={tenantName} style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover', border: `1px solid ${cardBorder}` }} />
+          ) : (
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: configCor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={18} color="#fff" />
+            </div>
+          )}
+          <div style={{ fontWeight: 700, fontSize: '16px', textTransform: 'uppercase' }}>{tenantName}</div>
         </div>
         
         <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -244,6 +276,57 @@ export function TenantDashboard({ lang }: { lang: Language }) {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'configuracoes' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
+            <div>
+              <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Configurações da Agência</h1>
+              <p style={{ color: textSecondary, marginTop: '4px' }}>Personalize a identidade visual e o link de captação da sua agência.</p>
+            </div>
+
+            <div style={{ backgroundColor: cardBg, padding: '32px', borderRadius: '16px', border: `1px solid ${cardBorder}`, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Link Único de Captação B2C</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <input readOnly value={`https://app.selectsys.com/c/${tenantSlug}`} style={{ flex: 1, padding: '12px 16px', borderRadius: '8px', border: `1px solid ${cardBorder}`, backgroundColor: isDark ? '#1a212d' : '#f4f5f7', color: textPrimary, fontFamily: 'monospace' }} />
+                  <button onClick={() => { navigator.clipboard.writeText(`https://app.selectsys.com/c/${tenantSlug}`); alert('Link copiado!'); }} style={{ padding: '12px 20px', borderRadius: '8px', backgroundColor: accentPri, color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                    Copiar Link
+                  </button>
+                </div>
+                <p style={{ fontSize: '12px', color: textSecondary, marginTop: '8px' }}>Compartilhe este link nas suas redes sociais para atrair candidatos diretamente para sua base.</p>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: cardBorder }} />
+
+              <div style={{ display: 'flex', gap: '24px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>URL do Logo</label>
+                  <input value={configLogo} onChange={e => setConfigLogo(e.target.value)} placeholder="https://..." style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${cardBorder}`, backgroundColor: pageBg, color: textPrimary }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Cor Primária</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input type="color" value={configCor} onChange={e => setConfigCor(e.target.value)} style={{ width: '40px', height: '40px', padding: 0, border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
+                    <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>{configCor}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button onClick={async () => {
+                  if (!supabase) return;
+                  const { error } = await supabase.from('organizations').update({ logo_url: configLogo, cor_primaria: configCor }).eq('id', tenantId);
+                  if (error) alert('Erro ao salvar: ' + error.message);
+                  else alert('Configurações salvas com sucesso!');
+                }} style={{ padding: '12px 24px', borderRadius: '8px', backgroundColor: accentPri, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
+                  Salvar Alterações
+                </button>
+              </div>
+
+            </div>
           </div>
         )}
 

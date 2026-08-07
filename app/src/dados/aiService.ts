@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 /**
  * Serviço de Integração B2B (Adapter Pattern)
  * Utiliza o modelo DeepSeek V3 (preço hiper otimizado) para extrair

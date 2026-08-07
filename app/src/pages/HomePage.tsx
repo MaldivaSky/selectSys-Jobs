@@ -1,157 +1,251 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ArrowRight, Search, ShieldCheck, MapPin, 
-  PlaneTakeoff, Briefcase, ChevronRight, CheckCircle2
+  PlaneTakeoff, Briefcase,
+  Globe, ChevronRight, UserCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/theme';
-import { BrandMark } from '../brand/BrandMark';
 
 export function HomePage() {
   const { escuro: isDark } = useTheme();
+  const [scrollY, setScrollY] = useState(0);
 
-  // Paleta Premium B2C
-  const pageBg = isDark ? '#0d1016' : '#ffffff';
-  const cardBg = isDark ? '#161b24' : '#f8f9fa';
-  const cardBorder = isDark ? '#29313c' : '#e9ecef';
-  const textPrimary = isDark ? '#e9ece8' : '#14181f';
-  const textSecondary = isDark ? '#8d968f' : '#6c757d';
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Premium B2C Colors
+  const bg = isDark ? '#05070a' : '#f8f9fa';
+  const textPri = isDark ? '#ffffff' : '#000000';
+  const textSec = isDark ? '#8d96a0' : '#6c757d';
   
-  const accentPri = '#c4452b'; // Vermelho Japonês (Shu)
-  const accentPriHover = '#a33620';
-  const accentSec = isDark ? '#7ba4de' : '#294b86'; // Azul Anil (Indigo)
+  // Brand Gradients
+  const gradientPrimary = 'linear-gradient(135deg, #c4452b 0%, #ff6b4a 100%)';
+  const gradientText = 'linear-gradient(to right, #ffffff, #a0aab5)';
+  const glassBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
+  const glassBorder = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 
   return (
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      backgroundColor: pageBg,
-      color: textPrimary,
+      backgroundColor: bg,
+      color: textPri,
       fontFamily: 'var(--ssj-font-sans)',
-      display: 'flex',
-      flexDirection: 'column'
+      overflowX: 'hidden'
     }}>
+      {/* GLOBAL CSS ANIMATIONS (Injetadas inline) */}
+      <style>{`
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+          100% { transform: translateY(0px); }
+        }
+        @keyframes pulseGlow {
+          0% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.05); }
+          100% { opacity: 0.4; transform: scale(1); }
+        }
+        @keyframes shine {
+          0% { left: -100%; }
+          100% { left: 200%; }
+        }
+        @keyframes scrollMarquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .hero-title {
+          background: ${isDark ? gradientText : 'linear-gradient(to right, #1a1a1a, #4a4a4a)'};
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+          background: ${glassBg};
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid ${glassBorder};
+          border-radius: 24px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+          transform: translateY(-5px);
+          background: ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'};
+          border: 1px solid rgba(196, 69, 43, 0.3);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .premium-btn {
+          position: relative;
+          overflow: hidden;
+          background: ${gradientPrimary};
+          color: white;
+          box-shadow: 0 10px 30px rgba(196, 69, 43, 0.3);
+          transition: all 0.3s ease;
+        }
+        .premium-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 15px 40px rgba(196, 69, 43, 0.4);
+        }
+        .premium-btn::after {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%;
+          width: 50%; height: 100%;
+          background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+          transform: skewX(-25deg);
+          animation: shine 6s infinite;
+        }
+      `}</style>
+
+      {/* DYNAMIC BACKGROUND ORBS */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{
+          position: 'absolute', top: '-10%', left: '50%', transform: `translate(-50%, ${scrollY * 0.2}px)`,
+          width: '80vw', height: '80vw', maxWidth: '800px', maxHeight: '800px',
+          background: 'radial-gradient(circle, rgba(196, 69, 43, 0.15) 0%, transparent 60%)',
+          animation: 'pulseGlow 8s infinite alternate', filter: 'blur(60px)'
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-20%', right: '-10%', transform: `translateY(${-scrollY * 0.1}px)`,
+          width: '60vw', height: '60vw', maxWidth: '600px', maxHeight: '600px',
+          background: 'radial-gradient(circle, rgba(41, 75, 134, 0.1) 0%, transparent 60%)',
+          animation: 'pulseGlow 10s infinite alternate-reverse', filter: 'blur(60px)'
+        }} />
+      </div>
 
       {/* HERO SECTION */}
-      <section style={{
-        position: 'relative',
-        width: '100%',
-        padding: '120px 20px 80px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        borderBottom: `1px solid ${cardBorder}`
-      }}>
-        {/* Background Gradients */}
-        <div style={{
-          position: 'absolute', top: '-20%', left: '50%', transform: 'translateX(-50%)',
-          width: '80%', height: '80%', background: `radial-gradient(circle, ${accentPri}15 0%, transparent 70%)`,
-          zIndex: 0, pointerEvents: 'none'
-        }} />
-
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px', borderRadius: '30px', backgroundColor: `${accentPri}15`, color: accentPri, fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            <ShieldCheck size={16} /> Portal Oficial e Verificado
-          </div>
-
-          <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em' }}>
-            A sua ponte segura para o <br />
-            <span style={{ color: accentPri }}>trabalho no Japão.</span>
-          </h1>
-
-          <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.25rem)', lineHeight: 1.6, color: textSecondary, maxWidth: '700px', fontWeight: 500 }}>
-            Conectamos brasileiros descendentes diretamente com as maiores e mais seguras empreiteiras do Japão. Sem taxas ocultas, com suporte total de visto e embarque.
-          </p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
-            <Link to="/vagas" style={{
-              display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 40px', borderRadius: '12px',
-              backgroundColor: accentPri, color: '#fff', fontSize: '16px', fontWeight: 700, textDecoration: 'none',
-              boxShadow: `0 8px 25px ${accentPri}40`, transition: 'all 0.2s ease'
-            }}>
-              <Search size={20} /> Explorar Vagas no Japão
-            </Link>
-            
-            <Link to="/candidato" style={{
-              display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 40px', borderRadius: '12px',
-              backgroundColor: cardBg, color: textPrimary, fontSize: '16px', fontWeight: 700, textDecoration: 'none',
-              border: `1.5px solid ${cardBorder}`, transition: 'all 0.2s ease'
-            }}>
-              Já tenho cadastro
-            </Link>
-          </div>
-
-          {/* Trust Badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px', marginTop: '48px', opacity: 0.8, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: textSecondary }}>
-              <CheckCircle2 size={18} color={accentPri} /> Vagas Validadas
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: textSecondary }}>
-              <CheckCircle2 size={18} color={accentPri} /> Suporte Jurídico (COE)
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: textSecondary }}>
-              <CheckCircle2 size={18} color={accentPri} /> Zero Custo para Candidato
-            </div>
-          </div>
+      <section style={{ position: 'relative', zIndex: 1, paddingTop: '160px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingLeft: '20px', paddingRight: '20px' }}>
+        
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', borderRadius: '100px', background: glassBg, border: `1px solid ${glassBorder}`, marginBottom: '40px', backdropFilter: 'blur(10px)' }}>
+          <ShieldCheck size={16} color="#c4452b" />
+          <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Portal Oficial de Recrutamento</span>
         </div>
-      </section>
 
-      {/* HOW IT WORKS */}
-      <section style={{ padding: '100px 20px', backgroundColor: pageBg }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '64px' }}>
-          
-          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '16px' }}>Como Funciona?</h2>
-            <p style={{ fontSize: '1.1rem', color: textSecondary, lineHeight: 1.6 }}>Nosso processo foi desenhado para ser transparente, rápido e totalmente digital.</p>
-          </div>
+        <h1 className="hero-title" style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.04em', maxWidth: '1000px', margin: '0 auto 32px' }}>
+          O caminho mais rápido <br /> para o <span style={{ background: gradientPrimary, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Japão.</span>
+        </h1>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
-            
-            {/* Step 1 */}
-            <div style={{ padding: '32px', backgroundColor: cardBg, borderRadius: '24px', border: `1px solid ${cardBorder}`, position: 'relative' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: `${accentPri}15`, color: accentPri, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                <Search size={24} />
-              </div>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px' }}>1. Escolha a Vaga Ideal</h3>
-              <p style={{ color: textSecondary, lineHeight: 1.6 }}>Navegue pelo nosso portal e escolha a oportunidade que mais se adapta ao seu perfil. Vagas em Aichi, Shizuoka e mais.</p>
-            </div>
+        <p style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', color: textSec, maxWidth: '650px', lineHeight: 1.6, marginBottom: '48px', fontWeight: 400 }}>
+          Descubra oportunidades verificadas nas melhores empreiteiras, com suporte completo para visto e embarque. Sem taxas ocultas.
+        </p>
 
-            {/* Step 2 */}
-            <div style={{ padding: '32px', backgroundColor: cardBg, borderRadius: '24px', border: `1px solid ${cardBorder}`, position: 'relative' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: `${accentSec}15`, color: accentSec, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                <Briefcase size={24} />
-              </div>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px' }}>2. Cadastro Facilitado com IA</h3>
-              <p style={{ color: textSecondary, lineHeight: 1.6 }}>Faça upload do seu currículo em PDF. Nossa Inteligência Artificial preenche sua ficha automaticamente, poupando seu tempo.</p>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ padding: '32px', backgroundColor: cardBg, borderRadius: '24px', border: `1px solid ${cardBorder}`, position: 'relative' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: `${accentPri}15`, color: accentPri, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                <PlaneTakeoff size={24} />
-              </div>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px' }}>3. Emissão de Visto e Embarque</h3>
-              <p style={{ color: textSecondary, lineHeight: 1.6 }}>A empreiteira cuida do COE e nós te ajudamos em todo o processo do visto. Tudo transparente pelo seu painel do candidato.</p>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* CTA SECTION */}
-      <section style={{ padding: '100px 20px', backgroundColor: cardBg, borderTop: `1px solid ${cardBorder}` }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 800 }}>Pronto para mudar o rumo da sua carreira?</h2>
-          <p style={{ fontSize: '1.1rem', color: textSecondary, maxWidth: '600px', lineHeight: 1.6 }}>Junte-se a milhares de brasileiros que construíram uma vida segura e próspera no Japão através dos nossos parceiros oficiais.</p>
-          <Link to="/vagas" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 48px', borderRadius: '12px',
-            backgroundColor: accentPri, color: '#fff', fontSize: '16px', fontWeight: 700, textDecoration: 'none',
-            boxShadow: `0 8px 25px ${accentPri}40`
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link to="/vagas" className="premium-btn" style={{
+            display: 'flex', alignItems: 'center', gap: '12px', padding: '18px 40px', borderRadius: '100px',
+            fontSize: '17px', fontWeight: 700, textDecoration: 'none'
           }}>
-            Ver as Vagas Disponíveis <ArrowRight size={20} />
+            Ver Vagas Disponíveis <ArrowRight size={20} />
+          </Link>
+          <Link to="/candidato" className="glass-card" style={{
+            display: 'flex', alignItems: 'center', gap: '12px', padding: '18px 40px', borderRadius: '100px',
+            color: textPri, fontSize: '17px', fontWeight: 600, textDecoration: 'none'
+          }}>
+            <UserCircle2 size={20} /> Portal do Candidato
+          </Link>
+        </div>
+
+        {/* HERO STATS */}
+        <div style={{ display: 'flex', gap: '48px', marginTop: '80px', flexWrap: 'wrap', justifyContent: 'center', opacity: 0.8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: textPri }}>+500</span>
+            <span style={{ fontSize: '14px', color: textSec, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>Vagas Abertas</span>
+          </div>
+          <div style={{ width: '1px', background: glassBorder }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: textPri }}>100%</span>
+            <span style={{ fontSize: '14px', color: textSec, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>Processo Gratuito</span>
+          </div>
+          <div style={{ width: '1px', background: glassBorder }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: textPri }}>24h</span>
+            <span style={{ fontSize: '14px', color: textSec, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px' }}>Retorno Médio</span>
+          </div>
+        </div>
+      </section>
+
+      {/* MARQUEE */}
+      <div style={{ position: 'relative', width: '100%', overflow: 'hidden', padding: '30px 0', borderTop: `1px solid ${glassBorder}`, borderBottom: `1px solid ${glassBorder}`, background: glassBg, zIndex: 1 }}>
+        <div style={{ display: 'flex', width: '200%', animation: 'scrollMarquee 30s linear infinite' }}>
+          {[1, 2].map(i => (
+            <div key={i} style={{ display: 'flex', width: '50%', justifyContent: 'space-around', alignItems: 'center' }}>
+              {['AICHI', 'SHIZUOKA', 'MIE', 'GUNMA', 'KANAGAWA'].map(prov => (
+                <div key={prov} style={{ display: 'flex', alignItems: 'center', gap: '16px', color: textSec, fontSize: '1.5rem', fontWeight: 800, letterSpacing: '2px', opacity: 0.5 }}>
+                  <MapPin size={24} /> {prov}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURES / HOW IT WORKS */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '120px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+          <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, marginBottom: '24px', letterSpacing: '-0.02em' }}>
+            Simples. Rápido. <span style={{ color: '#c4452b' }}>Seguro.</span>
+          </h2>
+          <p style={{ fontSize: '1.2rem', color: textSec, maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
+            Nossa plataforma utiliza tecnologia de ponta para garantir que sua jornada até o Japão seja livre de complicações.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+          
+          <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(196, 69, 43, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(196, 69, 43, 0.1)', color: '#c4452b', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+              <Search size={32} />
+            </div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Encontre a Vaga Ideal</h3>
+            <p style={{ color: textSec, lineHeight: 1.7, fontSize: '1.1rem' }}>
+              Acesso exclusivo a centenas de vagas verificadas nas maiores indústrias automotivas e eletrônicas do Japão.
+            </p>
+          </div>
+
+          <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(41, 75, 134, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(41, 75, 134, 0.1)', color: '#294b86', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+              <Briefcase size={32} />
+            </div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Cadastro por IA</h3>
+            <p style={{ color: textSec, lineHeight: 1.7, fontSize: '1.1rem' }}>
+              Basta enviar seu currículo atual. Nossa Inteligência Artificial preenche toda a papelada complexa exigida pelas empreiteiras automaticamente.
+            </p>
+          </div>
+
+          <div className="glass-card" style={{ padding: '40px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(31, 122, 77, 0.1) 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+            <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(31, 122, 77, 0.1)', color: '#1f7a4d', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px' }}>
+              <PlaneTakeoff size={32} />
+            </div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px' }}>Suporte COE & Visto</h3>
+            <p style={{ color: textSec, lineHeight: 1.7, fontSize: '1.1rem' }}>
+              Acompanhe o status do seu Certificado de Elegibilidade (COE) em tempo real. Auxílio jurídico completo até o dia do embarque.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ENTERPRISE CALLOUT */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '80px 20px', background: `linear-gradient(to right, ${glassBg}, transparent)` }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: textSec, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px' }}>
+              <Globe size={18} /> Para Empreiteiras e Agências
+            </div>
+            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '16px' }}>Portal B2B & Gestão de Talentos</h2>
+            <p style={{ fontSize: '1.1rem', color: textSec, maxWidth: '500px', lineHeight: 1.6 }}>
+              Acesse nosso dashboard avançado para gerenciar candidatos, acompanhar SLAs de COE e exportar fichas diretamente no padrão Excel.
+            </p>
+          </div>
+          <Link to="/login" className="glass-card" style={{
+            display: 'flex', alignItems: 'center', gap: '12px', padding: '20px 40px', borderRadius: '16px',
+            color: textPri, fontSize: '16px', fontWeight: 600, textDecoration: 'none'
+          }}>
+            Acessar Área Empresarial <ChevronRight size={20} color="#c4452b" />
           </Link>
         </div>
       </section>

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MapPin, Briefcase, Building2, JapaneseYen, Clock, ArrowLeft, Send } from 'lucide-react';
+import { MapPin, Building2, JapaneseYen, Clock, ArrowLeft, Send } from 'lucide-react';
 import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
 import { useTheme } from '../theme/theme';
 
-export function VagaDetalhe({ lang }: { lang: Language }) {
+export function VagaDetalhe({ lang: _lang }: { lang?: Language }) {
   const { id } = useParams();
   const { escuro: isDark } = useTheme();
   const [vaga, setVaga] = useState<any>(null);
