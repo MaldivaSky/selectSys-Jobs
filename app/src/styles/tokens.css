@@ -1,0 +1,243 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 01. TOKENS
+   Fonte única da verdade. NENHUM valor de cor, fonte, raio, sombra ou espaço
+   deve ser escrito direto num componente: use sempre var(--ssj-*).
+   Base visual: protótipo "SelectSys Jobs" (Brasil → Japão).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Marca ───────────────────────────────────────────────────────────── */
+  --ssj-ink: #14181f;        /* tinta: títulos, superfícies escuras         */
+  --ssj-ink-2: #3a4048;      /* texto corrido sobre papel                    */
+  --ssj-indigo: #294b86;     /* ação primária, estado "em andamento"        */
+  --ssj-indigo-2: #3d64a3;
+  --ssj-shu: #c4452b;        /* vermelho japonês: destaque, marca, alerta   */
+  --ssj-shu-2: #a53823;
+  --ssj-verde: #1f9d57;      /* verde Brasil: origem, sucesso                */
+  --ssj-verde-2: #1f7a4d;
+  --ssj-ambar: #c99a2e;      /* trânsito, atenção                            */
+
+  /* Par preenchimento + rótulo. Destaque e fundo de botão são trabalhos
+     DIFERENTES: no escuro o destaque clareia, então o rótulo tem de escurecer
+     junto — senão vira texto branco sobre azul claro e some. */
+  --ssj-fill-pri: #294b86;
+  --ssj-on-fill-pri: #ffffff;   /* 8.6:1 */
+  --ssj-fill-seal: #c4452b;
+  --ssj-on-fill-seal: #ffffff;  /* 5.1:1 */
+
+  /* ── Superfícies ─────────────────────────────────────────────────────── */
+  --ssj-paper: #f4f5f2;      /* fundo da aplicação                           */
+  --ssj-paper-grad: radial-gradient(120% 120% at 50% -10%, #eef0ec 0%, #e0e3dd 70%);
+  --ssj-surface: #ffffff;    /* cartões                                      */
+  --ssj-surface-2: #f7f8f5;  /* cartões recuados, zebra                      */
+  --ssj-surface-ink: #14181f;/* blocos escuros                               */
+
+  /* ── Texto ─────────────────────────────────────────────────────────────
+     Todos os tons abaixo passam AA (≥4.5:1) sobre papel/superfície. Cinza
+     claro decorativo não carrega informação. */
+  --ssj-text: #14181f;       /* 15.8:1                                       */
+  --ssj-text-2: #3a4048;     /* 10.1:1                                       */
+  --ssj-muted: #616a66;      /* 5.3:1 — legendas e rótulos                   */
+  --ssj-faint: #6f7773;      /* 4.6:1 — metadado, ainda legível              */
+  --ssj-on-ink: #f4f2ec;     /* texto sobre superfície escura                */
+  --ssj-on-ink-muted: #a9b4c9;
+
+  /* ── Traços ──────────────────────────────────────────────────────────── */
+  --ssj-rule: #e0e2dc;       /* borda padrão de cartão                       */
+  --ssj-rule-2: #e6e8e2;     /* divisórias                                   */
+  --ssj-rule-3: #cdd0c8;     /* borda de ênfase                              */
+
+  /* ── Tonais (fundo claro + texto forte da mesma família) ─────────────── */
+  --ssj-indigo-wash: #eef2fb;
+  --ssj-indigo-line: #cfd9ee;
+  --ssj-shu-wash: #fbf1ee;
+  --ssj-shu-wash-2: #f7e6e2;
+  --ssj-shu-line: #f0d9d3;
+  --ssj-verde-wash: #e2f0e9;
+  --ssj-verde-line: #cfe6da;
+  --ssj-verde-ink: #1f7a4d;
+  --ssj-ambar-wash: #f6edda;
+  --ssj-ambar-ink: #8a6a1c;
+
+  /* ── Tipografia ──────────────────────────────────────────────────────── */
+  --ssj-font-display: 'IBM Plex Sans', 'IBM Plex Sans JP', system-ui, -apple-system, sans-serif;
+  --ssj-font-sans: 'IBM Plex Sans', 'IBM Plex Sans JP', system-ui, -apple-system, sans-serif;
+  --ssj-font-mono: 'IBM Plex Mono', 'IBM Plex Sans JP', ui-monospace, monospace;
+
+  /* Escala fluida: o mesmo componente serve mobile e desktop sem media query.
+     PISO DE ACESSIBILIDADE: nada de texto abaixo de 12px no produto. Corpo em
+     16px (padrão do navegador) — o público lê no celular, muitas vezes com a
+     vista cansada depois do turno. Legibilidade vence densidade, sempre. */
+  --ssj-t-display: clamp(30px, 6vw, 48px);
+  --ssj-t-h1: clamp(26px, 4.6vw, 38px);
+  --ssj-t-h2: clamp(21px, 3.2vw, 28px);
+  --ssj-t-h3: clamp(17px, 2.2vw, 21px);
+  --ssj-t-body: 16px;      /* corpo                                          */
+  --ssj-t-sm: 14px;        /* apoio, botões, navegação                       */
+  --ssj-t-xs: 12.5px;      /* metadado — PISO absoluto                       */
+  --ssj-t-label: 12px;     /* rótulo mono em caixa alta                      */
+
+  --ssj-lh-body: 1.65;     /* respiro para leitura longa                     */
+  --ssj-lh-tight: 1.25;
+
+  --ssj-track-display: -0.022em;  /* títulos respiram menos                  */
+  --ssj-track-label: 0.14em;      /* rótulos mono respiram mais              */
+
+  /* ── Espaçamento (escala de 4) ───────────────────────────────────────── */
+  --ssj-s1: 4px;
+  --ssj-s2: 8px;
+  --ssj-s3: 12px;
+  --ssj-s4: 16px;
+  --ssj-s5: 22px;
+  --ssj-s6: 32px;
+  --ssj-s7: 48px;
+  --ssj-s8: 72px;
+
+  /* ── Raios ───────────────────────────────────────────────────────────── */
+  --ssj-r-sm: 8px;
+  --ssj-r-md: 13px;
+  --ssj-r-lg: 16px;
+  --ssj-r-xl: 20px;
+  --ssj-r-pill: 999px;
+
+  /* ── Sombras ─────────────────────────────────────────────────────────── */
+  --ssj-shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.04);
+  --ssj-shadow: 0 4px 20px rgba(20, 24, 31, 0.06), 0 12px 36px -16px rgba(20, 24, 31, 0.16);
+  --ssj-shadow-lg: 0 40px 90px -40px rgba(13, 16, 22, 0.7);
+
+  /* ── Movimento ───────────────────────────────────────────────────────── */
+  --ssj-ease: cubic-bezier(0.4, 0, 0.15, 1);
+  --ssj-fast: 0.18s;
+  --ssj-base: 0.28s;
+  --ssj-slow: 0.42s;
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --ssj-max: 1200px;
+  --ssj-gutter: clamp(16px, 4vw, 32px);
+  --ssj-nav-h: 72px;
+  --ssj-z-nav: 50;
+  --ssj-z-overlay: 90;
+}
+
+/* ── Tema escuro ───────────────────────────────────────────────────────────
+   Só as superfícies e o texto invertem; as cores de marca continuam sendo a
+   mesma marca (clareadas o suficiente para passar contraste sobre o escuro). */
+:root[data-theme='dark'] {
+  --ssj-ink: #e9ece8;
+  --ssj-ink-2: #c3c9c5;
+  --ssj-indigo: #7ba4de;
+  --ssj-indigo-2: #9dbde9;
+  --ssj-shu: #e8785d;
+  --ssj-shu-2: #f09a83;
+  --ssj-verde: #4fc287;
+  --ssj-verde-2: #6fd3a0;
+  --ssj-ambar: #ddb45c;
+
+  --ssj-fill-pri: #7ba4de;
+  --ssj-on-fill-pri: #0b1220;   /* 9.1:1 sobre o azul claro */
+  --ssj-fill-seal: #e8785d;
+  --ssj-on-fill-seal: #21100b;  /* 7.4:1 sobre o coral      */
+
+  --ssj-paper: #0d1016;
+  --ssj-paper-grad: radial-gradient(120% 120% at 50% -10%, #1a202b 0%, #0d1016 70%);
+  --ssj-surface: #161b24;
+  --ssj-surface-2: #1c222c;
+  --ssj-surface-ink: #090c11;
+
+  --ssj-text: #e9ece8;
+  --ssj-text-2: #c3c9c5;
+  --ssj-muted: #8d968f;
+  --ssj-faint: #6d766f;
+  --ssj-on-ink: #f4f2ec;
+  --ssj-on-ink-muted: #97a3b8;
+
+  --ssj-rule: #29313c;
+  --ssj-rule-2: #222933;
+  --ssj-rule-3: #38424f;
+
+  --ssj-indigo-wash: #182338;
+  --ssj-indigo-line: #24344f;
+  --ssj-shu-wash: #2c1a15;
+  --ssj-shu-wash-2: #3a221b;
+  --ssj-shu-line: #4a2a21;
+  --ssj-verde-wash: #12291e;
+  --ssj-verde-line: #1d3b2c;
+  --ssj-verde-ink: #6fd3a0;
+  --ssj-ambar-wash: #2c2412;
+  --ssj-ambar-ink: #ddb45c;
+
+  --ssj-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ssj-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 14px 40px -16px rgba(0, 0, 0, 0.8);
+  --ssj-shadow-lg: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTEXTOS DE COR  —  a regra que resolve a classe inteira do problema
+   ---------------------------------------------------------------------------
+   Nem toda superfície acompanha o tema. Um bloco de tinta continua escuro no
+   tema claro; a tela simulada de um celular continua clara no tema escuro. Se
+   o texto dentro dessas áreas herdar o token do tema do site, ele some.
+
+   Então a superfície declara o contexto dela e TUDO que estiver dentro passa a
+   ler o token certo — em qualquer tema, sem exceção e sem remendo por página:
+
+     <div class="ssj-card--ink">…</div>        já vem com contexto escuro
+     <section class="ssj-section--ink">…</section>
+     <div class="ssj-device__screen">…</div>   já vem com contexto claro
+     <div class="ssj-on-dark">…</div>          para qualquer superfície própria
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.ssj-on-light,
+.ssj-device__screen {
+  --ssj-text: #14181f;
+  --ssj-text-2: #3a4048;
+  --ssj-muted: #616a66;
+  --ssj-faint: #6f7773;
+  --ssj-surface: #ffffff;
+  --ssj-surface-2: #f7f8f5;
+  --ssj-paper: #f4f5f2;
+  --ssj-rule: #e0e2dc;
+  --ssj-rule-2: #e6e8e2;
+  --ssj-rule-3: #cdd0c8;
+  --ssj-indigo: #294b86;
+  --ssj-shu: #c4452b;
+  --ssj-verde: #1f9d57;
+  --ssj-ambar: #a5761c;
+  --ssj-indigo-wash: #eef2fb;
+  --ssj-shu-wash: #fbf1ee;
+  --ssj-shu-wash-2: #f7e6e2;
+  --ssj-verde-wash: #e2f0e9;
+  --ssj-fill-pri: #294b86;
+  --ssj-on-fill-pri: #ffffff;
+  --ssj-fill-seal: #c4452b;
+  --ssj-on-fill-seal: #ffffff;
+  color: var(--ssj-text);
+}
+
+.ssj-on-dark,
+.ssj-card--ink,
+.ssj-section--ink {
+  --ssj-text: #f4f2ec;
+  --ssj-text-2: #d4d9e2;
+  --ssj-muted: #a9b4c9;
+  --ssj-faint: #8fa6cf;
+  --ssj-surface: #1c2331;
+  --ssj-surface-2: #232b3a;
+  --ssj-paper: #14181f;
+  --ssj-rule: #2b3444;
+  --ssj-rule-2: #232b38;
+  --ssj-rule-3: #3a4560;
+  --ssj-indigo: #8fa6cf;
+  --ssj-shu: #e8785d;
+  --ssj-verde: #4fc287;
+  --ssj-ambar: #ddb45c;
+  --ssj-indigo-wash: #1e2a40;
+  --ssj-shu-wash: #2c1a15;
+  --ssj-shu-wash-2: #3a221b;
+  --ssj-verde-wash: #12291e;
+  --ssj-fill-pri: #7ba4de;
+  --ssj-on-fill-pri: #0b1220;
+  --ssj-fill-seal: #e8785d;
+  --ssj-on-fill-seal: #21100b;
+  color: var(--ssj-text);
+}

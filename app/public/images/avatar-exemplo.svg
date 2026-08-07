@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <title>Foto de exemplo — retrato ilustrado, dados fictícios</title>
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8ecf4"/>
+      <stop offset="100%" stop-color="#cfd9ee"/>
+    </linearGradient>
+    <clipPath id="moldura"><rect width="200" height="200"/></clipPath>
+  </defs>
+  <g clip-path="url(#moldura)">
+    <rect width="200" height="200" fill="url(#fundo)"/>
+    <!-- ombros -->
+    <path d="M28 200c0-38 32-60 72-60s72 22 72 60z" fill="#294b86"/>
+    <path d="M74 148h52v18a26 26 0 0 1-52 0z" fill="#e8b89c"/>
+    <!-- cabeca -->
+    <ellipse cx="100" cy="98" rx="40" ry="46" fill="#f0c6a8"/>
+    <!-- cabelo -->
+    <path d="M60 96c-2-32 18-50 40-50s42 18 40 50c-4-16-14-24-24-26-12 10-40 8-46 4-6 6-8 14-10 22z" fill="#1f2430"/>
+    <path d="M60 96c0 14 2 24 6 32-10-10-14-24-12-38z" fill="#1f2430"/>
+    <path d="M140 96c0 14-2 24-6 32 10-10 14-24 12-38z" fill="#1f2430"/>
+    <!-- olhos e boca -->
+    <ellipse cx="86" cy="96" rx="4" ry="4.6" fill="#1f2430"/>
+    <ellipse cx="114" cy="96" rx="4" ry="4.6" fill="#1f2430"/>
+    <path d="M90 118q10 8 20 0" stroke="#b8785e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- gola -->
+    <path d="M74 166l26 16 26-16" stroke="#f4f5f2" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  </g>
+</svg>

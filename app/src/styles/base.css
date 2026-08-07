@@ -1,0 +1,116 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 02. BASE
+   Reset, elementos nativos e tipografia. Vale para TODA página do app.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--ssj-paper);
+  color: var(--ssj-text);
+  font-family: var(--ssj-font-sans);
+  font-size: var(--ssj-t-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition: background-color var(--ssj-base) ease, color var(--ssj-base) ease;
+}
+
+/* Títulos usam a display; corpo usa a sans. Nunca misturar. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--ssj-font-display);
+  font-weight: 700;
+  letter-spacing: var(--ssj-track-display);
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--ssj-text);
+}
+
+h1 { font-size: var(--ssj-t-h1); }
+h2 { font-size: var(--ssj-t-h2); }
+h3 { font-size: var(--ssj-t-h3); }
+
+p { text-wrap: pretty; }
+
+a {
+  color: var(--ssj-indigo);
+  text-decoration: none;
+  transition: color var(--ssj-fast) ease;
+}
+a:hover { color: var(--ssj-indigo-2); }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button { background: none; border: 0; }
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+b, strong { font-weight: 600; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--ssj-rule);
+}
+
+/* Foco visível e consistente — acessibilidade não é opcional. */
+:focus-visible {
+  outline: 2px solid var(--ssj-indigo);
+  outline-offset: 2px;
+  border-radius: var(--ssj-r-sm);
+}
+
+::selection {
+  background: var(--ssj-shu);
+  color: #fff;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--ssj-rule-3);
+  border-radius: var(--ssj-r-pill);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ssj-muted); }
+
+/* Respeita quem pediu menos movimento no sistema operacional. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

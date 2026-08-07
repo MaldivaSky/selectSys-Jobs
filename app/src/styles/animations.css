@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — 03. MOVIMENTO
+   Todo keyframe do produto mora aqui, sempre com prefixo `ssj-`.
+   Uso: style={{ animation: 'ssj-fadeUp .6s .1s both' }} ou classe .ssj-in.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+@keyframes ssj-fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes ssj-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ssj-appIn {
+  from { opacity: 0; transform: scale(0.975); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes ssj-stampIn {
+  from { opacity: 0; transform: scale(0.55) translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* A batida do carimbo: desce de cima, afunda na tinta e assenta torto. */
+@keyframes ssj-carimbo {
+  0%   { opacity: 0; transform: rotate(-24deg) scale(1.9); }
+  55%  { opacity: 1; transform: rotate(-4deg) scale(0.9); }
+  75%  { transform: rotate(-8deg) scale(1.04); }
+  100% { opacity: 1; transform: rotate(-7deg) scale(1); }
+}
+
+@keyframes ssj-pop {
+  0%   { transform: scale(0); }
+  68%  { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ssj-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* O ponto que sai do Brasil, cruza a ponte e chega no sol vermelho. */
+@keyframes ssj-travel {
+  0%   { offset-distance: 2%; fill: #1f9d57; }
+  55%  { fill: #c99a2e; }
+  100% { offset-distance: 100%; fill: #c4452b; }
+}
+
+@keyframes ssj-barload {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes ssj-ring66 {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0.34; }
+}
+
+@keyframes ssj-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(41, 75, 134, 0.32); }
+  70%  { box-shadow: 0 0 0 10px rgba(41, 75, 134, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(41, 75, 134, 0); }
+}
+
+@keyframes ssj-shimmer {
+  to { background-position: 200% 0; }
+}
+
+/* O ponto da logo percorrendo a ponte. Usado por <BrandMark animated />. */
+.ssj-bridge-dot {
+  offset-path: path('M31 78 Q60 34 89 78');
+  animation: ssj-travel 1.5s 0.35s cubic-bezier(0.5, 0, 0.5, 1) forwards;
+}
+
+/* ── Atalhos de entrada ──────────────────────────────────────────────────
+   .ssj-in           → sobe e aparece
+   .ssj-in.d1 … .d6  → escalona o atraso numa lista/grade                   */
+.ssj-in    { animation: ssj-fadeUp 0.55s var(--ssj-ease) both; }
+.ssj-in.d1 { animation-delay: 0.06s; }
+.ssj-in.d2 { animation-delay: 0.12s; }
+.ssj-in.d3 { animation-delay: 0.18s; }
+.ssj-in.d4 { animation-delay: 0.24s; }
+.ssj-in.d5 { animation-delay: 0.3s; }
+.ssj-in.d6 { animation-delay: 0.36s; }
+
+.ssj-skeleton {
+  background: linear-gradient(90deg, var(--ssj-surface-2) 25%, var(--ssj-rule-2) 37%, var(--ssj-surface-2) 63%);
+  background-size: 200% 100%;
+  animation: ssj-shimmer 1.4s linear infinite;
+  border-radius: var(--ssj-r-sm);
+}

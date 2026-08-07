@@ -1,0 +1,10 @@
+{
+  "name": "selectsys-jobs",
+  "private": true,
+  "version": "2.0.0",
+  "description": "SelectSys Jobs - SaaS Engine Dekassegui V2",
+  "scripts": {
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build"
+  }
+}

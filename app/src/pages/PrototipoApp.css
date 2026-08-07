@@ -1,0 +1,25 @@
+/* Ajustes exclusivos da vista "App do candidato" dentro do protótipo.
+   Fontes, animações e componentes vêm do design system global (src/index.css). */
+
+.ssj-proto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ssj-s5);
+  padding: clamp(24px, 5vw, 44px) var(--ssj-s4);
+  background: var(--ssj-paper-grad);
+}
+
+/* A legenda fora do aparelho segue o tema do site, não a tela do celular. */
+.ssj-proto__legenda {
+  color: var(--ssj-muted);
+  max-width: 372px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ssj-balance {
+  text-wrap: balance;
+}
