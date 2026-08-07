@@ -10,7 +10,7 @@ import { useTheme } from '../theme/theme';
 import { BrandMark } from '../brand/BrandMark';
 import type { Language } from '../translations';
 
-export function HomePage({ lang }: { lang: Language }) {
+export function HomePage({ lang: _lang }: { lang: Language }) {
 
 
   // Modals state

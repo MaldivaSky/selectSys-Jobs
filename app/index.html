@@ -10,10 +10,15 @@
       content="SelectSys Jobs torna visível cada etapa da travessia: do primeiro cadastro no Brasil à admissão na fábrica no Japão."
     />
 
-    <!-- Marca Oficial -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <!-- Marca oficial. Gerada por scripts/gerar-icones.py a partir da geometria
+         da logo — nunca por captura de tela. O SVG vem primeiro (nítido em
+         qualquer densidade); o .ico é a queda para navegador e leitor antigo,
+         inclusive o que o Vercel usa para o ícone do projeto. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#14181f" />
     <meta name="color-scheme" content="light dark" />
@@ -23,7 +28,12 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="SelectSys Jobs" />
     <meta property="og:title" content="SelectSys Jobs — SaaS Dekassegui" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image" content="https://selectsys-jobs.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://selectsys-jobs.vercel.app/og-image.png" />
     <meta
       property="og:description"
       content="Cada etapa da travessia, visível. Plataforma de gestão dekassegui Brasil → Japão."

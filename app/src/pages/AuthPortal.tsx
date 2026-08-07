@@ -75,11 +75,15 @@ export function AuthPortal() {
               <button
                 type="button"
                 onClick={() => {
-                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '168305245233-uh1f6abmb0ken0j1mibfgmm27rail8cc.apps.googleusercontent.com';
+                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                  if (!googleClientId) {
+                    alert('Login Google ainda não configurado. Defina VITE_GOOGLE_CLIENT_ID no ambiente.');
+                    return;
+                  }
                   if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
                     (window as any).google.accounts.id.initialize({
                       client_id: googleClientId,
-                      callback: (res: any) => {
+                      callback: () => {
                         alert('Autenticado com sucesso via Google OAuth!');
                         window.location.href = '/candidato';
                       }
@@ -94,7 +98,7 @@ export function AuthPortal() {
                       if ((window as any).google?.accounts?.id) {
                         (window as any).google.accounts.id.initialize({
                           client_id: googleClientId,
-                          callback: (res: any) => {
+                          callback: () => {
                             alert('Autenticado com sucesso via Google OAuth!');
                             window.location.href = '/candidato';
                           }
@@ -181,11 +185,15 @@ export function AuthPortal() {
               <button
                 type="button"
                 onClick={() => {
-                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '168305245233-uh1f6abmb0ken0j1mibfgmm27rail8cc.apps.googleusercontent.com';
+                  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                  if (!googleClientId) {
+                    alert('Login Google ainda não configurado. Defina VITE_GOOGLE_CLIENT_ID no ambiente.');
+                    return;
+                  }
                   if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
                     (window as any).google.accounts.id.initialize({
                       client_id: googleClientId,
-                      callback: (res: any) => {
+                      callback: () => {
                         alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
                         window.location.href = '/admin';
                       }
@@ -200,7 +208,7 @@ export function AuthPortal() {
                       if ((window as any).google?.accounts?.id) {
                         (window as any).google.accounts.id.initialize({
                           client_id: googleClientId,
-                          callback: (res: any) => {
+                          callback: () => {
                             alert(`Autenticado com sucesso como ${selectedRole} via Google Workspace!`);
                             window.location.href = '/admin';
                           }

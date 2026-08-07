@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  User, Shield, FileSpreadsheet, CheckCircle2, ChevronRight, ChevronLeft,
+  User, Shield, CheckCircle2, ChevronRight, ChevronLeft,
   Lock, Building2, MapPin
 } from 'lucide-react';
 import { Hanko } from '../brand/Hanko';
@@ -37,9 +37,7 @@ function maskPhone(v: string) {
 }
 
 export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
-  const [modoExibicao, setModoExibicao] = useState<'walkthrough' | 'form'>('walkthrough');
   const [step, setStep] = useState(1);
-  const [autoSaved, setAutoSaved] = useState(false);
 
   // FORM DATA — ~130 CAMPOS OFICIAIS DA PLANILHA FUJIARTE
   const [formData, setFormData] = useState({
@@ -118,6 +116,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   });
 
   const [cepFeedback, setCepFeedback] = useState('');
+  // Indicador "Salvo" do autosave (Escopo A2). Estava sendo usado sem existir.
+  const [autoSaved, setAutoSaved] = useState(false);
 
   const buscarViaCep = async (cepInput: string) => {
     setFormData(prev => ({ ...prev, cep: cepInput }));
@@ -188,9 +188,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     setFormData({ ...formData, experienciasJapao: [...formData.experienciasJapao, novaExp] });
   };
 
-  const regioesTatuagemList = [
-    'Cabeça/Rosto', 'Pescoço', 'Peito', 'Costas', 'Ombros', 'Braços', 'Mãos', 'Abdômen', 'Cintura', 'Pernas', 'Pés'
-  ];
+
 
   const stepsList = [
     { n: '01', title: 'Identificação', ja: '本人確認' },
@@ -320,6 +318,34 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                 );
               })}
             </div>
+          </div>
+
+          {/* Indicador de autosave — critério A2 do escopo: o candidato precisa
+              ver que não vai perder os 130 campos se a conexão cair. */}
+          <div
+            aria-live="polite"
+            style={{
+              position: 'sticky',
+              top: 78,
+              zIndex: 5,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              padding: '0 32px',
+              height: 0,
+            }}
+          >
+            <span
+              className="ssj-pill ssj-pill--ok"
+              style={{
+                opacity: autoSaved ? 1 : 0,
+                transform: autoSaved ? 'translateY(0)' : 'translateY(-6px)',
+                transition: 'opacity .25s ease, transform .25s ease',
+                pointerEvents: 'none',
+                boxShadow: 'var(--ssj-shadow-sm)',
+              }}
+            >
+              ✓ Salvo
+            </span>
           </div>
 
           {/* Conteúdo do Formulário */}
@@ -853,128 +879,362 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
               </h3>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                  Possui Tatuagem? (Requisito da Ficha FUJIARTE) · 入れ墨はありますか？
+                <label style={{ fontSize: '15px', fontWeight: 700, display: 'block', marginBottom: '14px', color: 'var(--ssj-text)' }}>
+                  Possui Tatuagem? · 入れ墨はありますか？
                 </label>
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-                  <label><input type="radio" name="tat" value="nao" checked={formData.temTatuagem === 'nao'} onChange={() => setFormData({ ...formData, temTatuagem: 'nao' })} /> Não possuo tatuagem</label>
-                  <label><input type="radio" name="tat" value="sim" checked={formData.temTatuagem === 'sim'} onChange={() => setFormData({ ...formData, temTatuagem: 'sim' })} /> Sim, possuo tatuagem</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', cursor: 'pointer', padding: '12px 20px', background: formData.temTatuagem === 'nao' ? 'rgba(0,0,0,0.06)' : 'var(--ssj-surface)', border: formData.temTatuagem === 'nao' ? '2px solid var(--ssj-text)' : '2px solid var(--ssj-rule)', borderRadius: '10px', transition: 'all 0.15s' }}>
+                    <input type="radio" name="tat" value="nao" checked={formData.temTatuagem === 'nao'} onChange={() => setFormData({ ...formData, temTatuagem: 'nao' })} style={{ width: '18px', height: '18px', accentColor: 'var(--ssj-shu)' }} />
+                    Não possuo tatuagem
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px', cursor: 'pointer', padding: '12px 20px', background: formData.temTatuagem === 'sim' ? 'rgba(196,69,43,0.08)' : 'var(--ssj-surface)', border: formData.temTatuagem === 'sim' ? '2px solid var(--ssj-shu)' : '2px solid var(--ssj-rule)', borderRadius: '10px', transition: 'all 0.15s' }}>
+                    <input type="radio" name="tat" value="sim" checked={formData.temTatuagem === 'sim'} onChange={() => setFormData({ ...formData, temTatuagem: 'sim' })} style={{ width: '18px', height: '18px', accentColor: 'var(--ssj-shu)' }} />
+                    Sim, possuo tatuagem
+                  </label>
                 </div>
 
                 {formData.temTatuagem === 'sim' && (
-                  <div style={{ padding: '20px', background: 'var(--ssj-surface)', borderRadius: '12px', border: '1px solid var(--ssj-shu)' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ssj-shu)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      Selecione as regiões exatas no corpo:
-                    </div>
+                  <div style={{ borderRadius: '12px', border: '1px solid var(--ssj-shu)', overflow: 'hidden' }}>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                    {/* Header */}
+                    <div style={{ padding: '14px 20px', background: 'rgba(196,69,43,0.08)', borderBottom: '1px solid rgba(196,69,43,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ssj-shu)' }}>
+                        Localização das Tatuagens · 入れ墨の位置
+                      </span>
+                      {formData.tatuagensRegioes.length > 0 && (
+                        <span style={{ fontSize: '13px', background: 'var(--ssj-shu)', color: '#fff', borderRadius: '20px', padding: '4px 12px', fontWeight: 700 }}>
+                          {formData.tatuagensRegioes.length} região(ões)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Avatar + Pills */}
+                    <div style={{ padding: '20px', background: 'var(--ssj-surface)' }}>
                       
-                      {/* Lado esquerdo: Seleção por Checkboxes e Upload */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
-                          {regioesTatuagemList.map(reg => (
-                            <label key={reg} style={{ 
-                              fontSize: '12.5px', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px',
-                              padding: '8px 12px',
-                              background: formData.tatuagensRegioes.includes(reg) ? 'rgba(196,69,43,0.1)' : 'var(--ssj-paper)',
-                              border: formData.tatuagensRegioes.includes(reg) ? '1px solid var(--ssj-shu)' : '1px solid var(--ssj-rule)',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease'
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={formData.tatuagensRegioes.includes(reg)}
-                                onChange={() => handleTatuagemToggle(reg)}
-                                style={{ accentColor: 'var(--ssj-shu)' }}
-                              />
-                              {reg}
-                            </label>
-                          ))}
+                      {/* ===== AVATARES ===== */}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                        
+                        {/* FRENTE */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ssj-muted)' }}>前面 · Frente</span>
+                          <svg viewBox="0 0 100 260" width="160" style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.18))' }}>
+                            <defs>
+                              <linearGradient id="skinF" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#f5cba7" />
+                                <stop offset="100%" stopColor="#e8a87c" />
+                              </linearGradient>
+                              <linearGradient id="skinRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#e74c3c" />
+                                <stop offset="100%" stopColor="#c0392b" />
+                              </linearGradient>
+                              <filter id="glow">
+                                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                              </filter>
+                            </defs>
+
+                            {/* Cabeça */}
+                            <ellipse cx="50" cy="22" rx="16" ry="19"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Rosto')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Rosto')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Rosto')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Rosto/Frente')}>
+                              <title>Rosto / Cabeça</title>
+                            </ellipse>
+                            {/* Face detail */}
+                            <ellipse cx="44" cy="20" rx="2.5" ry="3" fill="rgba(0,0,0,0.1)" />
+                            <ellipse cx="56" cy="20" rx="2.5" ry="3" fill="rgba(0,0,0,0.1)" />
+                            <path d="M44 27 Q50 31 56 27" stroke="rgba(0,0,0,0.15)" strokeWidth="1" fill="none" />
+
+                            {/* Pescoço */}
+                            <rect x="44" y="40" width="12" height="10" rx="3"
+                              fill={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Nuca/Pescoço')}>
+                              <title>Pescoço</title>
+                            </rect>
+
+                            {/* Ombro Esq */}
+                            <ellipse cx="24" cy="58" rx="10" ry="7"
+                              fill={formData.tatuagensRegioes.includes('Ombro Esq.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Ombro Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Ombro Esq.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Ombro Esq.')}>
+                              <title>Ombro Esquerdo</title>
+                            </ellipse>
+                            {/* Ombro Dir */}
+                            <ellipse cx="76" cy="58" rx="10" ry="7"
+                              fill={formData.tatuagensRegioes.includes('Ombro Dir.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Ombro Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Ombro Dir.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Ombro Dir.')}>
+                              <title>Ombro Direito</title>
+                            </ellipse>
+
+                            {/* Peito */}
+                            <path d="M34 50 Q50 45 66 50 L68 95 Q50 100 32 95 Z"
+                              fill={formData.tatuagensRegioes.includes('Peito (Frontal)') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Peito (Frontal)') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Peito (Frontal)') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Peito (Frontal)')}>
+                              <title>Peito Frontal</title>
+                            </path>
+
+                            {/* Abdômen */}
+                            <path d="M32 95 Q50 100 68 95 L66 132 Q50 136 34 132 Z"
+                              fill={formData.tatuagensRegioes.includes('Abdômen') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Abdômen') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Abdômen') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Abdômen')}>
+                              <title>Abdômen</title>
+                            </path>
+                            {/* Linha umbigo */}
+                            <line x1="50" y1="100" x2="50" y2="130" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
+
+                            {/* Braço Esq */}
+                            <path d="M24 65 L14 65 L10 118 L20 120 L28 68 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Frontal')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Frontal')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Frontal')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Braço Esq. Frontal')}>
+                              <title>Braço Esq. Frontal</title>
+                            </path>
+                            {/* Braço Dir */}
+                            <path d="M76 65 L86 65 L90 118 L80 120 L72 68 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Frontal')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Frontal')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Frontal')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Braço Dir. Frontal')}>
+                              <title>Braço Dir. Frontal</title>
+                            </path>
+
+                            {/* Mão Esq */}
+                            <ellipse cx="8" cy="126" rx="6" ry="9"
+                              fill={formData.tatuagensRegioes.includes('Mão Esq.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Mão Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Mão Esq.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Mão Esq.')}>
+                              <title>Mão Esquerda</title>
+                            </ellipse>
+                            {/* Mão Dir */}
+                            <ellipse cx="92" cy="126" rx="6" ry="9"
+                              fill={formData.tatuagensRegioes.includes('Mão Dir.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Mão Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Mão Dir.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Mão Dir.')}>
+                              <title>Mão Direita</title>
+                            </ellipse>
+
+                            {/* Coxa Esq */}
+                            <path d="M34 134 L48 134 L50 182 L33 180 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Coxa Esq.')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Coxa Esq.')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Coxa Esq.')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Coxa Esq. Frontal')}>
+                              <title>Coxa Esq. Frontal</title>
+                            </path>
+                            {/* Coxa Dir */}
+                            <path d="M66 134 L52 134 L50 182 L67 180 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Coxa Dir.')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Coxa Dir.')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Coxa Dir.')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Coxa Dir. Frontal')}>
+                              <title>Coxa Dir. Frontal</title>
+                            </path>
+
+                            {/* Perna Esq */}
+                            <path d="M33 182 L50 183 L48 228 L33 226 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Frontal')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Frontal')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Frontal')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Perna Esq. Frontal')}>
+                              <title>Perna Esq. Frontal</title>
+                            </path>
+                            {/* Perna Dir */}
+                            <path d="M67 182 L50 183 L52 228 L67 226 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Frontal')) ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Frontal')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Frontal')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Perna Dir. Frontal')}>
+                              <title>Perna Dir. Frontal</title>
+                            </path>
+
+                            {/* Pé Esq */}
+                            <ellipse cx="40" cy="240" rx="10" ry="6"
+                              fill={formData.tatuagensRegioes.includes('Pé Esq.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Pé Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Pé Esq.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Pé Esq.')}>
+                              <title>Pé Esquerdo</title>
+                            </ellipse>
+                            {/* Pé Dir */}
+                            <ellipse cx="60" cy="240" rx="10" ry="6"
+                              fill={formData.tatuagensRegioes.includes('Pé Dir.') ? 'url(#skinRed)' : 'url(#skinF)'}
+                              stroke={formData.tatuagensRegioes.includes('Pé Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Pé Dir.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Pé Dir.')}>
+                              <title>Pé Direito</title>
+                            </ellipse>
+                          </svg>
                         </div>
 
-                        {/* Foto das Tatuagens */}
-                        {formData.tatuagensRegioes.length > 0 && (
-                          <div style={{ padding: '16px', background: 'var(--ssj-paper)', borderRadius: '10px', border: '1px dashed var(--ssj-rule-3)' }}>
-                            <label className="ssj-label" style={{ display: 'block', marginBottom: '8px', color: 'var(--ssj-shu)' }}>
-                              Anexar Fotos das Tatuagens (Requisito) · 入れ墨の写真
-                            </label>
-                            <p style={{ fontSize: '11px', color: 'var(--ssj-muted)', marginBottom: '12px' }}>
-                              Menos as que estiverem em locais íntimos.
-                            </p>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <label style={{
-                                padding: '8px 16px',
-                                background: 'var(--ssj-surface-2)',
-                                border: '1px solid var(--ssj-rule)',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}>
-                                <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={() => alert('Simulando upload de fotos de tatuagem...')} />
-                                <span style={{ fontSize: '16px' }}>+</span> Adicionar Fotos
-                              </label>
-                            </div>
-                          </div>
-                        )}
+                        {/* VERSO */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ssj-muted)' }}>背面 · Verso</span>
+                          <svg viewBox="0 0 100 260" width="160" style={{ filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.18))' }}>
+                            <defs>
+                              <linearGradient id="skinB" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#e8a87c" />
+                                <stop offset="100%" stopColor="#d4956a" />
+                              </linearGradient>
+                            </defs>
+                            {/* Cabeça verso */}
+                            <ellipse cx="50" cy="22" rx="16" ry="19"
+                              fill={formData.tatuagensRegioes.includes('Cabeça/Topo') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Cabeça/Topo') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Cabeça/Topo') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Cabeça/Topo')}>
+                              <title>Cabeça / Topo</title>
+                            </ellipse>
+                            {/* Nuca */}
+                            <rect x="44" y="40" width="12" height="10" rx="3"
+                              fill={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Nuca/Pescoço') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Nuca/Pescoço')}>
+                              <title>Nuca / Pescoço</title>
+                            </rect>
+                            {/* Ombros verso */}
+                            <ellipse cx="24" cy="58" rx="10" ry="7"
+                              fill={formData.tatuagensRegioes.includes('Ombro Esq.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Ombro Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Ombro Esq.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Ombro Esq.')}>
+                              <title>Ombro Esq. (Verso)</title>
+                            </ellipse>
+                            <ellipse cx="76" cy="58" rx="10" ry="7"
+                              fill={formData.tatuagensRegioes.includes('Ombro Dir.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Ombro Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Ombro Dir.') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Ombro Dir.')}>
+                              <title>Ombro Dir. (Verso)</title>
+                            </ellipse>
+                            {/* Costas */}
+                            <path d="M34 50 Q50 45 66 50 L68 132 Q50 136 32 132 Z"
+                              fill={formData.tatuagensRegioes.includes('Costas (Posterior)') || formData.tatuagensRegioes.includes('Cintura/Lombar') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Costas (Posterior)') || formData.tatuagensRegioes.includes('Cintura/Lombar') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Costas (Posterior)') || formData.tatuagensRegioes.includes('Cintura/Lombar') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Costas (Posterior)')}>
+                              <title>Costas / Lombar</title>
+                            </path>
+                            {/* Coluna detail */}
+                            <line x1="50" y1="52" x2="50" y2="130" stroke="rgba(0,0,0,0.08)" strokeWidth="1.5" />
+                            {/* Braço Esq Posterior */}
+                            <path d="M24 65 L14 65 L10 118 L20 120 L28 68 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Posterior')) ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Posterior')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Braço Esq.') && r.includes('Posterior')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Braço Esq. Posterior')}>
+                              <title>Braço Esq. Posterior</title>
+                            </path>
+                            <path d="M76 65 L86 65 L90 118 L80 120 L72 68 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Posterior')) ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Posterior')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Braço Dir.') && r.includes('Posterior')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Braço Dir. Posterior')}>
+                              <title>Braço Dir. Posterior</title>
+                            </path>
+                            <ellipse cx="8" cy="126" rx="6" ry="9"
+                              fill={formData.tatuagensRegioes.includes('Mão Esq.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Mão Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Mão Esq.')}>
+                              <title>Mão Esq.</title>
+                            </ellipse>
+                            <ellipse cx="92" cy="126" rx="6" ry="9"
+                              fill={formData.tatuagensRegioes.includes('Mão Dir.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Mão Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Mão Dir.')}>
+                              <title>Mão Dir.</title>
+                            </ellipse>
+                            {/* Coxa Posterior */}
+                            <path d="M34 134 L48 134 L50 182 L33 180 Z"
+                              fill={formData.tatuagensRegioes.includes('Coxa Esq. Posterior') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Coxa Esq. Posterior') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Coxa Esq. Posterior') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Coxa Esq. Posterior')}>
+                              <title>Coxa Esq. Posterior</title>
+                            </path>
+                            <path d="M66 134 L52 134 L50 182 L67 180 Z"
+                              fill={formData.tatuagensRegioes.includes('Coxa Dir. Posterior') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Coxa Dir. Posterior') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.includes('Coxa Dir. Posterior') ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Coxa Dir. Posterior')}>
+                              <title>Coxa Dir. Posterior</title>
+                            </path>
+                            {/* Perna Posterior */}
+                            <path d="M33 182 L50 183 L48 228 L33 226 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Posterior')) ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Posterior')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Perna Esq.') && r.includes('Posterior')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Perna Esq. Posterior')}>
+                              <title>Perna Esq. Posterior</title>
+                            </path>
+                            <path d="M67 182 L50 183 L52 228 L67 226 Z"
+                              fill={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Posterior')) ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Posterior')) ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" filter={formData.tatuagensRegioes.some(r => r.includes('Perna Dir.') && r.includes('Posterior')) ? 'url(#glow)' : 'none'}
+                              style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Perna Dir. Posterior')}>
+                              <title>Perna Dir. Posterior</title>
+                            </path>
+                            <ellipse cx="40" cy="240" rx="10" ry="6"
+                              fill={formData.tatuagensRegioes.includes('Pé Esq.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Pé Esq.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Pé Esq.')}>
+                              <title>Pé Esq.</title>
+                            </ellipse>
+                            <ellipse cx="60" cy="240" rx="10" ry="6"
+                              fill={formData.tatuagensRegioes.includes('Pé Dir.') ? 'url(#skinRed)' : 'url(#skinB)'}
+                              stroke={formData.tatuagensRegioes.includes('Pé Dir.') ? '#c0392b' : '#d4956a'} strokeWidth="1"
+                              cursor="pointer" style={{ transition: 'all 0.25s' }} onClick={() => handleTatuagemToggle('Pé Dir.')}>
+                              <title>Pé Dir.</title>
+                            </ellipse>
+                          </svg>
+                        </div>
                       </div>
 
-                      {/* Lado direito: SVGs do Corpo Humano (Frente e Verso) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--ssj-paper)', borderRadius: '12px', padding: '20px', alignItems: 'center' }}>
-                         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-                           {/* CORPO - FRENTE */}
-                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ssj-muted)', textTransform: 'uppercase' }}>Frente</span>
-                             <svg viewBox="0 0 200 360" width="100%" height="240px" style={{ maxWidth: '120px' }}>
-                                {/* Cabeça/Rosto (Frente) */}
-                                <circle cx="100" cy="40" r="25" fill={formData.tatuagensRegioes.includes('Cabeça/Rosto') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Cabeça/Rosto') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Cabeça/Rosto')} />
-                                {/* Pescoço */}
-                                <rect x="85" y="65" width="30" height="15" fill={formData.tatuagensRegioes.includes('Pescoço') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pescoço') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pescoço')} />
-                                {/* Peito & Ombros (Frente) */}
-                                <path d="M50 80 Q100 70 150 80 L150 130 L50 130 Z" fill={formData.tatuagensRegioes.includes('Peito') || formData.tatuagensRegioes.includes('Ombros') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Peito') || formData.tatuagensRegioes.includes('Ombros') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Peito')} />
-                                {/* Abdômen */}
-                                <rect x="60" y="130" width="80" height="70" fill={formData.tatuagensRegioes.includes('Abdômen') || formData.tatuagensRegioes.includes('Cintura') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Abdômen') || formData.tatuagensRegioes.includes('Cintura') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Abdômen')} />
-                                {/* Braços (Frente) */}
-                                <rect x="30" y="85" width="20" height="80" rx="10" fill={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Braços')} transform="rotate(15 40 85)" />
-                                <rect x="150" y="85" width="20" height="80" rx="10" fill={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Braços')} transform="rotate(-15 160 85)" />
-                                {/* Pernas (Frente) */}
-                                <rect x="65" y="200" width="30" height="110" rx="10" fill={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pernas')} />
-                                <rect x="105" y="200" width="30" height="110" rx="10" fill={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pernas')} />
-                                {/* Mãos e Pés (Bolinhas nas pontas para facilitar clique) */}
-                                <circle cx="18" cy="170" r="12" fill={formData.tatuagensRegioes.includes('Mãos') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Mãos') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="2" cursor="pointer" onClick={() => handleTatuagemToggle('Mãos')} />
-                                <circle cx="182" cy="170" r="12" fill={formData.tatuagensRegioes.includes('Mãos') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Mãos') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="2" cursor="pointer" onClick={() => handleTatuagemToggle('Mãos')} />
-                                <circle cx="80" cy="320" r="15" fill={formData.tatuagensRegioes.includes('Pés') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pés') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="2" cursor="pointer" onClick={() => handleTatuagemToggle('Pés')} />
-                                <circle cx="120" cy="320" r="15" fill={formData.tatuagensRegioes.includes('Pés') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pés') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="2" cursor="pointer" onClick={() => handleTatuagemToggle('Pés')} />
-                             </svg>
-                           </div>
+                      {/* Resumo das regiões selecionadas */}
+                      {formData.tatuagensRegioes.length === 0 ? (
+                        <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--ssj-muted)', margin: '8px 0 0', fontStyle: 'italic' }}>
+                          Clique nas regiões do avatar acima para marcar onde há tatuagem
+                        </p>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: 'rgba(196,69,43,0.04)', borderRadius: '8px', border: '1px solid rgba(196,69,43,0.15)' }}>
+                          {formData.tatuagensRegioes.map(op => (
+                            <span key={op} onClick={() => handleTatuagemToggle(op)} style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '6px',
+                              padding: '6px 14px', background: '#c4452b', color: '#fff',
+                              borderRadius: '20px', fontSize: '13px', fontWeight: 600,
+                              cursor: 'pointer', userSelect: 'none', transition: 'opacity 0.15s'
+                            }}>
+                              {op} <span style={{ opacity: 0.7, fontSize: '11px' }}>✕</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
-                           {/* CORPO - COSTAS */}
-                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                             <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ssj-muted)', textTransform: 'uppercase' }}>Verso</span>
-                             <svg viewBox="0 0 200 360" width="100%" height="240px" style={{ maxWidth: '120px' }}>
-                                {/* Cabeça (Verso) */}
-                                <circle cx="100" cy="40" r="25" fill={formData.tatuagensRegioes.includes('Cabeça/Rosto') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Cabeça/Rosto') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Cabeça/Rosto')} />
-                                {/* Nuca/Pescoço (Verso) */}
-                                <rect x="85" y="65" width="30" height="15" fill={formData.tatuagensRegioes.includes('Pescoço') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pescoço') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pescoço')} />
-                                {/* Costas (Verso do Peito/Abdômen) */}
-                                <path d="M50 80 Q100 70 150 80 L150 200 L50 200 Z" fill={formData.tatuagensRegioes.includes('Costas') || formData.tatuagensRegioes.includes('Cintura') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Costas') || formData.tatuagensRegioes.includes('Cintura') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Costas')} />
-                                {/* Braços (Verso) */}
-                                <rect x="30" y="85" width="20" height="80" rx="10" fill={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Braços')} transform="rotate(15 40 85)" />
-                                <rect x="150" y="85" width="20" height="80" rx="10" fill={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Braços') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Braços')} transform="rotate(-15 160 85)" />
-                                {/* Pernas (Verso) */}
-                                <rect x="65" y="200" width="30" height="110" rx="10" fill={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pernas')} />
-                                <rect x="105" y="200" width="30" height="110" rx="10" fill={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : '#f0f0f0'} stroke={formData.tatuagensRegioes.includes('Pernas') ? 'var(--ssj-shu)' : 'var(--ssj-text)'} strokeWidth="3" cursor="pointer" onClick={() => handleTatuagemToggle('Pernas')} />
-                             </svg>
-                           </div>
-                         </div>
-                         <text style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ssj-text-2)', textAlign: 'center', marginTop: '8px' }}>Clique nas áreas do corpo</text>
-                      </div>
+                      {/* Upload */}
+                      {formData.tatuagensRegioes.length > 0 && (
+                        <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(196,69,43,0.06)', borderRadius: '8px', border: '1px dashed #c4452b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#c4452b' }}>
+                            📎 Fotos das Tatuagens · 入れ墨の写真 <span style={{ fontWeight: 400, color: 'var(--ssj-muted)', fontSize: '11px' }}>(não inclua locais íntimos)</span>
+                          </span>
+                          <label style={{ padding: '7px 16px', background: '#c4452b', color: '#fff', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}>
+                            <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={() => alert('Upload...')} />
+                            + Adicionar Fotos
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -982,7 +1242,6 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
             </div>
           )}
 
-          {/* ETAPA 6: ENQUETE BLOCO B (SAÚDE 🔒 LGPD ART. 11) */}
           {step === 6 && (
             <div className="ssj-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ padding: '16px', background: 'rgba(120,80,220,0.1)', borderRadius: '10px', border: '1px solid #7850dc' }}>
@@ -1121,9 +1380,6 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
               <div style={{ textAlign: 'center' }}>
                 <span style={{ fontSize: '12px', color: 'var(--ssj-text)', fontWeight: 600, display: 'block' }}>
                   Etapa {step} de 7
-                </span>
-                <span style={{ fontSize: '11px', color: 'var(--ssj-muted)' }}>
-                  Tempo estimado restante: ~{Math.ceil((12 / 7) * (7 - step))} min
                 </span>
               </div>
 
