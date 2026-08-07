@@ -48,7 +48,9 @@ export function Navbar({ lang: _lang }: NavbarProps) {
       <div className="ssj-container">
         <div className="ssj-nav__bar">
           <Link to="/" aria-label={`${BRAND.name} — início`} style={{ display: 'inline-flex', flex: 'none' }}>
-            <BrandLockup size={44} withTagline />
+            {/* Sem tagline no celular: o lockup completo come 257px dos 375px
+                da tela e é o que empurrava a barra para fora do viewport. */}
+            <BrandLockup size={44} withTagline className="ssj-nav__brand" />
           </Link>
 
           <nav className="ssj-nav__links" aria-label="Navegação principal">
@@ -69,7 +71,6 @@ export function Navbar({ lang: _lang }: NavbarProps) {
               onClick={alternar}
               aria-label={escuro ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
               title={escuro ? 'Tema claro' : 'Tema escuro'}
-              style={{ width: 40, height: 40, borderRadius: 20 }}
             >
               {escuro ? <Sun size={17} style={{ color: 'var(--ssj-ambar)' }} /> : <Moon size={17} style={{ color: 'var(--ssj-indigo)' }} />}
             </button>
@@ -88,7 +89,6 @@ export function Navbar({ lang: _lang }: NavbarProps) {
               onClick={() => setGaveta((v) => !v)}
               aria-expanded={gaveta}
               aria-label={gaveta ? 'Fechar menu' : 'Abrir menu'}
-              style={{ width: 40, height: 40, borderRadius: 20 }}
             >
               {gaveta ? <X size={18} /> : <Menu size={18} />}
             </button>

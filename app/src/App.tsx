@@ -24,7 +24,14 @@ import type { Language } from './translations';
 
 function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) => void }) {
   const location = useLocation();
-  const isWhiteLabelRoute = location.pathname.startsWith('/c/') || location.pathname === '/candidato';
+  /* Rotas white-label: o ambiente pertence à agência (ou ao candidato dela),
+     então a navbar e o rodapé institucionais do SelectSys não entram. O painel
+     do tenant precisa disso: com a barra "Entrar / Proposta comercial" por cima,
+     a marca do cliente vira um detalhe no meio da nossa. */
+  const isWhiteLabelRoute =
+    location.pathname.startsWith('/c/') ||
+    location.pathname === '/candidato' ||
+    location.pathname.startsWith('/admin');
 
   return (
     <div className="ssj-shell">

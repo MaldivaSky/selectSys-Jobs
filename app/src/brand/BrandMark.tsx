@@ -108,6 +108,7 @@ export function BrandLockup({ size = 40, tone = 'auto', withTagline = false, cla
         </span>
         {withTagline && (
           <span
+            className="ssj-nav__brand-tagline"
             style={{
               fontFamily: 'var(--ssj-font-mono)',
               fontSize: Math.max(12, size * 0.28),
