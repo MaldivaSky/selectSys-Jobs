@@ -1,12 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CYBOZU GAROON ENTERPRISE CONNECTOR (GAROO) — SELECTSYS JOBS
+   CYBOZU GAROON ENTERPRISE CONNECTOR (GAROON) — SELECTSYS JOBS
    ---------------------------------------------------------------------------
-   Suporta Cybozu Garoon Cloud (REST API v1) e Cybozu Garoon On-Premise (SOAP/XML).
-   Realiza a transmissão completa do candidato aprovado com mapeamento Dekassegui:
-   - Dados Pessoais & Documentos (Passaporte, Koseki, Visto, Geração)
-   - Biometria & Uniformes (Altura, Peso, Pé em cm)
-   - Histórico Laboral no Japão e Contatos de Emergência
+   Conector de produção para Cybozu Garoon Cloud (REST API v1) e On-Premise (SOAP/XML).
+   Transmite a candidatura aprovada para os módulos de Workflow/HR no Japão:
+   - Identificação & Documentos (Passaporte, Koseki, Visto, Geração Nikkei)
+   - Biometria & Uniformes EPI (Altura, Peso, Tamanho do Calçado em cm)
+   - Histórico Laboral nas Províncias do Japão
    ═════════════════════════════════════════════════════════════════════════ */
+
+import { supabase } from '../dados/supabase';
 
 export interface GaroonSyncRequest {
   subdomain: string;
@@ -14,6 +16,7 @@ export interface GaroonSyncRequest {
   apiToken: string;
   ambiente: 'cloud' | 'on_premise';
   candidato: Record<string, any>;
+  organizationId?: string;
 }
 
 export interface GaroonResponse {
@@ -26,7 +29,7 @@ export interface GaroonResponse {
 
 export function buildGaroonCloudPayload(candidato: Record<string, any>) {
   return {
-    app: 1042, // Cybozu Garoon App ID Dekassegui
+    app: 1042, // ID da Aplicação no Cybozu Garoon Workflow
     record: {
       candidate_name: { value: candidato.nome_completo || candidato.nome || '' },
       cpf: { value: candidato.cpf || '' },
@@ -102,13 +105,23 @@ export function buildGaroonOnPremiseSoapXml(candidato: Record<string, any>, usua
 export async function executarSincronizacaoGaroon(req: GaroonSyncRequest): Promise<GaroonResponse> {
   const timestamp = new Date().toISOString();
 
+  if (!req.subdomain || !req.usuario || !req.apiToken) {
+    return {
+      ok: false,
+      detalhes: 'Parâmetros de conexão do Cybozu Garoon incompletos (subdomínio, usuário ou token ausente).',
+      payloadEnviado: '',
+      timestamp,
+    };
+  }
+
+  let result: GaroonResponse;
+
   if (req.ambiente === 'cloud') {
     const payload = buildGaroonCloudPayload(req.candidato);
-    const authHeader = btoa(`${req.usuario}:${req.apiToken}`);
+    const authHeader = typeof btoa !== 'undefined' ? btoa(`${req.usuario}:${req.apiToken}`) : Buffer.from(`${req.usuario}:${req.apiToken}`).toString('base64');
     const targetUrl = `https://${req.subdomain}.cybozu.com/g/api/v1/cbp/workflow/records`;
 
     try {
-      // Simulação da conexão REST com suporte a headers de autenticação Cybozu
       const response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
@@ -116,47 +129,100 @@ export async function executarSincronizacaoGaroon(req: GaroonSyncRequest): Promi
           'X-Cybozu-Authorization': authHeader,
         },
         body: JSON.stringify(payload),
-      }).catch(() => null);
+      });
 
-      if (response && response.ok) {
+      if (response.ok) {
         const json = await response.json();
-        return {
+        const recordId = json.id ? `GRN-${json.id}` : `GRN-${Date.now()}`;
+        result = {
           ok: true,
-          garoonRecordId: json.id ? `GRN-${json.id}` : `GRN-${Math.floor(100000 + Math.random() * 900000)}`,
-          detalhes: 'Sincronizado com sucesso via API REST Cybozu Garoon Cloud.',
+          garoonRecordId: recordId,
+          detalhes: `Sincronização concluída com sucesso via API REST Cybozu Garoon Cloud. Registro criado: ${recordId}`,
+          payloadEnviado: payload,
+          timestamp,
+        };
+      } else {
+        const errorText = await response.text().catch(() => '');
+        result = {
+          ok: false,
+          detalhes: `Falha na API Cybozu Garoon HTTP ${response.status}: ${errorText || response.statusText}`,
           payloadEnviado: payload,
           timestamp,
         };
       }
-
-      // Conexão simulada de sucesso para demonstração com dados de imigração reais
-      const recordId = `GRN-${Math.floor(100000 + Math.random() * 900000)}`;
-      return {
-        ok: true,
-        garoonRecordId: recordId,
-        detalhes: `Sincronização concluída com sucesso. Registro gravado no Garoon (${req.subdomain}.cybozu.com) com o ID ${recordId}.`,
-        payloadEnviado: payload,
-        timestamp,
-      };
     } catch (err: any) {
-      return {
+      result = {
         ok: false,
-        detalhes: `Erro ao conectar com Cybozu Garoon: ${err?.message || 'Falha de rede.'}`,
+        detalhes: `Erro de conexão HTTP ao tentar acessar ${targetUrl}: ${err?.message || 'Servidor inalcançável'}`,
         payloadEnviado: payload,
         timestamp,
       };
     }
   } else {
-    // Ambiente On-Premise via SOAP/XML
+    // SOAP On-Premise
     const xmlPayload = buildGaroonOnPremiseSoapXml(req.candidato, req.usuario, req.apiToken);
-    const recordId = `GRN-ONPREM-${Math.floor(100000 + Math.random() * 900000)}`;
+    const targetUrl = `https://${req.subdomain}/g/cbp.cgi`;
 
-    return {
-      ok: true,
-      garoonRecordId: recordId,
-      detalhes: `Envelope SOAP transmitido para o servidor local Garoon On-Premise. ID de controle: ${recordId}.`,
-      payloadEnviado: xmlPayload,
-      timestamp,
-    };
+    try {
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          SOAPAction: 'WorkflowCreateItem',
+        },
+        body: xmlPayload,
+      });
+
+      if (response.ok) {
+        const responseXml = await response.text();
+        const match = responseXml.match(/<garoon:id>([^<]+)<\/garoon:id>/);
+        const recordId = match ? `GRN-SOAP-${match[1]}` : `GRN-SOAP-${Date.now()}`;
+        result = {
+          ok: true,
+          garoonRecordId: recordId,
+          detalhes: `Envelope SOAP transmitido com sucesso para servidor Garoon local. Registro: ${recordId}`,
+          payloadEnviado: xmlPayload,
+          timestamp,
+        };
+      } else {
+        const errorText = await response.text().catch(() => '');
+        result = {
+          ok: false,
+          detalhes: `Erro no servidor SOAP Garoon On-Premise HTTP ${response.status}: ${errorText || response.statusText}`,
+          payloadEnviado: xmlPayload,
+          timestamp,
+        };
+      }
+    } catch (err: any) {
+      result = {
+        ok: false,
+        detalhes: `Erro na transmissão SOAP para ${targetUrl}: ${err?.message || 'Falha de rede local'}`,
+        payloadEnviado: xmlPayload,
+        timestamp,
+      };
+    }
   }
+
+  // Grava o log de auditoria no Supabase se houver conexão ativa
+  if (supabase && req.organizationId) {
+    try {
+      await supabase.from('audit_log').insert({
+        organization_id: req.organizationId,
+        acao: 'garoon.sync',
+        recurso: 'candidates',
+        resultado: result.ok ? 'sucesso' : 'falha',
+        detalhes: {
+          subdomain: req.subdomain,
+          ambiente: req.ambiente,
+          recordId: result.garoonRecordId,
+          mensagem: result.detalhes,
+        },
+        executado_em: timestamp,
+      });
+    } catch (_err) {
+      // Falha silenciosa de auditoria não interrompe resposta principal
+    }
+  }
+
+  return result;
 }

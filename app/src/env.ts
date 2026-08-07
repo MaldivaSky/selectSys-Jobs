@@ -2,12 +2,18 @@ export interface EnvVariables {
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_PUBLISHABLE_KEY: string;
   VITE_DEEPSEEK_API_KEY?: string;
+  VITE_GAROON_SUBDOMAIN?: string;
+  VITE_GAROON_USER?: string;
+  VITE_GAROON_TOKEN?: string;
 }
 
 function validarEnv(): EnvVariables {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
   const deepseek = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
+  const garoonSubdomain = import.meta.env.VITE_GAROON_SUBDOMAIN || '';
+  const garoonUser = import.meta.env.VITE_GAROON_USER || '';
+  const garoonToken = import.meta.env.VITE_GAROON_TOKEN || '';
 
   const erros: string[] = [];
 
@@ -38,6 +44,9 @@ function validarEnv(): EnvVariables {
     VITE_SUPABASE_URL: url,
     VITE_SUPABASE_PUBLISHABLE_KEY: key,
     VITE_DEEPSEEK_API_KEY: deepseek,
+    VITE_GAROON_SUBDOMAIN: garoonSubdomain,
+    VITE_GAROON_USER: garoonUser,
+    VITE_GAROON_TOKEN: garoonToken,
   };
 }
 

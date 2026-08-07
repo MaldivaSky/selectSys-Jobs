@@ -1,4 +1,4 @@
-import { executarSincronizacaoGaroon } from '../app/src/services/garoonSync';
+import { executarSincronizacaoGaroon, buildGaroonCloudPayload, buildGaroonOnPremiseSoapXml } from '../app/src/services/garoonSync';
 import { calcularMatchScore } from '../app/src/dados/matchEngine';
 import { executarTriagem } from '../app/src/dados/triagemEngine';
 import { exportarFichaHibrido } from '../packages/exportador/exportadorNode';
@@ -19,35 +19,46 @@ async function rodarTestesFase2() {
     }
   };
 
-  // ── TESTE 1: Cybozu Garoon REST Cloud Sync ──
+  // ── TESTE 1: Cybozu Garoon Cloud Payload Mapping ──
   try {
-    const garoonRes = await executarSincronizacaoGaroon({
-      subdomain: 'fujiarte-japan',
-      usuario: 'admin_dekassegui',
-      apiToken: 'tok_sec_2026',
-      ambiente: 'cloud',
-      candidato: { nome_completo: 'MARINA TANAKA OLIVEIRA', cpf: '123.456.789-00', geracao: 'sansei' },
+    const payload = buildGaroonCloudPayload({
+      nome_completo: 'MARINA TANAKA OLIVEIRA',
+      cpf: '123.456.789-00',
+      geracao: 'sansei',
+      pe_cm: 24.5,
     });
-    assert(garoonRes.ok && String(garoonRes.garoonRecordId).startsWith('GRN-'), 'Módulo 1: Garoon REST Cloud Sync envia registro');
+    assert(payload.app === 1042 && payload.record.candidate_name.value === 'MARINA TANAKA OLIVEIRA', 'Módulo 1: Garoon REST Cloud Payload mapeado corretamente');
   } catch (err: any) {
-    assert(false, `Módulo 1 erro: ${err.message}`);
+    assert(false, `Módulo 1 Payload erro: ${err.message}`);
   }
 
-  // ── TESTE 2: Cybozu Garoon SOAP On-Premise Sync ──
+  // ── TESTE 2: Cybozu Garoon SOAP On-Premise Envelope XML ──
   try {
-    const garoonSoap = await executarSincronizacaoGaroon({
-      subdomain: 'fujiarte-onprem',
-      usuario: 'admin_soap',
-      apiToken: 'soap_pass',
-      ambiente: 'on_premise',
-      candidato: { nome_completo: 'HIROSHI TANAKA', passaporte: 'TK887766' },
-    });
-    assert(garoonSoap.ok && String(garoonSoap.payloadEnviado).includes('<SOAP-ENV:Envelope'), 'Módulo 1: Garoon SOAP Envelope XML gerado com sucesso');
+    const xml = buildGaroonOnPremiseSoapXml(
+      { nome_completo: 'HIROSHI TANAKA', passaporte: 'TK887766' },
+      'admin_soap',
+      'soap_pass'
+    );
+    assert(xml.includes('<garoon:Username>admin_soap</garoon:Username>') && xml.includes('WorkflowCreateItem'), 'Módulo 1: Garoon SOAP Envelope XML gerado com sucesso');
   } catch (err: any) {
     assert(false, `Garoon SOAP erro: ${err.message}`);
   }
 
-  // ── TESTE 3: Match Score Engine (Perfil Ideal -> Score 100%) ──
+  // ── TESTE 3: Garoon Validator com parâmetros incompletos ──
+  try {
+    const res = await executarSincronizacaoGaroon({
+      subdomain: '',
+      usuario: '',
+      apiToken: '',
+      ambiente: 'cloud',
+      candidato: {},
+    });
+    assert(!res.ok && res.detalhes.includes('incompletos'), 'Módulo 1: Validação de credenciais Garoon bloqueia execução sem tokens');
+  } catch (err: any) {
+    assert(false, `Garoon Validation erro: ${err.message}`);
+  }
+
+  // ── TESTE 4: Match Score Engine (Perfil Ideal -> Score 100%) ──
   try {
     const matchIdeal = calcularMatchScore({
       nivel_japones: 'Intermediário (N3)',
@@ -60,7 +71,7 @@ async function rodarTestesFase2() {
     assert(false, `Match Score erro: ${err.message}`);
   }
 
-  // ── TESTE 4: Match Score Engine (Hard Fail sem descendência) ──
+  // ── TESTE 5: Match Score Engine (Hard Fail sem descendência) ──
   try {
     const matchFail = calcularMatchScore({
       nacionalidade: 'BRAS',
@@ -71,7 +82,7 @@ async function rodarTestesFase2() {
     assert(false, `Match Score HardFail erro: ${err.message}`);
   }
 
-  // ── TESTE 5: Motor de Triagem 3 Regras ──
+  // ── TESTE 6: Motor de Triagem 3 Regras ──
   try {
     const triagem = executarTriagem({ dataNascimento: '1965-01-01' });
     assert(triagem.status === 'reprovado', 'Módulo 7: Triagem reprova idade 55+ sem histórico de mesma empresa');
@@ -79,7 +90,7 @@ async function rodarTestesFase2() {
     assert(false, `Triagem erro: ${err.message}`);
   }
 
-  // ── TESTE 6: Exportador Híbrido Node/Python ──
+  // ── TESTE 7: Exportador Híbrido Node/Python ──
   try {
     const exportRes = await exportarFichaHibrido({ datsJsonPath: '', saidaXlsPath: 'saida/fase2_teste.xls' } as any);
     assert(exportRes.sucesso, 'Módulo 9: Exportador Híbrido executa geração de arquivo');

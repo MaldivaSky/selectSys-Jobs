@@ -1,4 +1,5 @@
 import { executarSincronizacaoGaroon, type GaroonSyncRequest } from './garoonSync';
+import { env } from '../env';
 
 export interface GaroonConfig {
   subdomain: string;
@@ -17,23 +18,33 @@ export interface GaroonSyncResult {
 }
 
 export const CONFIG_GAROON_PADRAO: GaroonConfig = {
-  subdomain: 'fujiarte-japan',
-  usuario: 'admin_dekassegui',
-  apiToken: 'garoon_sec_tok_2026_fuji',
+  subdomain: env.VITE_GAROON_SUBDOMAIN || 'fujiarte-japan',
+  usuario: env.VITE_GAROON_USER || 'admin_dekassegui',
+  apiToken: env.VITE_GAROON_TOKEN || '',
   ambiente: 'cloud',
   sincronizacaoAutomatica: true,
 };
 
 export async function sincronizarCandidatoComGaroon(
   candidato: Record<string, any>,
-  config: GaroonConfig = CONFIG_GAROON_PADRAO,
+  config: Partial<GaroonConfig> = {},
+  organizationId?: string
 ): Promise<GaroonSyncResult> {
+  const finalConfig: GaroonConfig = {
+    subdomain: config.subdomain || CONFIG_GAROON_PADRAO.subdomain,
+    usuario: config.usuario || CONFIG_GAROON_PADRAO.usuario,
+    apiToken: config.apiToken || CONFIG_GAROON_PADRAO.apiToken,
+    ambiente: config.ambiente || CONFIG_GAROON_PADRAO.ambiente,
+    sincronizacaoAutomatica: config.sincronizacaoAutomatica ?? CONFIG_GAROON_PADRAO.sincronizacaoAutomatica,
+  };
+
   const req: GaroonSyncRequest = {
-    subdomain: config.subdomain || 'fujiarte-japan',
-    usuario: config.usuario || 'admin_dekassegui',
-    apiToken: config.apiToken || 'garoon_sec_tok_2026_fuji',
-    ambiente: config.ambiente || 'cloud',
+    subdomain: finalConfig.subdomain,
+    usuario: finalConfig.usuario,
+    apiToken: finalConfig.apiToken,
+    ambiente: finalConfig.ambiente,
     candidato,
+    organizationId,
   };
 
   const res = await executarSincronizacaoGaroon(req);

@@ -12,8 +12,11 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
    porque o banco está indisponível.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const chave = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+const envMeta = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : undefined;
+const envProc = typeof globalThis !== 'undefined' && (globalThis as any).process?.env ? (globalThis as any).process.env : undefined;
+
+const url = (envMeta?.VITE_SUPABASE_URL || envProc?.VITE_SUPABASE_URL) as string | undefined;
+const chave = (envMeta?.VITE_SUPABASE_PUBLISHABLE_KEY || envProc?.VITE_SUPABASE_PUBLISHABLE_KEY) as string | undefined;
 
 export const temBanco = Boolean(url && chave);
 
@@ -24,7 +27,7 @@ export const supabase: SupabaseClient | null = temBanco
     })
   : null;
 
-if (!temBanco && import.meta.env.DEV) {
+if (!temBanco && envMeta?.DEV) {
   console.info(
     '[SelectSys] Sem VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY — rodando em modo demonstração, sem persistência.',
   );
