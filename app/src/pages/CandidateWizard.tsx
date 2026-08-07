@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  User, Shield, FileSpreadsheet, Save, CheckCircle2, ChevronRight, ChevronLeft,
+  User, Shield, FileSpreadsheet, CheckCircle2, ChevronRight, ChevronLeft,
   Lock, Building2, MapPin
 } from 'lucide-react';
 import { Hanko } from '../brand/Hanko';
@@ -14,7 +14,30 @@ interface Experience {
   motivoSaida: string;
 }
 
+function maskCPF(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function maskCEP(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 5) return d;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
+}
+
+function maskPhone(v: string) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 2) return d ? `(${d}` : '';
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
 export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
+  const [modoExibicao, setModoExibicao] = useState<'walkthrough' | 'form'>('walkthrough');
   const [step, setStep] = useState(1);
   const [autoSaved, setAutoSaved] = useState(false);
 
@@ -91,6 +114,37 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     agenciaCodigo: 'FUJIARTE-SP-01'
   });
 
+  const [cepFeedback, setCepFeedback] = useState('');
+
+  const buscarViaCep = async (cepInput: string) => {
+    setFormData(prev => ({ ...prev, cep: cepInput }));
+    const cleanCep = cepInput.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      try {
+        setCepFeedback('Buscando endereço via ViaCEP...');
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            cep: cepInput,
+            logradouro: data.logradouro || prev.logradouro,
+            bairro: data.bairro || prev.bairro,
+            cidade: data.localidade || prev.cidade,
+            estado: data.uf || prev.estado
+          }));
+          setCepFeedback(`✓ ${data.logradouro} — ${data.bairro}, ${data.localidade}/${data.uf}`);
+        } else {
+          setCepFeedback('CEP não encontrado na base ViaCEP.');
+        }
+      } catch (err) {
+        setCepFeedback('Erro de conexão ao buscar ViaCEP.');
+      }
+    } else {
+      setCepFeedback('');
+    }
+  };
+
   // Autosave a cada 3s (Doc 05 Escopo A2)
   useEffect(() => {
     const timer = setInterval(() => {
@@ -110,7 +164,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     if (m < 0 || (m === 0 && hoje.getDate() < nascido.getDate())) {
       idade--;
     }
-    return isNaN(idade) ? '' : `${idade} anos`;
+    return isNaN(idade) ? '' : `${idade}`;
   };
 
   const handleTatuagemToggle = (regiao: string) => {
@@ -135,92 +189,133 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     'Cabeça/Rosto', 'Pescoço', 'Peito', 'Costas', 'Ombros', 'Braços', 'Mãos', 'Abdômen', 'Cintura', 'Pernas', 'Pés'
   ];
 
+  const stepsList = [
+    { n: '01', title: 'Identificação', ja: '本人確認' },
+    { n: '02', title: 'Biometria EPI', ja: '生体・作業着' },
+    { n: '03', title: 'Endereço/Família', ja: '住所・緊急連絡先' },
+    { n: '04', title: 'Histórico JP', ja: '職歴・日本' },
+    { n: '05', title: 'Enquete Bloco A', ja: '希望条件・入れ墨' },
+    { n: '06', title: 'Saúde LGPD', ja: '健康・同意' },
+    { n: '07', title: 'Revisão/.XLS', ja: '確認・エクセル' }
+  ];
+
   return (
-    <div className="ssj-section" style={{ minHeight: '90vh', padding: '24px 0' }}>
-      <div className="ssj-container" style={{ maxWidth: '860px' }}>
+    <div className="ssj-section" style={{
+      minHeight: '100vh',
+      background: 'var(--ssj-paper)',
+      padding: '32px 0'
+    }}>
+      <div className="ssj-container" style={{ maxWidth: '920px', margin: '0 auto' }}>
         
-        {/* Cabeçalho da Ficha FUJIARTE */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="ssj-pill ssj-pill--seal">FUJIARTE Ficha Cadastral Jun2024</span>
-              <span className="ssj-pill ssj-pill--info">Mobile-First ~130 Campos</span>
+        {/* Ficha Cadastral FUJIARTE - Form Container */}
+        <div className="ssj-card" style={{
+          borderRadius: '16px',
+          boxShadow: 'var(--ssj-shadow)',
+          border: '1px solid var(--ssj-rule)',
+          overflow: 'hidden',
+          background: 'var(--ssj-surface)',
+          color: 'var(--ssj-text)'
+        }}>
+
+          {/* Cabeçalho com Linha do Tempo Hanko (Linha do Tempo Japonesa) */}
+          <div style={{ padding: '20px 24px 16px', background: 'var(--ssj-surface-2)', borderBottom: '1px solid var(--ssj-rule)' }}>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
+              {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                <div
+                  key={s}
+                  style={{
+                    flex: 1,
+                    height: '5px',
+                    borderRadius: '3px',
+                    background: s <= step ? 'linear-gradient(90deg, #1f9d57 0%, #c99a2e 50%, #c4452b 100%)' : 'var(--ssj-rule-2)',
+                    boxShadow: s <= step ? '0 2px 8px rgba(196, 69, 43, 0.3)' : 'none',
+                    transition: 'all 0.35s ease'
+                  }}
+                />
+              ))}
             </div>
-            <h1 style={{ margin: '8px 0 4px', fontSize: '24px' }}>
-              Formulário de Candidatura Dekassegui (Brasil → Japão)
-            </h1>
-            <p className="ssj-text-muted" style={{ fontSize: '13px' }}>
-              Substituição digital oficial da planilha Excel FUJIARTE • Conforme LGPD Art. 11
-            </p>
+
+            {/* Selos Hanko Interativos em Linha */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '6px',
+              textAlign: 'center',
+              alignItems: 'start'
+            }}>
+              {stepsList.map((sItem, idx) => {
+                const sNum = idx + 1;
+                const estado = sNum < step ? 'aprovado' : sNum === step ? 'agora' : 'futuro';
+                return (
+                  <button
+                    key={sItem.n}
+                    type="button"
+                    onClick={() => setStep(sNum)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      opacity: sNum > step ? 0.65 : 1,
+                      transition: 'opacity 0.2s ease'
+                    }}
+                  >
+                    <Hanko
+                      estado={estado}
+                      texto={estado === 'aprovado' ? '済' : sItem.n}
+                      size={28}
+                      title={`Ir para etapa ${sItem.n}: ${sItem.title}`}
+                    />
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: sNum === step ? 700 : 500,
+                      color: sNum === step ? 'var(--ssj-shu)' : 'var(--ssj-text)',
+                      lineHeight: 1.2,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%'
+                    }}>
+                      {sItem.title}
+                    </span>
+                    <span style={{ fontSize: '10px', color: 'var(--ssj-muted)', fontFamily: 'var(--ssj-font-mono)' }}>
+                      {sItem.ja}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Indicador de Autosave */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {autoSaved && (
-              <span className="ssj-chip" style={{ background: 'rgba(31,157,87,0.15)', color: 'var(--ssj-verde)', border: '1px solid var(--ssj-verde)' }}>
-                <Save size={14} /> Salvo automaticamente
-              </span>
-            )}
-            <Hanko estado={step === 7 ? 'aprovado' : 'agora'} texto={step === 7 ? '済' : '印'} size={36} />
-          </div>
-        </div>
-
-        {/* Barra de Progresso em 7 Etapas (Doc 05 Épico A) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '24px' }}>
-          {[
-            '1. Identificação',
-            '2. Biometria EPI',
-            '3. Endereço/Família',
-            '4. Histórico JP',
-            '5. Enquete A',
-            '6. Saúde LGPD',
-            '7. Revisão/.XLS'
-          ].map((titulo, idx) => (
-            <div
-              key={idx}
-              onClick={() => setStep(idx + 1)}
-              style={{
-                cursor: 'pointer',
-                textAlign: 'center',
-                padding: '8px 4px',
-                borderRadius: '6px',
-                background: step === idx + 1 ? 'var(--ssj-indigo)' : idx + 1 < step ? 'var(--ssj-paper)' : 'var(--ssj-surface)',
-                color: step === idx + 1 ? '#fff' : idx + 1 < step ? 'var(--ssj-verde)' : 'var(--ssj-muted)',
-                fontSize: '11px',
-                fontWeight: 600,
-                border: step === idx + 1 ? '1px solid var(--ssj-indigo)' : '1px solid var(--ssj-border)'
-              }}
-            >
-              {titulo}
-            </div>
-          ))}
-        </div>
-
-        {/* CONTEÚDO DAS ETAPAS */}
-        <div className="ssj-card" style={{ padding: '32px', background: 'var(--ssj-surface)', borderRadius: '16px', border: '1px solid var(--ssj-border)' }}>
+          {/* Conteúdo do Formulário */}
+          <div style={{ padding: '28px 32px 36px' }}>
           
           {/* ETAPA 1: IDENTIFICAÇÃO & DOCUMENTOS */}
           {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ borderBottom: '1px solid var(--ssj-border)', paddingBottom: '10px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <h3 style={{ borderBottom: '1px solid var(--ssj-rule-2)', paddingBottom: '12px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <User size={20} /> Etapa 1: Dados Pessoais & Documentação Oficial
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Nome Completo (conforme RG)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Nome Completo (conforme RG)</label>
                   <input
                     type="text"
                     value={formData.nomeCompleto}
                     onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                    placeholder="Nome igual ao documento oficial"
+                    placeholder="MARINA TANAKA OLIVEIRA"
                     className="ssj-input"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', textTransform: 'uppercase' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Data de Nascimento</label>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Data de Nascimento · 生年月日</label>
                   <input
                     type="date"
                     value={formData.dataNascimento}
@@ -230,77 +325,114 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                   />
                   {formData.dataNascimento && (
                     <span style={{ fontSize: '12px', color: 'var(--ssj-verde)', fontWeight: 600, marginTop: '4px', display: 'block' }}>
-                      Idade Calculada: {calcularIdade(formData.dataNascimento)}
+                      Idade Calculada: {calcularIdade(formData.dataNascimento)} anos
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Sexo</label>
-                  <select
-                    value={formData.sexo}
-                    onChange={e => setFormData({ ...formData, sexo: e.target.value })}
-                    className="ssj-input"
-                    style={{ width: '100%' }}
-                  >
-                    <option value="M">Masculino</option>
-                    <option value="F">Feminino</option>
-                  </select>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Sexo</label>
+                  <div className="ssj-opts" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="ssj-opt"
+                      aria-pressed={formData.sexo === 'M'}
+                      onClick={() => setFormData({ ...formData, sexo: 'M' })}
+                    >
+                      Masculino
+                    </button>
+                    <button
+                      type="button"
+                      className="ssj-opt"
+                      aria-pressed={formData.sexo === 'F'}
+                      onClick={() => setFormData({ ...formData, sexo: 'F' })}
+                    >
+                      Feminino
+                    </button>
+                  </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Nacionalidade</label>
-                  <select
-                    value={formData.nacionalidade}
-                    onChange={e => setFormData({ ...formData, nacionalidade: e.target.value })}
-                    className="ssj-input"
-                    style={{ width: '100%' }}
-                  >
-                    <option value="BRAS">Brasileira (BRAS)</option>
-                    <option value="JAP">Japonesa (JAP)</option>
-                    <option value="Outra">Outra</option>
-                  </select>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Nacionalidade</label>
+                  <div className="ssj-opts" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="ssj-opt"
+                      aria-pressed={formData.nacionalidade === 'BRAS'}
+                      onClick={() => setFormData({ ...formData, nacionalidade: 'BRAS' })}
+                    >
+                      Brasileira (BRAS)
+                    </button>
+                    <button
+                      type="button"
+                      className="ssj-opt"
+                      aria-pressed={formData.nacionalidade === 'JAP'}
+                      onClick={() => setFormData({ ...formData, nacionalidade: 'JAP' })}
+                    >
+                      Japonesa (JAP)
+                    </button>
+                    <button
+                      type="button"
+                      className="ssj-opt"
+                      aria-pressed={formData.nacionalidade === 'Outra'}
+                      onClick={() => setFormData({ ...formData, nacionalidade: 'Outra' })}
+                    >
+                      Outra
+                    </button>
+                  </div>
                 </div>
 
                 {formData.nacionalidade === 'BRAS' && (
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Geração Nikkei (Descendência)</label>
-                    <select
-                      value={formData.geracaoNikkei}
-                      onChange={e => setFormData({ ...formData, geracaoNikkei: e.target.value })}
-                      className="ssj-input"
-                      style={{ width: '100%' }}
-                    >
-                      <option value="nissei">Nissei (Filho de Japonês)</option>
-                      <option value="sansei">Sansei (Neto de Japonês)</option>
-                      <option value="yonsei">Yonsei (Bisneto de Japonês)</option>
-                      <option value="conjuge">Cônjuge de Nikkei</option>
-                      <option value="nao_descendente">Não Descendente</option>
-                    </select>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>É descendente de japonês? · 日系人ですか</label>
+                    <div className="ssj-opts" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {[
+                        { val: 'nao_descendente', label: 'Não' },
+                        { val: 'nissei', label: 'Nissei (2ª Ger.)' },
+                        { val: 'sansei', label: 'Sansei (3ª Ger.)' },
+                        { val: 'yonsei', label: 'Yonsei (4ª Ger.)' },
+                        { val: 'conjuge', label: 'Cônjuge de Nikkei' }
+                      ].map(opt => (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          className="ssj-opt"
+                          aria-pressed={formData.geracaoNikkei === opt.val}
+                          onClick={() => setFormData({ ...formData, geracaoNikkei: opt.val })}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '11.5px', color: 'var(--ssj-muted)', marginTop: '6px', display: 'block' }}>
+                      Pergunta obrigatória — define a elegibilidade do tipo de visto para o Japão.
+                    </span>
                   </div>
                 )}
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>CPF</label>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>CPF</label>
                   <input
                     type="text"
                     value={formData.cpf}
-                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                    onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
                     placeholder="000.000.000-00"
+                    maxLength={14}
                     className="ssj-input"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', fontFamily: 'var(--ssj-font-mono)' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Passaporte Nº + Validade</label>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Passaporte Nº + Validade</label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <input
                       type="text"
-                      placeholder="Nº Passaporte"
+                      placeholder="FK884213"
                       value={formData.passaporte}
                       onChange={e => setFormData({ ...formData, passaporte: e.target.value })}
                       className="ssj-input"
+                      style={{ fontFamily: 'var(--ssj-font-mono)' }}
                     />
                     <input
                       type="date"
@@ -384,34 +516,92 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
           {/* ETAPA 3: ENDEREÇO & FAMÍLIA */}
           {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ borderBottom: '1px solid var(--ssj-border)', paddingBottom: '10px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <h3 style={{ borderBottom: '1px solid var(--ssj-rule-2)', paddingBottom: '12px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={20} /> Etapa 3: Endereço & Contatos de Emergência
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>CEP (Busca automática via ViaCEP)</label>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>CEP (Busca automática via ViaCEP)</label>
                   <input
                     type="text"
                     value={formData.cep}
-                    onChange={e => setFormData({ ...formData, cep: e.target.value })}
-                    placeholder="00000-000"
+                    onChange={e => buscarViaCep(maskCEP(e.target.value))}
+                    placeholder="07064-020"
+                    maxLength={9}
+                    className="ssj-input"
+                    style={{ width: '100%', fontFamily: 'var(--ssj-font-mono)' }}
+                  />
+                  {cepFeedback && (
+                    <span style={{
+                      fontSize: '12px',
+                      color: cepFeedback.startsWith('✓') ? 'var(--ssj-verde)' : 'var(--ssj-muted)',
+                      fontWeight: 600,
+                      marginTop: '4px',
+                      display: 'block'
+                    }}>
+                      {cepFeedback}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Celular / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={formData.celular}
+                    onChange={e => setFormData({ ...formData, celular: maskPhone(e.target.value) })}
+                    placeholder="(11) 99999-9999"
+                    maxLength={15}
+                    className="ssj-input"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Logradouro (Rua / Número / Complemento)</label>
+                  <input
+                    type="text"
+                    value={formData.logradouro}
+                    onChange={e => setFormData({ ...formData, logradouro: e.target.value })}
+                    placeholder="Rua Gabriel Vasconcelos, 265"
                     className="ssj-input"
                     style={{ width: '100%' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Celular / WhatsApp</label>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Bairro</label>
                   <input
                     type="text"
-                    value={formData.celular}
-                    onChange={e => setFormData({ ...formData, celular: e.target.value })}
-                    placeholder="(11) 99999-9999"
+                    value={formData.bairro}
+                    onChange={e => setFormData({ ...formData, bairro: e.target.value })}
+                    placeholder="Vila Rosália"
                     className="ssj-input"
                     style={{ width: '100%' }}
                   />
+                </div>
+
+                <div>
+                  <label className="ssj-label" style={{ display: 'block', marginBottom: '6px' }}>Cidade / UF</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="Guarulhos"
+                      value={formData.cidade}
+                      onChange={e => setFormData({ ...formData, cidade: e.target.value })}
+                      className="ssj-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="SP"
+                      value={formData.estado}
+                      onChange={e => setFormData({ ...formData, estado: e.target.value })}
+                      className="ssj-input"
+                      style={{ textTransform: 'uppercase' }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ gridColumn: 'span 2', padding: '16px', background: 'var(--ssj-paper)', borderRadius: '10px' }}>
@@ -617,5 +807,6 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
       </div>
     </div>
+  </div>
   );
 }
