@@ -64,7 +64,7 @@ export function Navbar({ lang: _lang }: NavbarProps) {
       <div className="ssj-container">
         <div className="ssj-nav__bar">
           <Link to="/" aria-label={`${BRAND.name} — início`} style={{ display: 'inline-flex', flex: 'none' }}>
-            <BrandLockup size={34} withTagline />
+            <BrandLockup size={44} withTagline />
           </Link>
 
           <nav className="ssj-nav__links" aria-label="Navegação principal">

@@ -1,4 +1,4 @@
-import { BRAND, BRAND_COLORS as C, BRIDGE_PATH, MARK_GEO as G } from './brand';
+import { BRAND, BRAND_COLORS as C, BRIDGE_PATH, MARK_GEO as G, MARK_VIEWBOX } from './brand';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SELECTSYS JOBS · LOGO
@@ -41,7 +41,7 @@ export function BrandMark({ size = 26, tone = 'auto', animated = false, bare = f
     <svg
       width={size}
       height={size}
-      viewBox="0 0 120 120"
+      viewBox={MARK_VIEWBOX}
       fill="none"
       className={className}
       role="img"
@@ -146,8 +146,8 @@ export function BrandLockup({ size = 32, tone = 'auto', withTagline = false, cla
           <span
             style={{
               fontFamily: 'var(--ssj-font-mono)',
-              fontSize: Math.max(8.5, size * 0.29),
-              letterSpacing: '0.22em',
+              fontSize: Math.max(12, size * 0.32),
+              letterSpacing: '0.18em',
               textTransform: 'uppercase',
               color: tone === 'light' ? C.ring : 'var(--ssj-muted)',
               whiteSpace: 'nowrap',

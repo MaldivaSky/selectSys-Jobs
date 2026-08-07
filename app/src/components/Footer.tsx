@@ -21,7 +21,7 @@ export function Footer({ lang }: { lang: Language }) {
           }}
         >
           <div>
-            <BrandLockup size={28} />
+            <BrandLockup size={38} />
             <p style={{ marginTop: 12, maxWidth: 420, lineHeight: 1.6, color: 'var(--ssj-muted)' }}>
               {BRAND.mission}
             </p>

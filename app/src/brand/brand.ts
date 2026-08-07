@@ -45,6 +45,14 @@ export const BRAND_COLORS = {
  *  Compartilhado por logo, favicon, icones e animacao de abertura. */
 export const BRIDGE_PATH = 'M42 70 Q60 38 78 70';
 
+/** Recorte do viewBox nos limites do desenho.
+ *  O arquivo da marca e um ICONE: o simbolo ocupa metade do quadro porque o
+ *  resto e o fundo quadrado escuro. Usado como logo ao lado do texto, esse
+ *  vazio faz o simbolo parecer encolhido. Recortar o viewBox mantem as
+ *  proporcoes exatas (anel : ponte : pontos) e so tira a margem morta.
+ *    anel cx60 cy58 r30 + traco 2.4  ->  x 28.8..91.2 · y 26.8..89.2 */
+export const MARK_VIEWBOX = '28.8 26.8 62.4 62.4';
+
 /** Geometria oficial do simbolo, em viewBox 120. Nao ajustar. */
 export const MARK_GEO = {
   anel: { cx: 60, cy: 58, r: 30, w: 2.4 },

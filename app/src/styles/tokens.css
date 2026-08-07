@@ -114,7 +114,7 @@
   /* ── Layout ──────────────────────────────────────────────────────────── */
   --ssj-max: 1200px;
   --ssj-gutter: clamp(16px, 4vw, 32px);
-  --ssj-nav-h: 72px;
+  --ssj-nav-h: 84px;
   --ssj-z-nav: 50;
   --ssj-z-overlay: 90;
 }

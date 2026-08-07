@@ -9,6 +9,7 @@ import { FuncionalidadesView } from './pages/FuncionalidadesView';
 import { ClaudeFUJIARTEWalkthrough } from './pages/ClaudeFUJIARTEWalkthrough';
 import { FujiarteCase } from './pages/FujiarteCase';
 import { CandidateWizard } from './pages/CandidateWizard';
+import { FichaRenderer } from './components/ficha/FichaRenderer';
 import { AuthPortal } from './pages/AuthPortal';
 import { VagasHub } from './pages/VagasHub';
 import { TenantDashboard } from './pages/TenantDashboard';
@@ -35,6 +36,8 @@ export function App() {
               <Route path="/funcionalidades" element={<FuncionalidadesView lang={lang} />} />
               <Route path="/prototipo" element={<ClaudeFUJIARTEWalkthrough />} />
               <Route path="/candidato" element={<CandidateWizard lang={lang} />} />
+              {/* Ficha completa: 7 etapas geradas do schema versionado */}
+              <Route path="/ficha" element={<FichaRenderer />} />
               <Route path="/vagas" element={<VagasHub lang={lang} />} />
               <Route path="/fujiarte" element={<FujiarteCase lang={lang} />} />
               <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />

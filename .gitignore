@@ -71,3 +71,7 @@ temp/
 
 .vercel
 .env*
+saida/
+marca-opcoes/
+ficha-fujiarte-dump.txt
+ficha-globo-designer.html
