@@ -43,6 +43,7 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
             <Route path="/vagas/:id" element={<VagaDetalhe lang={lang} />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/admin" element={<TenantDashboard />} />
+              <Route path="/admin/:tenantSlug" element={<TenantDashboard />} />
               <Route path="/superadmin" element={<SuperAdmin lang={lang} />} />
             </Route>
             {/* Área do Candidato (B2C) - Roteamento Multi-Tenant */}

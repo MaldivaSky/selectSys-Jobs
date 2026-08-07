@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../dados/supabase';
 import { Plus, Users, LayoutDashboard, Building2, Calendar, FileText, Briefcase } from 'lucide-react';
 import { useTheme } from '../theme/theme';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export function TenantDashboard() {
   const { escuro: isDark } = useTheme();
@@ -36,6 +37,9 @@ export function TenantDashboard() {
   const cardBorder = isDark ? '#29313c' : '#e0e2dc';
   const accentPri = isDark ? '#7ba4de' : '#294b86';
 
+  const navigate = useNavigate();
+  const { tenantSlug: slugFromUrl } = useParams<{ tenantSlug?: string }>();
+
   useEffect(() => {
     carregarDados();
   }, []);
@@ -53,24 +57,31 @@ export function TenantDashboard() {
     }
 
     // 2. Descobrir qual organização ele pertence
-    const { data: membership } = await supabase
+    const { data: membership, error: memErr } = await supabase
       .from('memberships')
-      .select('organization_id, organizations(id, nome, slug, logo_url, cor_primaria)')
+      .select('organization_id, role, organizations(id, nome, slug, features)')
       .eq('user_id', user.id)
       .single();
 
-    if (!membership || !membership.organizations) {
+    if (memErr || !membership || !membership.organizations) {
       setTenantName("Sem Organização Associada");
       setLoading(false);
       return;
     }
 
-    const orgId = (membership.organizations as any).id;
+    const org = membership.organizations as any;
+    const orgId = org.id;
+    const slug = org.slug || '';
     setTenantId(orgId);
-    setTenantName((membership.organizations as any).nome);
-    setTenantSlug((membership.organizations as any).slug || '');
-    setConfigLogo((membership.organizations as any).logo_url || '');
-    setConfigCor((membership.organizations as any).cor_primaria || '#294b86');
+    setTenantName(org.nome);
+    setTenantSlug(slug);
+    setConfigLogo((org.features as any)?.logo_url || '');
+    setConfigCor((org.features as any)?.cor_primaria || '#294b86');
+
+    // Redireciona /admin → /admin/{slug} para URL profissional
+    if (!slugFromUrl && slug) {
+      navigate(`/admin/${slug}`, { replace: true });
+    }
     
     // 3. Busca vagas
     const { data: vagasData } = await supabase
