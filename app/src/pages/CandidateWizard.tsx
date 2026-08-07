@@ -16,6 +16,8 @@ import {
 } from '../dados/validacao';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../dados/supabase';
+import { enviarCandidatura } from '../dados/candidaturas';
+import { executarTriagem, type ResultadoTriagem } from '../dados/triagemEngine';
 import type { Language } from '../translations';
 
 interface Experience {
@@ -52,6 +54,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [submetidoResultado, setSubmetidoResultado] = useState<{ enviado: boolean; triagem: ResultadoTriagem } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   /** Faixa de aviso da ficha (extração aplicada, erro de validação, etc.). */
   const [avisoFicha, setAvisoFicha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   /** Rascunho lido do localStorage, aguardando o candidato decidir se retoma. */
@@ -326,7 +330,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     { n: '07', title: 'Revisão/.XLS', ja: '確認・エクセル' }
   ];
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     // Validação da Etapa 1
     if (!formData.nomeCompleto.trim()) { alert("Por favor, preencha o Nome Completo."); setStep(1); return; }
     if (!formData.cpf.trim()) { alert("Por favor, preencha o CPF."); setStep(1); return; }
@@ -350,7 +354,39 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
       alert("É obrigatório concordar com o Termo de Consentimento LGPD sobre seus dados de saúde."); setStep(6); return; 
     }
 
-    alert(`Candidatura submetida com sucesso ao pipeline da ${tenantInfo?.nome || 'agência'}!`);
+    setIsSubmitting(true);
+
+    // Executar Motor de Triagem
+    const resultadoTriagem = executarTriagem(
+      formData as unknown as Record<string, unknown>,
+      { curriculo_japao: formData.experienciasJapao }
+    );
+
+    // Persistir no Supabase
+    const rascunho = {
+      valores: formData as unknown as Record<string, unknown>,
+      linhas: { curriculo_japao: formData.experienciasJapao as unknown as Record<string, unknown>[] },
+      consentimentos: {
+        geral_v1: true,
+        saude_v1: formData.consentimentoSaudeLGPD,
+        descendencia_v1: formData.nacionalidade === 'BRAS',
+      },
+      etapa: 7,
+    };
+
+    const res = await enviarCandidatura(rascunho, {
+      orgSlug: tenantSlug || 'fujiarte',
+      agenciaCodigo: formData.agenciaCodigo,
+    });
+
+    setIsSubmitting(false);
+
+    if (res.ok) {
+      if (chaveRascunho) localStorage.removeItem(chaveRascunho);
+      setSubmetidoResultado({ enviado: true, triagem: resultadoTriagem });
+    } else {
+      alert(`Ocorreu um erro ao submeter sua candidatura: ${res.motivo || 'Erro desconhecido'}`);
+    }
   };
 
   if (loadingTenant) {
@@ -358,6 +394,52 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   }
 
   const primaryColor = tenantInfo?.cor_primaria || '#294b86';
+
+  if (submetidoResultado) {
+    const t = submetidoResultado.triagem;
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#0d1016', color: '#e9ece8', padding: '60px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ maxWidth: '640px', width: '100%', backgroundColor: '#161b24', borderRadius: '24px', border: '1px solid #29313c', padding: '40px', textAlign: 'center', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <Hanko estado="aprovado" texto="済" size={72} title="Ficha Recebida" />
+          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#f3f4f6', margin: '0 0 8px 0' }}>
+            Ficha Submetida com Sucesso!
+          </h2>
+          <p style={{ fontSize: '14px', color: '#9ca3af', margin: '0 0 24px 0' }}>
+            Sua candidatura foi gravada na base da <strong>{tenantInfo?.nome || 'FUJIARTE'}</strong>.
+          </p>
+
+          <div style={{ backgroundColor: '#1c222c', borderRadius: '16px', padding: '24px', textAlign: 'left', border: '1px solid #29313c', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <Shield size={20} color="#7ba4de" />
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#f3f4f6' }}>{t.titulo}</span>
+            </div>
+            <p style={{ fontSize: '14px', color: '#d1d5db', margin: '0 0 12px 0', lineHeight: 1.6 }}>
+              {t.razao}
+            </p>
+            {t.detalhes.length > 0 && (
+              <div style={{ borderTop: '1px solid #29313c', paddingTop: '12px', marginTop: '12px' }}>
+                <span style={{ fontSize: '12px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+                  Fatos Avaliados na Triagem Automática (LGPD Art. 20)
+                </span>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#9ca3af' }}>
+                  {t.detalhes.map((d, idx) => <li key={idx}>{d}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => navigate('/vagas')}
+            style={{ padding: '14px 28px', borderRadius: '12px', backgroundColor: primaryColor, color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', fontSize: '15px' }}
+          >
+            Ver Mais Vagas Disponíveis
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ssj-section" style={{
@@ -886,39 +968,6 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                   />
                 </div>
 
-                {formData.alturaCm && formData.pesoKg && (
-                  <div style={{ gridColumn: '1 / -1', padding: '16px', background: 'var(--ssj-surface)', borderRadius: '10px', border: '1px solid var(--ssj-rule)' }}>
-                    {(() => {
-                      const alturaM = parseFloat(formData.alturaCm) / 100;
-                      const peso = parseFloat(formData.pesoKg);
-                      if (alturaM > 0 && peso > 0) {
-                        const imc = (peso / (alturaM * alturaM)).toFixed(1);
-                        const imcNum = parseFloat(imc);
-                        let imcColor = 'var(--ssj-text)';
-                        let imcLabel = '';
-                        
-                        if (imcNum < 18.5) { imcColor = 'var(--ssj-ambar)'; imcLabel = 'Abaixo do peso'; }
-                        else if (imcNum < 25) { imcColor = 'var(--ssj-verde)'; imcLabel = 'Peso normal'; }
-                        else if (imcNum < 30) { imcColor = 'var(--ssj-ambar)'; imcLabel = 'Sobrepeso'; }
-                        else { imcColor = 'var(--ssj-shu)'; imcLabel = 'Obesidade'; }
-
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--ssj-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>Índice de Massa Corporal (IMC)</span>
-                              <span style={{ fontSize: '24px', fontWeight: 700, color: imcColor }}>{imc}</span>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <span style={{ fontSize: '14px', fontWeight: 600, color: imcColor, background: `${imcColor}20`, padding: '4px 10px', borderRadius: '12px' }}>{imcLabel}</span>
-                              <span style={{ fontSize: '11px', color: 'var(--ssj-muted)', display: 'block', marginTop: '6px' }}>Cálculo automático para análise médica</span>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                )}
 
                 <div style={{ padding: '16px', background: 'rgba(232,176,74,0.1)', borderRadius: '10px', border: '1px solid var(--ssj-ambar)' }}>
                   <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '4px', color: 'var(--ssj-ambar)' }}>
@@ -1615,10 +1664,11 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
                 <button
                   onClick={handleFinalSubmit}
+                  disabled={isSubmitting}
                   className="ssj-btn ssj-btn--pri"
-                  style={{ padding: '12px 32px', fontSize: '16px', fontWeight: 600, width: '100%', maxWidth: '320px' }}
+                  style={{ padding: '12px 32px', fontSize: '16px', fontWeight: 600, width: '100%', maxWidth: '320px', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  <CheckCircle2 size={20} style={{ marginRight: '8px' }} /> Enviar Candidatura · 送信する
+                  <CheckCircle2 size={20} style={{ marginRight: '8px' }} /> {isSubmitting ? 'Submetendo...' : 'Enviar Candidatura · 送信する'}
                 </button>
               </div>
             </div>
