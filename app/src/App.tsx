@@ -14,6 +14,8 @@ import { VagaDetalhe } from './pages/VagaDetalhe';
 import { TenantDashboard } from './pages/TenantDashboard';
 import { PlanoAcaoView } from './pages/PlanoAcaoView';
 import { SuperAdmin } from './pages/SuperAdmin';
+import { FujiarteCase } from './pages/FujiarteCase';
+import PrototipoApp from './pages/PrototipoApp';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RegisterTenant } from './pages/RegisterTenant';
 import { PoliticaPrivacidade } from './pages/PoliticaPrivacidade';
@@ -33,6 +35,8 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/plano-acao" element={<PlanoAcaoView lang={lang} />} />
+            <Route path="/fujiarte" element={<FujiarteCase lang={lang} />} />
+            <Route path="/prototipo" element={<PrototipoApp />} />
             <Route path="/login" element={<AuthPortal />} />
             <Route path="/funcionalidades" element={<FuncionalidadesView lang={lang} />} />
             <Route path="/vagas" element={<VagasHub lang={lang} />} />
