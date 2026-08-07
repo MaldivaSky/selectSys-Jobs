@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd app && npm install --include=dev && npm run build",
+  "buildCommand": "cd app && npm install --no-package-lock --include=dev && npm run build",
   "outputDirectory": "app/dist",
   "framework": "vite",
   "rewrites": [
