@@ -1,29 +1,19 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { CHAVE_TEMA, ContextoTema, FUNDO, type Tema, type TemaCtx } from './contexto';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TEMA — FONTE ÚNICA
    Antes cada página tinha o próprio botão e o próprio estado: navegar da Home
    para o walkthrough virava o app inteiro do escuro para o claro. Agora existe
    UM estado, no shell, persistido. Página nenhuma declara tema.
+
+   O contexto e o hook `useTheme` vivem em `contexto.ts` — ver a justificativa
+   de Fast Refresh lá. Este arquivo exporta só o componente.
    ═════════════════════════════════════════════════════════════════════════ */
 
-export type Tema = 'light' | 'dark';
-
-const CHAVE = 'ssj:tema';
-const FUNDO: Record<Tema, string> = { light: '#f4f5f2', dark: '#0d1016' };
-
-interface TemaCtx {
-  tema: Tema;
-  escuro: boolean;
-  alternar: () => void;
-  definir: (t: Tema) => void;
-}
-
-const Ctx = createContext<TemaCtx | null>(null);
-
 function temaInicial(): Tema {
-  const salvo = localStorage.getItem(CHAVE);
+  const salvo = localStorage.getItem(CHAVE_TEMA);
   if (salvo === 'light' || salvo === 'dark') return salvo;
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
@@ -34,7 +24,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', tema);
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', FUNDO[tema]);
-    localStorage.setItem(CHAVE, tema);
+    localStorage.setItem(CHAVE_TEMA, tema);
   }, [tema]);
 
   const alternar = useCallback(() => setTema((t) => (t === 'dark' ? 'light' : 'dark')), []);
@@ -44,11 +34,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [tema, alternar],
   );
 
-  return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
-}
-
-export function useTheme(): TemaCtx {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error('useTheme precisa estar dentro de <ThemeProvider>');
-  return ctx;
+  return <ContextoTema.Provider value={valor}>{children}</ContextoTema.Provider>;
 }

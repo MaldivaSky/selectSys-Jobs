@@ -5,7 +5,7 @@ import {
   LayoutGrid, BarChart3, Cpu, Award
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 
 interface ShowcaseModal {
   titulo: string;
