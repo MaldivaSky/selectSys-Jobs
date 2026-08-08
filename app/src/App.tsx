@@ -13,6 +13,7 @@ import { VagasHub } from './pages/VagasHub';
 import { VagaDetalhe } from './pages/VagaDetalhe';
 import { VagasTenantHub } from './pages/VagasTenantHub';
 import { TenantDashboard } from './pages/TenantDashboard';
+import { AcompanhamentoCandidato } from './pages/AcompanhamentoCandidato';
 import { PlanoAcaoView } from './pages/PlanoAcaoView';
 import { SuperAdmin } from './pages/SuperAdmin';
 import { FujiarteCase } from './pages/FujiarteCase';
@@ -58,6 +59,7 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
             {/* Área do Candidato (B2C) - Roteamento Multi-Tenant */}
             <Route path="/c/:tenantSlug" element={<CandidateWizard lang={lang} />} />
             <Route path="/c/:tenantSlug/vagas" element={<VagasTenantHub />} />
+            <Route path="/c/:tenantSlug/acompanhamento" element={<AcompanhamentoCandidato />} />
             <Route path="/candidato" element={<Navigate to="/c/fujiarte" replace />} />
             
             <Route path="/ficha" element={<FichaRenderer />} />

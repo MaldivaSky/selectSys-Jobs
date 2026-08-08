@@ -16,6 +16,14 @@ import {
 } from '../dados/validacao';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../dados/supabase';
+import {
+  carregarRascunho,
+  descartarRascunho,
+  obterSessao,
+  salvarEtapaLocal,
+  salvarRascunho,
+  sanitizarResiduosLocais,
+} from '../dados/rascunhoFicha';
 import { enviarCandidatura } from '../dados/candidaturas';
 import { executarTriagem, type ResultadoTriagem } from '../dados/triagemEngine';
 import type { Language } from '../translations';
@@ -58,7 +66,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   /** Faixa de aviso da ficha (extração aplicada, erro de validação, etc.). */
   const [avisoFicha, setAvisoFicha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
-  /** Rascunho lido do localStorage, aguardando o candidato decidir se retoma. */
+  /** Rascunho vindo do servidor, aguardando o candidato decidir se retoma. */
   const [rascunhoPendente, setRascunhoPendente] = useState<{ dados: Record<string, unknown>; etapa: number } | null>(null);
   
   // Tenant Context
@@ -79,7 +87,9 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, nome, logo_url, cor_primaria, features')
+        // Só a vitrine. `features` carrega configuração de plano e deixou de
+        // ser legível sem login — portal público não lê config de tenant.
+        .select('id, nome, logo_url, cor_primaria')
         .eq('slug', tenantSlug)
         .maybeSingle();
 
@@ -87,10 +97,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
         alert('Agência não encontrada ou link inválido.');
         navigate('/login');
       } else {
-        // Colunas dedicadas mandam; `features` cobre as orgs do seed antigo.
-        const feats = (data.features ?? {}) as Record<string, string>;
-        const cor = normalizarHex(data.cor_primaria ?? feats.cor_primaria);
-        const logo = data.logo_url ?? feats.logo_url ?? '';
+        const cor = normalizarHex(data.cor_primaria);
+        const logo = data.logo_url ?? '';
         setTenantInfo({ id: data.id, nome: data.nome, cor_primaria: cor, logo_url: logo });
         setFormData(prev => ({ ...prev, agenciaCodigo: data.id }));
       }
@@ -245,50 +253,69 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     });
   }, []);
 
-  /* ── AUTOSAVE REAL ────────────────────────────────────────────────────
-     Antes o badge "Salvo" só piscava num setInterval, sem gravar nada: o
-     candidato que fechasse a aba na etapa 6 perdia as 6 etapas. Agora o
-     rascunho vai para o localStorage, com chave por tenant, e a ficha é
-     retomada de onde parou. */
-  const chaveRascunho = tenantSlug ? `ssj:ficha:${tenantSlug}` : null;
+  /* ── AUTOSAVE ─────────────────────────────────────────────────────────
+     O rascunho vive no servidor, em `application_data.rascunho`, sob a RLS
+     que só libera para o dono do dado e para a agência dele. Antes a ficha
+     inteira — CPF, RG, passaporte, família — ia para `localStorage` a cada
+     1,2 s e ficava lá depois de fechar o navegador.
+
+     Sem sessão não há gravação de PII em lugar nenhum: o formulário mora na
+     memória e só o número da etapa vai para `sessionStorage`. O preço é
+     honesto e está dito na tela — para retomar depois, é preciso entrar. */
   const jaRestaurou = useRef(false);
   const [rascunhoEncontrado, setRascunhoEncontrado] = useState<{ etapa: number; quando: string } | null>(null);
+  const [rascunhoNoServidor, setRascunhoNoServidor] = useState(false);
 
   useEffect(() => {
-    if (!chaveRascunho || jaRestaurou.current) return;
+    // Resíduo do formato antigo sai na abertura, com ou sem sessão.
+    sanitizarResiduosLocais();
+  }, []);
+
+  useEffect(() => {
+    const orgId = tenantInfo?.id;
+    if (!orgId || jaRestaurou.current) return;
     jaRestaurou.current = true;
-    try {
-      const cru = localStorage.getItem(chaveRascunho);
-      if (!cru) return;
-      const salvo = JSON.parse(cru) as { dados: Record<string, unknown>; etapa: number; quando: number };
-      // Rascunho velho demais é mais atrapalho que ajuda.
-      if (Date.now() - salvo.quando > 30 * 24 * 3600 * 1000) {
-        localStorage.removeItem(chaveRascunho);
-        return;
-      }
-      setRascunhoPendente(salvo);
+
+    let ativo = true;
+    void (async () => {
+      const sessao = await obterSessao();
+      if (!ativo) return;
+      setRascunhoNoServidor(Boolean(sessao));
+      if (!sessao) return;
+
+      const { origem, rascunho } = await carregarRascunho(orgId);
+      if (!ativo || origem !== 'servidor' || !rascunho) return;
+
+      setRascunhoPendente({ dados: rascunho.dados, etapa: rascunho.etapa });
       setRascunhoEncontrado({
-        etapa: salvo.etapa,
-        quando: new Date(salvo.quando).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+        etapa: rascunho.etapa,
+        quando: new Date(rascunho.quando).toLocaleDateString('pt-BR', {
+          day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+        }),
       });
-    } catch {
-      localStorage.removeItem(chaveRascunho);
-    }
-  }, [chaveRascunho]);
+    })();
+
+    return () => { ativo = false; };
+  }, [tenantInfo?.id]);
 
   useEffect(() => {
-    if (!chaveRascunho || rascunhoEncontrado) return; // não sobrescreve antes da decisão
+    const orgId = tenantInfo?.id;
+    if (!orgId || rascunhoEncontrado) return; // não sobrescreve antes da decisão
+    if (tenantSlug) salvarEtapaLocal(tenantSlug, step);
+    if (!rascunhoNoServidor) return;
+
     const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(chaveRascunho, JSON.stringify({ dados: formData, etapa: step, quando: Date.now() }));
+      void (async () => {
+        const nome = typeof formData.nomeCompleto === 'string' ? formData.nomeCompleto : undefined;
+        const { ok } = await salvarRascunho(orgId, { dados: formData, etapa: step, quando: Date.now() }, nome);
+        if (!ok) return;
         setAutoSaved(true);
         setTimeout(() => setAutoSaved(false), 1600);
-      } catch {
-        /* cota cheia ou modo privativo: seguir sem autosave é melhor que travar */
-      }
+      })();
     }, 1200);
+
     return () => clearTimeout(timer);
-  }, [formData, step, chaveRascunho, rascunhoEncontrado]);
+  }, [formData, step, tenantInfo?.id, tenantSlug, rascunhoEncontrado, rascunhoNoServidor]);
 
   // Cálculo automático de idade ao vivo
   const calcularIdade = (dataNasc: string) => {
@@ -382,7 +409,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
     setIsSubmitting(false);
 
     if (res.ok) {
-      if (chaveRascunho) localStorage.removeItem(chaveRascunho);
+      if (tenantInfo?.id) await descartarRascunho(tenantInfo.id, tenantSlug);
+      sanitizarResiduosLocais();
       setSubmetidoResultado({ enviado: true, triagem: resultadoTriagem });
     } else {
       alert(`Ocorreu um erro ao submeter sua candidatura: ${res.motivo || 'Erro desconhecido'}`);
@@ -635,7 +663,7 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (chaveRascunho) localStorage.removeItem(chaveRascunho);
+                    if (tenantInfo?.id) void descartarRascunho(tenantInfo.id, tenantSlug);
                     setRascunhoEncontrado(null);
                     setRascunhoPendente(null);
                   }}
