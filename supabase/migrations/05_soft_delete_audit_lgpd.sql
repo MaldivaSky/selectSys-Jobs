@@ -29,6 +29,11 @@ CREATE INDEX IF NOT EXISTS idx_applications_deleted_at ON public.applications (d
 CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON public.users (deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_memberships_deleted_at ON public.memberships (deleted_at) WHERE deleted_at IS NULL;
 
+-- Garante que candidatos soft-deleted não saturem o constraint de CPF único ao se candidatarem novamente
+ALTER TABLE public.candidates DROP CONSTRAINT IF EXISTS candidates_organization_id_cpf_key;
+DROP INDEX IF EXISTS idx_candidates_org_cpf_active;
+CREATE UNIQUE INDEX idx_candidates_org_cpf_active ON public.candidates (organization_id, cpf) WHERE deleted_at IS NULL;
+
 -- -----------------------------------------------------------------------------
 -- TAREFA 2: ATUALIZAÇÃO DAS POLÍTICAS DE RLS (SELECT FILTRA deleted_at IS NULL)
 -- -----------------------------------------------------------------------------
