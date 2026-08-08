@@ -63,13 +63,37 @@ secrets.json
 !app/public/templates/ficha_fujiarte_template.xlsx
 
 # Sensitive Business Plans, Internal Master Plans & Mockup Assets
-PLANO_MASTER_SENIOR.md
+# O padrão era por extensão (`PLANO_MASTER_SENIOR.md`), então o `.pdf` do MESMO
+# documento passou batido e ficou público — junto com o plano de vendas B2B, que
+# nunca chegou a ser listado. Agora a regra cobre qualquer PLANO_* em qualquer
+# extensão. Nenhum deles é insumo de build; só são citados em docs.
+PLANO_*
 plano*.jpeg
 plano*.jpg
 plano*.png
 *.txt
 docs/04-modelo-comercial-e-fiscal.md
 docs/07-fluxo-de-caixa.md
+
+# Fora do projeto: mora na máquina, não no repositório
+# ---------------------------------------------------------------------------
+# Nada aqui é código, insumo de build ou documentação do produto — são
+# capturas de tela, rascunhos, scripts pessoais e contexto de ferramenta de IA
+# que foram parar no repositório por `git add .`. Conferido antes de tirar:
+# zero referências no código, e build + E2E seguem verdes sem eles.
+SelectSys Jobs App-selection*.png
+_tam.png
+TECHNICAL_SPEC_FOR_GEMINI.md
+commit_modules.ps1
+ficha-globo-designer.html
+skills-lock.json
+/git
+
+# Favicons e manifest da raiz: duplicata morta. O que o site publica é
+# `app/public/`, porque o Vite roda dentro de `app/` (ver vercel.json).
+/favicon.ico
+/favicon.png
+/public/
 
 # IDEs, Editors & AI Agents Context
 .claude/
