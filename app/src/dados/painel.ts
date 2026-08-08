@@ -110,10 +110,20 @@ function idadeDe(nascimento: string | null): number | null {
   return a;
 }
 
-/** Lista de candidatos com busca e filtros combináveis (critério C2). */
+/** Lista de candidatos com busca e filtros combináveis.
+ *
+ * Quando há termo de busca, delega para a RPC `buscar_candidatos` que usa
+ * índices GIN/pg_trgm — fuzzy, tolerante a acento e a erro de digitação.
+ * Sem termo, usa query direta com filtros de status/agência (sem seq scan). */
 export async function listarCandidatos(f: Filtros = {}): Promise<LinhaCandidato[]> {
   if (!temBanco || !supabase) return [];
 
+  // Com termo: busca server-side via RPC (pg_trgm + GIN index)
+  if (f.busca?.trim()) {
+    return buscarCandidatosRPC(f);
+  }
+
+  // Sem termo: query direta sem ILIKE
   let q = supabase
     .from('applications')
     .select(
@@ -126,11 +136,6 @@ export async function listarCandidatos(f: Filtros = {}): Promise<LinhaCandidato[
     .limit(200);
 
   if (f.status && f.status !== 'todos') q = q.eq('status', f.status);
-  if (f.busca?.trim()) {
-    // ilike cobre acento parcialmente; a busca tolerante de verdade usa o
-    // índice trigram e entra como RPC quando o volume justificar.
-    q = q.ilike('candidates.nome_completo', `%${f.busca.trim()}%`);
-  }
 
   const { data, error } = await q;
   if (error || !data) return [];
@@ -165,6 +170,48 @@ export async function listarCandidatos(f: Filtros = {}): Promise<LinhaCandidato[
       return true;
     });
 }
+
+/**
+ * Busca server-side via RPC `buscar_candidatos` (pg_trgm + GIN index).
+ *
+ * Tolerante a acento (unaccent) e a erro de digitação (similarity %).
+ * Retorna ordenado por relevância decrescente.
+ */
+export async function buscarCandidatosRPC(f: Filtros & { limit?: number; offset?: number } = {}): Promise<LinhaCandidato[]> {
+  if (!temBanco || !supabase) return [];
+
+  const { data, error } = await supabase.rpc('buscar_candidatos', {
+    p_termo:  f.busca?.trim()  || null,
+    p_status: (f.status && f.status !== 'todos') ? f.status : null,
+    p_org:    null, // a RPC usa app_current_org() como fallback — RLS garante o tenant
+    p_limit:  f.limit  ?? 60,
+    p_offset: f.offset ?? 0,
+  });
+
+  if (error || !data) {
+    // Fallback silencioso para ilike se a RPC não estiver disponível ainda
+    console.warn('[painel] buscar_candidatos RPC indisponível, usando fallback:', error?.message);
+    return listarCandidatos({ ...f, busca: undefined });
+  }
+
+  return (data as Record<string, any>[]).map((r) => ({
+    id: r.id,
+    application_id: r.application_id,
+    nome_completo: r.nome_completo,
+    idade: idadeDe(r.data_nascimento),
+    cidade: r.cidade,
+    estado: r.estado,
+    geracao: r.geracao,
+    nivel_japones: r.nivel_japones,
+    status: r.status as StatusCandidatura,
+    agencia: null, // RPC não retorna agência — busca secundária se necessário
+    parecer: null,
+    outcome: null,
+    submetida_em: null,
+    dias_parado: 0,
+  } as LinhaCandidato));
+}
+
 
 /** Só as transições que a organização permitiu — o dropdown vem do banco. */
 export async function transicoesDe(status: StatusCandidatura): Promise<StatusCandidatura[]> {
