@@ -7,7 +7,6 @@ export function PoliticaPrivacidade() {
   const { escuro: isDark } = useTheme();
   const [secaoAtiva, setSecaoAtiva] = useState('geral');
 
-  const pageBg = isDark ? '#0d1016' : '#f8f9fa';
   const cardBg = isDark ? '#161b24' : '#ffffff';
   const textPrimary = isDark ? '#e9ece8' : '#14181f';
   const textSecondary = isDark ? '#8d968f' : '#4a5568';
@@ -16,8 +15,8 @@ export function PoliticaPrivacidade() {
   const accentBlue = '#294b86';
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: pageBg, color: textPrimary, padding: '60px 20px' }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div className="ssj-doc">
+      <div className="ssj-doc__wrap">
         
         {/* Voltar */}
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: textSecondary, textDecoration: 'none', fontWeight: 600 }}>
@@ -65,10 +64,10 @@ export function PoliticaPrivacidade() {
         </div>
 
         {/* Navegação de Seções */}
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'start' }}>
-          
+        <div className="ssj-doc__grid">
+
           {/* Índice de Seções */}
-          <div style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px', position: 'sticky', top: '20px' }}>
+          <nav className="ssj-doc__indice" aria-label="Seções da política">
             {[
               { id: 'geral', label: '1. Agentes e Escopo' },
               { id: 'coleta', label: '2. Dados Coletados' },
@@ -93,10 +92,10 @@ export function PoliticaPrivacidade() {
                 {item.label}
               </button>
             ))}
-          </div>
+          </nav>
 
           {/* Conteúdo Detalhado */}
-          <div style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '20px', padding: '40px', lineHeight: 1.8, fontSize: '15px' }}>
+          <div className="ssj-doc__card ssj-doc__corpo">
             
             {secaoAtiva === 'geral' && (
               <section>

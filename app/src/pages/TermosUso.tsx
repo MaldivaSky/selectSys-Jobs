@@ -7,16 +7,14 @@ export function TermosUso() {
   const { escuro: isDark } = useTheme();
   const [secaoAtiva, setSecaoAtiva] = useState('natureza');
 
-  const pageBg = isDark ? '#0d1016' : '#f8f9fa';
-  const cardBg = isDark ? '#161b24' : '#ffffff';
   const textPrimary = isDark ? '#e9ece8' : '#14181f';
   const textSecondary = isDark ? '#8d968f' : '#4a5568';
   const cardBorder = isDark ? '#29313c' : '#e2e8f0';
   const accentPri = '#c4452b';
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: pageBg, color: textPrimary, padding: '60px 20px' }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div className="ssj-doc">
+      <div className="ssj-doc__wrap">
         
         {/* Voltar */}
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: textSecondary, textDecoration: 'none', fontWeight: 600 }}>
@@ -24,34 +22,39 @@ export function TermosUso() {
         </Link>
 
         {/* Cabeçalho Jurídico */}
-        <div style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '24px', padding: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div style={{ backgroundColor: 'rgba(196, 69, 43, 0.1)', padding: '12px', borderRadius: '16px', color: accentPri }}>
+        <div className="ssj-doc__card">
+          {/* Ícone e título empilham no celular em vez de disputar a largura. */}
+          <div className="ssj-doc__faixa">
+            <div style={{ backgroundColor: 'rgba(196, 69, 43, 0.1)', padding: 'var(--ssj-s3)', borderRadius: 'var(--ssj-r-lg)', color: accentPri, flexShrink: 0 }}>
               <Scale size={36} />
             </div>
-            <div>
-              <h1 style={{ fontSize: '2.2rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
-                Termos de Uso e Condições de Serviço
-              </h1>
-              <p style={{ color: textSecondary, fontSize: '14px', margin: '4px 0 0 0' }}>
+            <div style={{ minWidth: 0, flex: '1 1 16rem' }}>
+              <h1 className="ssj-doc__titulo">Termos de Uso e Condições de Serviço</h1>
+              <p className="ssj-doc__subtitulo">
                 Regulamento dos Serviços Tecnológicos da Plataforma SelectSys Jobs (Dekassegui B2B/B2C)
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '24px', borderTop: `1px solid ${cardBorder}`, paddingTop: '20px', marginTop: '20px', fontSize: '13px', color: textSecondary, flexWrap: 'wrap' }}>
+          {/* Os separadores "•" saíram: em uma coluna eles viram lixo visual.
+              A grade fluida já separa os itens sozinha. */}
+          <div
+            className="ssj-doc__meta"
+            style={{ borderTop: `1px solid ${cardBorder}`, paddingTop: 'var(--ssj-s5)', marginTop: 'var(--ssj-s5)' }}
+          >
             <span><strong>Versão:</strong> 3.1 / 2026</span>
-            <span>•</span>
             <span><strong>Gratuidade B2C:</strong> Isenção Total de Taxas para Candidatos</span>
-            <span>•</span>
             <span><strong>Foro:</strong> São Paulo / SP - Brasil</span>
           </div>
         </div>
 
         {/* Garantia de Gratuidade B2C */}
-        <div style={{ backgroundColor: isDark ? 'rgba(31, 122, 77, 0.15)' : '#f0fff4', border: `1px solid ${isDark ? '#1f7a4d' : '#c6f6d5'}`, borderRadius: '16px', padding: '24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        <div
+          className="ssj-doc__faixa"
+          style={{ backgroundColor: isDark ? 'rgba(31, 122, 77, 0.15)' : '#f0fff4', border: `1px solid ${isDark ? '#1f7a4d' : '#c6f6d5'}` }}
+        >
           <CheckCircle2 size={24} color="#38a169" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div>
+          <div style={{ minWidth: 0, flex: '1 1 16rem' }}>
             <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: 700, color: isDark ? '#68d391' : '#276749' }}>
               Plataforma 100% Gratuita para Candidatos e Trabalhadores Dekassegui
             </h4>
@@ -62,10 +65,10 @@ export function TermosUso() {
         </div>
 
         {/* Navegação de Seções */}
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'start' }}>
-          
+        <div className="ssj-doc__grid">
+
           {/* Índice de Seções */}
-          <div style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px', position: 'sticky', top: '20px' }}>
+          <nav className="ssj-doc__indice" aria-label="Seções dos termos">
             {[
               { id: 'natureza', label: '1. Natureza do Serviço' },
               { id: 'gratuidade', label: '2. Gratuidade B2C' },
@@ -78,21 +81,20 @@ export function TermosUso() {
             ].map(item => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => setSecaoAtiva(item.id)}
-                style={{
-                  textAlign: 'left', padding: '12px 14px', borderRadius: '10px', border: 'none',
-                  backgroundColor: secaoAtiva === item.id ? (isDark ? '#29313c' : '#edf2f7') : 'transparent',
-                  color: secaoAtiva === item.id ? accentPri : textPrimary,
-                  fontWeight: secaoAtiva === item.id ? 700 : 500, fontSize: '13.5px', cursor: 'pointer'
-                }}
+                className="ssj-doc__indice-item"
+                /* `aria-current` carrega o estado ativo: o CSS pinta a partir
+                   dele, e o leitor de tela anuncia qual seção está aberta. */
+                aria-current={secaoAtiva === item.id}
               >
                 {item.label}
               </button>
             ))}
-          </div>
+          </nav>
 
           {/* Conteúdo Detalhado */}
-          <div style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}`, borderRadius: '20px', padding: '40px', lineHeight: 1.8, fontSize: '15px' }}>
+          <div className="ssj-doc__card ssj-doc__corpo">
             
             {secaoAtiva === 'natureza' && (
               <section>

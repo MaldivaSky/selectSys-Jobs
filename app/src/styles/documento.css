@@ -1,0 +1,190 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DOCUMENTO — páginas de texto longo (Termos, Privacidade, e o que vier)
+   ---------------------------------------------------------------------------
+   Estas páginas têm todas a mesma anatomia: cabeçalho, um índice lateral que
+   acompanha a rolagem e um corpo de texto. Até aqui cada uma reimplementava
+   isso em estilo inline, com pixel travado — e o resultado no celular era o
+   texto espremido em 109px de uma tela de 375px.
+
+   A conta de como se chegava nesses 109px, porque é o erro que este arquivo
+   existe para não deixar acontecer de novo:
+
+       375px  tela
+       -32px  padding do wrapper   (16px de cada lado)
+       -40px  padding da seção     (20px de cada lado)
+       = 303px disponíveis
+              ...e dentro deles, `grid-template-columns: 260px 1fr`, um valor
+              FIXO que não cabe e não colapsa. Sobram 43px para a segunda
+              coluna, que ainda leva 40px de padding próprio.
+
+   As duas regras que resolvem e que não podem sair daqui:
+
+     `minmax(0, 1fr)` em vez de `1fr` — sem isso, o mínimo automático de uma
+     faixa de grid é o tamanho do conteúdo, e a coluna se recusa a encolher,
+     empurrando o layout para fora da tela.
+
+     `min-width: 0` nos filhos — pelo mesmo motivo, um item de flex/grid não
+     encolhe abaixo do conteúdo dele a menos que se diga explicitamente.
+
+   Espaçamento e tipografia saem de token e de `clamp()`: a página se adapta
+   por proporção, não por breakpoint escrito na mão em cada tela.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.ssj-doc {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--ssj-paper);
+  color: var(--ssj-ink);
+  /* O gutter já é fluido no design system: clamp(16px, 4vw, 32px). */
+  padding: clamp(var(--ssj-s5), 6vw, var(--ssj-s8)) var(--ssj-gutter);
+}
+
+.ssj-doc__wrap {
+  max-width: 1000px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--ssj-s4), 3vw, var(--ssj-s6));
+}
+
+/* ── Grade: uma coluna no celular, índice ao lado a partir de 900px ────────
+   O índice só faz sentido quando há espaço lateral sobrando. Abaixo disso ele
+   vira um bloco normal no topo — continua servindo para navegar, sem roubar
+   metade da largura do texto. */
+.ssj-doc__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(var(--ssj-s4), 3vw, var(--ssj-s5));
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .ssj-doc__grid {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+}
+
+/* ── Cartão base ──────────────────────────────────────────────────────────
+   O padding acompanha a tela: 40px fixo num aparelho de 375px come 21% da
+   largura útil. */
+.ssj-doc__card {
+  min-width: 0;
+  background: var(--ssj-surface);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-xl);
+  padding: clamp(var(--ssj-s4), 4vw, var(--ssj-s7));
+}
+
+/* ── Índice ───────────────────────────────────────────────────────────────
+   `position: sticky` só onde existe coluna lateral. No celular, grudar o
+   índice no topo cobriria justamente o texto que ele indexa. */
+.ssj-doc__indice {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ssj-s1);
+  background: var(--ssj-surface);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg);
+  padding: var(--ssj-s3);
+}
+
+@media (min-width: 900px) {
+  .ssj-doc__indice {
+    position: sticky;
+    top: var(--ssj-s5);
+    max-height: calc(100vh - var(--ssj-s8));
+    overflow-y: auto;
+  }
+}
+
+.ssj-doc__indice-item {
+  width: 100%;
+  text-align: left;
+  padding: var(--ssj-s3) var(--ssj-s3);
+  border: none;
+  border-radius: var(--ssj-r-sm);
+  background: transparent;
+  color: var(--ssj-ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: var(--ssj-lh-tight);
+  cursor: pointer;
+  /* Alvo de toque confortável: abaixo de ~44px o dedo erra. */
+  min-height: 44px;
+}
+
+.ssj-doc__indice-item:hover {
+  background: var(--ssj-surface-2);
+  color: var(--ssj-ink);
+}
+
+.ssj-doc__indice-item[aria-current='true'] {
+  background: var(--ssj-indigo-wash);
+  color: var(--ssj-indigo);
+  font-weight: 700;
+}
+
+/* ── Corpo do texto ───────────────────────────────────────────────────────
+   Tamanho fluido e medida de linha controlada: texto jurídico longo em linha
+   larga demais é tão ruim de ler quanto em coluna estreita demais. */
+.ssj-doc__corpo {
+  min-width: 0;
+  line-height: var(--ssj-lh-body);
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
+}
+
+.ssj-doc__corpo h2,
+.ssj-doc__corpo h3 {
+  line-height: var(--ssj-lh-tight);
+  /* Título longo não pode estourar a caixa em tela estreita. */
+  overflow-wrap: break-word;
+}
+
+.ssj-doc__corpo p {
+  max-width: 68ch;
+}
+
+/* ── Cabeçalho ────────────────────────────────────────────────────────────
+   O título vinha em px fixo e quebrava em quatro linhas no celular. */
+.ssj-doc__titulo {
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
+  line-height: var(--ssj-lh-tight);
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.ssj-doc__subtitulo {
+  color: var(--ssj-muted);
+  font-size: clamp(0.875rem, 0.85rem + 0.2vw, 0.9375rem);
+  margin: var(--ssj-s2) 0 0;
+}
+
+/* ── Faixa de destaque (avisos, selos) ────────────────────────────────────
+   Empilha no celular em vez de espremer ícone e texto lado a lado. */
+.ssj-doc__faixa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ssj-s4);
+  align-items: flex-start;
+  border-radius: var(--ssj-r-lg);
+  padding: clamp(var(--ssj-s4), 3vw, var(--ssj-s5));
+}
+
+/* ── Metadados (versão, vigência, foro) ───────────────────────────────────
+   Grade fluida: quantas colunas couberem, sem media query. */
+.ssj-doc__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--ssj-s3);
+  font-size: 0.8125rem;
+  color: var(--ssj-muted);
+}
+
+/* Tabelas de texto jurídico rolam dentro da própria caixa — a página nunca
+   rola na horizontal. */
+.ssj-doc__corpo table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

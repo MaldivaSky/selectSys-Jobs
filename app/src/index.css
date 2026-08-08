@@ -19,6 +19,7 @@
 @import './styles/acompanhamento.css';
 @import './styles/ficha.css';
 @import './styles/proposta.css';
+@import './styles/documento.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PONTE COM O TAILWIND
