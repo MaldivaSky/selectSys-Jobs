@@ -32,6 +32,12 @@ secrets.json
 *.csv
 白紙*.xls
 *FUJIARTE*.xls
+# Exceção: o modelo EM BRANCO da ficha é insumo de build, não dado de cliente.
+# Sem ele versionado, o workflow de cobertura falha em todo commit com
+# FileNotFoundError — um check permanentemente vermelho que ninguém mais lê.
+# Conferido antes de versionar: 337 células, todas rótulos, nenhum padrão de
+# CPF, data ou e-mail. Planilhas COM dado de candidato seguem bloqueadas.
+!白紙 FUJIARTE Ficha Cadastral Jun2024 (1).xls
 
 # Sensitive Business Plans, Internal Master Plans & Mockup Assets
 PLANO_MASTER_SENIOR.md

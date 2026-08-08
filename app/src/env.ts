@@ -2,9 +2,6 @@ export interface EnvVariables {
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_PUBLISHABLE_KEY: string;
   VITE_DEEPSEEK_API_KEY?: string;
-  VITE_GAROON_SUBDOMAIN?: string;
-  VITE_GAROON_USER?: string;
-  VITE_GAROON_TOKEN?: string;
   VITE_RESEND_API_KEY?: string;
 }
 
@@ -16,9 +13,6 @@ function validarEnv(): EnvVariables {
   const url = envSource.VITE_SUPABASE_URL || '';
   const key = envSource.VITE_SUPABASE_PUBLISHABLE_KEY || '';
   const deepseek = envSource.VITE_DEEPSEEK_API_KEY || '';
-  const garoonSubdomain = envSource.VITE_GAROON_SUBDOMAIN || '';
-  const garoonUser = envSource.VITE_GAROON_USER || '';
-  const garoonToken = envSource.VITE_GAROON_TOKEN || '';
   const resendKey = envSource.VITE_RESEND_API_KEY || '';
 
   const erros: string[] = [];
@@ -50,9 +44,6 @@ function validarEnv(): EnvVariables {
     VITE_SUPABASE_URL: url,
     VITE_SUPABASE_PUBLISHABLE_KEY: key,
     VITE_DEEPSEEK_API_KEY: deepseek,
-    VITE_GAROON_SUBDOMAIN: garoonSubdomain,
-    VITE_GAROON_USER: garoonUser,
-    VITE_GAROON_TOKEN: garoonToken,
     VITE_RESEND_API_KEY: resendKey,
   };
 }
