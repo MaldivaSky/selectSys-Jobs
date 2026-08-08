@@ -196,6 +196,67 @@
   background: color-mix(in srgb, var(--painel-marca) 12%, transparent);
 }
 
+/* ── Primitivos do painel ──────────────────────────────────────────────────
+   Estes quatro substituem os objetos `cardStyle`, `botaoMarca`, `inputStyle` e
+   `rotulo`, que eram recriados a cada render do TenantDashboard e espalhavam
+   medidas literais por dezenas de pontos do JSX. A régua passa a morar aqui.
+
+   A cor da agência continua vindo do JS — ela só existe em tempo de execução —
+   mas por variável (`--painel-marca` e companhia), não por valor cravado em
+   `style={{}}`. Assim uma medida muda num lugar só, e media query alcança. */
+.ssj-painel-card {
+  background-color: var(--painel-cartao);
+  border: 1px solid var(--painel-borda);
+  border-radius: var(--ssj-r-xl, 20px);
+}
+
+.ssj-btn-marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ssj-s2, 8px);
+  min-height: 44px;
+  padding: 0 var(--ssj-s5, 22px);
+  border: none;
+  border-radius: var(--ssj-r-md, 13px);
+  background: var(--painel-marca);
+  color: var(--painel-sobre-marca);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -8px var(--painel-marca-sombra);
+  text-decoration: none;
+}
+
+.ssj-btn-marca:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ssj-campo {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--ssj-s3, 12px) var(--ssj-s4, 14px);
+  border: 1px solid var(--painel-borda);
+  border-radius: var(--ssj-r-sm, 10px);
+  background-color: var(--painel-recuo);
+  color: var(--painel-texto);
+  outline: none;
+}
+
+.ssj-campo:focus-visible {
+  border-color: var(--painel-marca);
+  box-shadow: 0 0 0 3px var(--painel-marca-veu);
+}
+
+.ssj-rotulo {
+  display: block;
+  margin-bottom: var(--ssj-s2, 8px);
+  font-size: var(--ssj-t-label, 13px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--painel-texto-2);
+}
+
 /* ── Campos ────────────────────────────────────────────────────────────────
    O tamanho dos campos do painel vive aqui, e não em `style={{}}`, porque
    inline vence folha de estilo e anularia a regra de 16px do `primitivos.css`

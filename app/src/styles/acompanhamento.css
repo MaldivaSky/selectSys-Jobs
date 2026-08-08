@@ -1,0 +1,194 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — ACOMPANHAMENTO DO CANDIDATO
+   ---------------------------------------------------------------------------
+   Tela B2C, aberta quase sempre no celular, muitas vezes em conexão ruim e em
+   aparelho antigo. Mobile-first de verdade: o layout base é o do telefone e o
+   desktop é a exceção, não o contrário.
+
+   Tudo em tokens `--ssj-*`. Nenhuma medida literal em JSX — a única exceção é
+   a cor da agência, que só existe em tempo de execução.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.ssj-acomp {
+  max-width: 680px;
+  margin-inline: auto;
+  padding: var(--ssj-s5) var(--ssj-gutter) var(--ssj-s8);
+  min-height: 100dvh;
+}
+
+/* ── Cabeçalho ─────────────────────────────────────────────────────────── */
+.ssj-acomp__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--ssj-s4);
+  padding-bottom: var(--ssj-s5);
+  border-bottom: 1px solid var(--ssj-rule);
+  margin-bottom: var(--ssj-s6);
+}
+
+.ssj-acomp__logo {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--ssj-r-md);
+  object-fit: contain;
+  background: var(--ssj-surface);
+  padding: var(--ssj-s1);
+  border: 1px solid var(--ssj-rule);
+}
+
+.ssj-acomp__sobretitulo {
+  font-size: var(--ssj-t-label);
+  font-weight: 700;
+  letter-spacing: var(--ssj-track-label);
+  text-transform: uppercase;
+  color: var(--ssj-muted);
+}
+
+.ssj-acomp__topo h1 {
+  font-size: var(--ssj-t-h3);
+  line-height: var(--ssj-lh-tight);
+  letter-spacing: var(--ssj-track-display);
+  margin-top: var(--ssj-s1);
+}
+
+/* ── Avisos (sem sessão, sem candidatura, erro) ────────────────────────── */
+.ssj-acomp__aviso {
+  display: flex;
+  gap: var(--ssj-s3);
+  padding: var(--ssj-s5);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-lg);
+  background: var(--ssj-surface);
+  color: var(--ssj-text-2);
+  font-size: var(--ssj-t-sm);
+  line-height: var(--ssj-lh-body);
+}
+
+.ssj-acomp__aviso svg { flex-shrink: 0; color: var(--ssj-muted); }
+.ssj-acomp__aviso--ruim { background: var(--ssj-shu-wash); border-color: var(--ssj-shu-line); }
+
+.ssj-acomp__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;              /* alvo de toque, igual ao resto do sistema */
+  margin-top: var(--ssj-s4);
+  padding-inline: var(--ssj-s5);
+  border: none;
+  border-radius: var(--ssj-r-md);
+  color: #fff;
+  font: inherit;
+  font-size: var(--ssj-t-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ── Resumo da situação ────────────────────────────────────────────────── */
+.ssj-acomp__resumo {
+  padding: var(--ssj-s5);
+  border: 1px solid var(--ssj-rule);
+  border-left-width: 4px;
+  border-radius: var(--ssj-r-lg);
+  background: var(--ssj-surface);
+  margin-bottom: var(--ssj-s6);
+}
+
+.ssj-acomp__rotulo {
+  font-size: var(--ssj-t-label);
+  font-weight: 700;
+  letter-spacing: var(--ssj-track-label);
+  text-transform: uppercase;
+  color: var(--ssj-muted);
+}
+
+.ssj-acomp__resumo h2 {
+  font-size: var(--ssj-t-h3);
+  line-height: var(--ssj-lh-tight);
+  margin: var(--ssj-s2) 0;
+}
+
+.ssj-acomp__meta {
+  font-size: var(--ssj-t-xs);
+  color: var(--ssj-faint);
+}
+
+/* ── Linha do tempo ────────────────────────────────────────────────────── */
+.ssj-acomp__linha { list-style: none; padding: 0; }
+
+.ssj-acomp__grupo {
+  font-size: var(--ssj-t-label);
+  font-weight: 700;
+  letter-spacing: var(--ssj-track-label);
+  text-transform: uppercase;
+  color: var(--ssj-muted);
+  margin: var(--ssj-s5) 0 var(--ssj-s3);
+}
+
+.ssj-acomp__passo-linha {
+  display: flex;
+  gap: var(--ssj-s3);
+  align-items: flex-start;
+  padding: var(--ssj-s3) 0;
+  position: relative;
+}
+
+/* Fio que liga um passo ao próximo. Puramente decorativo. */
+.ssj-acomp__passo:not(:last-child) .ssj-acomp__passo-linha::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 34px;
+  bottom: -8px;
+  width: 1px;
+  background: var(--ssj-rule);
+}
+
+.ssj-acomp__marca {
+  flex-shrink: 0;
+  color: var(--ssj-rule-3);
+  line-height: 0;
+  padding-top: 2px;
+  position: relative;
+  z-index: 1;
+  background: var(--ssj-paper);
+}
+
+.ssj-acomp__passo-label {
+  font-size: var(--ssj-t-sm);
+  color: var(--ssj-muted);
+  line-height: var(--ssj-lh-tight);
+}
+
+.ssj-acomp__passo.e-feito .ssj-acomp__passo-label { color: var(--ssj-text-2); }
+
+.ssj-acomp__passo.e-atual .ssj-acomp__passo-label {
+  color: var(--ssj-text);
+  font-weight: 700;
+}
+
+.ssj-acomp__passo-data {
+  font-size: var(--ssj-t-xs);
+  color: var(--ssj-faint);
+  margin-top: 2px;
+}
+
+.ssj-acomp__nota {
+  margin-top: var(--ssj-s6);
+  padding-top: var(--ssj-s5);
+  border-top: 1px solid var(--ssj-rule);
+  font-size: var(--ssj-t-xs);
+  color: var(--ssj-faint);
+  line-height: var(--ssj-lh-body);
+}
+
+.ssj-gira { animation: ssj-girar 0.9s linear infinite; }
+@keyframes ssj-girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ssj-gira { animation: none; } }
+
+/* ── Desktop: só respiro a mais. A régua vertical continua servindo. ───── */
+@media (min-width: 768px) {
+  .ssj-acomp { padding-top: var(--ssj-s7); }
+  .ssj-acomp__topo h1 { font-size: var(--ssj-t-h2); }
+}

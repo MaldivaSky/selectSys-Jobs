@@ -550,47 +550,10 @@ export function TenantDashboard() {
     navigate('/login', { replace: true });
   }
 
-  /* ── ESTILOS REUTILIZADOS ───────────────────────────────────────────── */
-  const cardStyle: CSSProperties = {
-    backgroundColor: cardBg,
-    border: `1px solid ${cardBorder}`,
-    borderRadius: '18px',
-  };
-  // Sem `fontSize` de propósito: estilo inline vence folha de estilo, e era
-  // exatamente isso que anulava a regra de 16px do `primitivos.css` que evita
-  // o zoom automático do iOS ao focar um campo. O tamanho vem do CSS agora.
-  const inputStyle: CSSProperties = {
-    width: '100%',
-    padding: '12px 14px',
-    borderRadius: '10px',
-    border: `1px solid ${cardBorder}`,
-    backgroundColor: sunkenBg,
-    color: textPrimary,
-    outline: 'none',
-  };
-  const botaoMarca: CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '12px 22px',
-    borderRadius: '12px',
-    background: p.marca,
-    color: p.sobreMarca,
-    border: 'none',
-    fontWeight: 700,
-    fontSize: '14px',
-    cursor: 'pointer',
-    boxShadow: `0 8px 20px -8px ${p.marcaSombra}`,
-  };
-  const rotulo: CSSProperties = {
-    fontSize: '12px',
-    fontWeight: 700,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-    color: textSecondary,
-    display: 'block',
-    marginBottom: '8px',
-  };
+  /* ── ESTILOS REUTILIZADOS ─────────────────────────────────────────────
+     Migrados para `painel.css`: .ssj-painel-card, .ssj-btn-marca,
+     .ssj-campo e .ssj-rotulo. A cor da agência chega por variável CSS
+     declarada na raiz do painel, não por objeto recriado a cada render. */
 
   /* ── PLACA DO LOGO ──────────────────────────────────────────────────── */
   // O logo do cliente é o elemento mais valorizado da tela: ele ganha uma
@@ -664,19 +627,17 @@ export function TenantDashboard() {
           padding: '24px',
         }}
       >
-        <div style={{ ...cardStyle, padding: '32px', maxWidth: '520px', textAlign: 'center' }}>
+        <div className="ssj-painel-card" style={{ padding: '32px', maxWidth: '520px', textAlign: 'center' }}>
           <AlertTriangle size={32} color="#c4452b" style={{ margin: '0 auto 16px' }} />
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '8px' }}>Painel indisponível</h2>
           <p style={{ color: textSecondary, fontSize: '14px', lineHeight: 1.6 }}>{erroFatal}</p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
-            <button onClick={() => void carregarDados()} style={botaoMarca}>
+            <button onClick={() => void carregarDados()} className="ssj-btn-marca">
               <RotateCcw size={16} /> Tentar novamente
             </button>
             <button
               onClick={() => void sair()}
-              style={{
-                ...botaoMarca,
-                background: 'transparent',
+              className="ssj-btn-marca" style={{ background: 'transparent',
                 color: textSecondary,
                 border: `1px solid ${cardBorder}`,
                 boxShadow: 'none',
@@ -721,6 +682,12 @@ export function TenantDashboard() {
         ['--painel-borda' as string]: cardBorder,
         ['--painel-texto-2' as string]: textSecondary,
         ['--painel-marca' as string]: p.marca,
+        ['--painel-sobre-marca' as string]: p.sobreMarca,
+        ['--painel-marca-sombra' as string]: p.marcaSombra,
+        ['--painel-marca-veu' as string]: p.marcaVeu,
+        ['--painel-cartao' as string]: cardBg,
+        ['--painel-recuo' as string]: sunkenBg,
+        ['--painel-texto' as string]: textPrimary,
         // Fio de luz da marca no topo: assina o ambiente sem poluir.
         backgroundImage: `radial-gradient(1200px 400px at 20% -10%, ${p.marcaVeu}, transparent 70%)`,
       } as CSSProperties}
@@ -1022,10 +989,9 @@ export function TenantDashboard() {
 
             {aba !== 'configuracoes' && (
               <button
-                className="ssj-painel__acao-primaria"
+                className="ssj-btn-marca ssj-painel__acao-primaria"
                 aria-label="Nova vaga"
                 onClick={() => setModalNovaVaga(true)}
-                style={botaoMarca}
               >
                 <Plus size={17} />
                 <span className="ssj-painel__rotulo">Nova vaga</span>
@@ -1144,7 +1110,7 @@ export function TenantDashboard() {
                     cor: '#1f7a4d',
                   },
                 ].map((k) => (
-                  <div key={k.label} style={{ ...cardStyle, padding: '22px' }}>
+                  <div key={k.label} className="ssj-painel-card" style={{ padding: '22px' }}>
                     <div
                       style={{
                         display: 'flex',
@@ -1169,7 +1135,7 @@ export function TenantDashboard() {
 
               <div className="ssj-painel__grade-principal">
                 {/* Funil */}
-                <section style={{ ...cardStyle, padding: '26px' }}>
+                <section className="ssj-painel-card" style={{ padding: '26px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
                     <TrendingUp size={18} color={p.marcaLegivel} />
                     <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Distribuição do funil</h3>
@@ -1208,7 +1174,7 @@ export function TenantDashboard() {
                 </section>
 
                 {/* Link de captação */}
-                <section style={{ ...cardStyle, padding: '26px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <section className="ssj-painel-card" style={{ padding: '26px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Captação B2C</h3>
                   <p style={{ fontSize: '13px', color: textSecondary, lineHeight: 1.6 }}>
                     Este link abre um formulário com a marca da {tenant?.nome} — logo, cor e nome da agência.
@@ -1248,13 +1214,13 @@ export function TenantDashboard() {
           {aba === 'vagas' && (
             <div style={{ maxWidth: '1240px' }}>
               {vagas.length === 0 ? (
-                <div style={{ ...cardStyle, padding: '56px', textAlign: 'center' }}>
+                <div className="ssj-painel-card" style={{ padding: '56px', textAlign: 'center' }}>
                   <Briefcase size={34} color={p.marcaLegivel} style={{ margin: '0 auto 16px' }} />
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px' }}>Nenhuma vaga publicada</h3>
                   <p style={{ color: textSecondary, fontSize: '14px', marginBottom: '24px' }}>
                     A primeira vaga publicada já entra no Vagas Hub com a marca da agência.
                   </p>
-                  <button onClick={() => setModalNovaVaga(true)} style={{ ...botaoMarca, margin: '0 auto' }}>
+                  <button onClick={() => setModalNovaVaga(true)} className="ssj-btn-marca" style={{ margin: '0 auto' }}>
                     <Plus size={17} /> Publicar primeira vaga
                   </button>
                 </div>
@@ -1264,7 +1230,7 @@ export function TenantDashboard() {
                     const restantes = Math.max(0, v.vagas_total - v.vagas_preenchidas);
                     const pct = v.vagas_total ? (v.vagas_preenchidas / v.vagas_total) * 100 : 0;
                     return (
-                      <article key={v.id} style={{ ...cardStyle, padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <article key={v.id} className="ssj-painel-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
                           <div>
                             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.01em' }}>{v.titulo}</h3>
@@ -1768,7 +1734,7 @@ export function TenantDashboard() {
             <div className="ssj-painel__grade-aside">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Logo */}
-                <section style={{ ...cardStyle, padding: '28px' }}>
+                <section className="ssj-painel-card" style={{ padding: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <ImageIcon size={18} color={p.marcaLegivel} />
                     <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Logo da agência</h3>
@@ -1781,7 +1747,7 @@ export function TenantDashboard() {
                         <button
                           onClick={() => inputArquivo.current?.click()}
                           disabled={enviandoLogo}
-                          style={{ ...botaoMarca, opacity: enviandoLogo ? 0.6 : 1 }}
+                          className="ssj-btn-marca" style={{ opacity: enviandoLogo ? 0.6 : 1 }}
                         >
                           {enviandoLogo ? <Loader2 size={16} /> : <Upload size={16} />}
                           {enviandoLogo ? 'Enviando...' : 'Enviar imagem'}
@@ -1819,12 +1785,12 @@ export function TenantDashboard() {
                         }}
                       />
                       <div>
-                        <label style={rotulo}>ou cole uma URL</label>
+                        <label className="ssj-rotulo">ou cole uma URL</label>
                         <input
                           value={configLogo}
                           onChange={(e) => setConfigLogo(e.target.value)}
                           placeholder="https://..."
-                          style={inputStyle}
+                          className="ssj-campo"
                         />
                       </div>
                       <p style={{ fontSize: '12px', color: textSecondary, lineHeight: 1.55 }}>
@@ -1836,7 +1802,7 @@ export function TenantDashboard() {
                 </section>
 
                 {/* Cor */}
-                <section style={{ ...cardStyle, padding: '28px' }}>
+                <section className="ssj-painel-card" style={{ padding: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <Palette size={18} color={p.marcaLegivel} />
                     <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Cor da marca</h3>
@@ -1852,7 +1818,7 @@ export function TenantDashboard() {
                     <input
                       value={configCor}
                       onChange={(e) => setConfigCor(e.target.value)}
-                      style={{ ...inputStyle, width: '132px', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                      className="ssj-campo" style={{ width: '132px', fontFamily: 'monospace', textTransform: 'uppercase' }}
                     />
                     <div style={{ display: 'flex', gap: '6px' }}>
                       {p.rampa.map((c) => (
@@ -1867,7 +1833,7 @@ export function TenantDashboard() {
                 </section>
 
                 {/* Setores — taxonomia da agência */}
-                <section style={{ ...cardStyle, padding: '28px' }}>
+                <section className="ssj-painel-card" style={{ padding: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                     <Layers size={18} color={p.marcaLegivel} />
                     <h3 style={{ fontSize: '15px', fontWeight: 800 }}>Setores de atuação</h3>
@@ -1932,12 +1898,12 @@ export function TenantDashboard() {
                         adicionarSetor();
                       }}
                       placeholder="Adicionar setor (ex.: Construção civil)"
-                      style={inputStyle}
+                      className="ssj-campo"
                     />
                     <button
                       onClick={adicionarSetor}
                       disabled={!novoSetor.trim()}
-                      style={{ ...botaoMarca, opacity: novoSetor.trim() ? 1 : 0.45 }}
+                      className="ssj-btn-marca" style={{ opacity: novoSetor.trim() ? 1 : 0.45 }}
                     >
                       <Plus size={16} /> Adicionar
                     </button>
@@ -1950,7 +1916,7 @@ export function TenantDashboard() {
                 </section>
 
                 {/* Link */}
-                <section style={{ ...cardStyle, padding: '28px' }}>
+                <section className="ssj-painel-card" style={{ padding: '28px' }}>
                   <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '16px' }}>Link único de captação</h3>
                   <CampoLink valor={linkPublico} p={p} borda={cardBorder} fundo={sunkenBg} texto={textPrimary} />
                   <p style={{ fontSize: '12px', color: textSecondary, marginTop: '10px' }}>
@@ -1993,7 +1959,7 @@ export function TenantDashboard() {
                   <button
                     onClick={() => void salvarIdentidade()}
                     disabled={!temAlteracao || salvando}
-                    style={{ ...botaoMarca, opacity: !temAlteracao || salvando ? 0.5 : 1, cursor: temAlteracao ? 'pointer' : 'not-allowed' }}
+                    className="ssj-btn-marca" style={{ opacity: !temAlteracao || salvando ? 0.5 : 1, cursor: temAlteracao ? 'pointer' : 'not-allowed' }}
                   >
                     {salvando ? <Loader2 size={16} /> : <Check size={16} />}
                     {salvando ? 'Salvando...' : 'Salvar identidade'}
@@ -2002,7 +1968,7 @@ export function TenantDashboard() {
               </div>
 
               {/* Pré-visualização do que o candidato vê */}
-              <aside style={{ ...cardStyle, padding: '22px', position: 'sticky', top: '108px' }}>
+              <aside className="ssj-painel-card" style={{ padding: '22px', position: 'sticky', top: '108px' }}>
                 <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: textSecondary, marginBottom: '16px' }}>
                   Prévia · página do candidato
                 </div>
@@ -2090,9 +2056,7 @@ export function TenantDashboard() {
         >
           <form
             onSubmit={criarVaga}
-            style={{
-              ...cardStyle,
-              borderRadius: '22px',
+            className="ssj-painel-card" style={{ borderRadius: '22px',
               padding: '30px',
               width: '100%',
               maxWidth: '620px',
@@ -2115,29 +2079,29 @@ export function TenantDashboard() {
             </div>
 
             <div>
-              <label style={rotulo}>Título da vaga</label>
+              <label className="ssj-rotulo">Título da vaga</label>
               <input
                 required
                 autoFocus
                 placeholder="Operador de linha — autopeças"
                 value={novaVaga.titulo}
                 onChange={(e) => setNovaVaga({ ...novaVaga, titulo: e.target.value })}
-                style={inputStyle}
+                className="ssj-campo"
               />
             </div>
 
             <div className="ssj-painel__grade-2">
               <div>
-                <label style={rotulo}>Empresa japonesa</label>
+                <label className="ssj-rotulo">Empresa japonesa</label>
                 <input
                   placeholder="Ex.: Toyota Boshoku"
                   value={novaVaga.empresa_japonesa}
                   onChange={(e) => setNovaVaga({ ...novaVaga, empresa_japonesa: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
               <div>
-                <label style={rotulo}>Setor</label>
+                <label className="ssj-rotulo">Setor</label>
                 {/* Lista da agência + criação inline: quem cadastra a vaga não
                     precisa sair da tela para incluir um setor que falta. */}
                 <select
@@ -2153,7 +2117,7 @@ export function TenantDashboard() {
                     }
                     setNovaVaga({ ...novaVaga, setor: e.target.value });
                   }}
-                  style={inputStyle}
+                  className="ssj-campo"
                 >
                   <option value="">— não informar —</option>
                   {configSetores.map((s) => (
@@ -2168,28 +2132,28 @@ export function TenantDashboard() {
 
             <div className="ssj-painel__grade-2">
               <div>
-                <label style={rotulo}>Província</label>
+                <label className="ssj-rotulo">Província</label>
                 <input
                   placeholder="Aichi"
                   value={novaVaga.provincia}
                   onChange={(e) => setNovaVaga({ ...novaVaga, provincia: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
               <div>
-                <label style={rotulo}>Cidade</label>
+                <label className="ssj-rotulo">Cidade</label>
                 <input
                   placeholder="Nagoya"
                   value={novaVaga.cidade}
                   onChange={(e) => setNovaVaga({ ...novaVaga, cidade: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
             </div>
 
             <div className="ssj-painel__grade-3">
               <div>
-                <label style={rotulo}>Salário ¥/hora</label>
+                <label className="ssj-rotulo">Salário ¥/hora</label>
                 <input
                   type="number"
                   min="0"
@@ -2197,11 +2161,11 @@ export function TenantDashboard() {
                   placeholder="1500"
                   value={novaVaga.salario_hora_jpy}
                   onChange={(e) => setNovaVaga({ ...novaVaga, salario_hora_jpy: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
               <div>
-                <label style={rotulo}>H. extras/dia</label>
+                <label className="ssj-rotulo">H. extras/dia</label>
                 <input
                   type="number"
                   min="0"
@@ -2209,23 +2173,23 @@ export function TenantDashboard() {
                   placeholder="2"
                   value={novaVaga.horas_extras_dia}
                   onChange={(e) => setNovaVaga({ ...novaVaga, horas_extras_dia: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
               <div>
-                <label style={rotulo}>Nº de postos</label>
+                <label className="ssj-rotulo">Nº de postos</label>
                 <input
                   type="number"
                   min="1"
                   value={novaVaga.vagas_total}
                   onChange={(e) => setNovaVaga({ ...novaVaga, vagas_total: e.target.value })}
-                  style={inputStyle}
+                  className="ssj-campo"
                 />
               </div>
             </div>
 
             <div>
-              <label style={rotulo}>Turnos</label>
+              <label className="ssj-rotulo">Turnos</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {TURNOS.map((t) => {
                   const ativo = novaVaga.turnos.includes(t.valor);
@@ -2259,12 +2223,12 @@ export function TenantDashboard() {
             </div>
 
             <div>
-              <label style={rotulo}>Descrição e benefícios</label>
+              <label className="ssj-rotulo">Descrição e benefícios</label>
               <textarea
                 placeholder="Detalhe a rotina, alojamento, transporte e benefícios..."
                 value={novaVaga.descricao}
                 onChange={(e) => setNovaVaga({ ...novaVaga, descricao: e.target.value })}
-                style={{ ...inputStyle, minHeight: '110px', resize: 'vertical', fontFamily: 'inherit' }}
+                className="ssj-campo" style={{ minHeight: '110px', resize: 'vertical', fontFamily: 'inherit' }}
               />
             </div>
 
@@ -2295,7 +2259,7 @@ export function TenantDashboard() {
               >
                 Cancelar
               </button>
-              <button type="submit" disabled={criandoVaga} style={{ ...botaoMarca, opacity: criandoVaga ? 0.6 : 1 }}>
+              <button type="submit" disabled={criandoVaga} className="ssj-btn-marca" style={{ opacity: criandoVaga ? 0.6 : 1 }}>
                 {criandoVaga ? <Loader2 size={16} /> : <Plus size={16} />}
                 {criandoVaga ? 'Publicando...' : 'Publicar vaga'}
               </button>

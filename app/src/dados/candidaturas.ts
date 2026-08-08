@@ -22,28 +22,35 @@ export interface Rascunho {
   etapa: number;
 }
 
-const CHAVE_LOCAL = 'ssj:ficha:rascunho';
+/* Rascunho em memória, de propósito
+   ---------------------------------------------------------------------------
+   Estas três funções gravavam a ficha inteira em `localStorage`, sob a chave
+   `ssj:ficha:rascunho`. Passaporte, CPF e RG ficavam em disco, legíveis por
+   qualquer script da página e sobrevivendo ao fechamento do navegador.
+
+   Agora o buffer é um objeto de módulo: some ao recarregar a página, que é o
+   comportamento seguro por padrão. Retomada durável é atribuição do
+   `rascunhoFicha.ts`, que grava em `application_data.rascunho` sob RLS e só
+   para candidato identificado. */
+let bufferMemoria: Rascunho | null = null;
 
 export function salvarLocal(r: Rascunho) {
-  try {
-    localStorage.setItem(CHAVE_LOCAL, JSON.stringify({ ...r, em: Date.now() }));
-    return true;
-  } catch {
-    return false;
-  }
+  bufferMemoria = { ...r };
+  return true;
 }
 
 export function lerLocal(): Rascunho | null {
-  try {
-    const bruto = localStorage.getItem(CHAVE_LOCAL);
-    return bruto ? (JSON.parse(bruto) as Rascunho) : null;
-  } catch {
-    return null;
-  }
+  return bufferMemoria;
 }
 
 export function limparLocal() {
-  localStorage.removeItem(CHAVE_LOCAL);
+  bufferMemoria = null;
+  // Varre resíduo gravado por versões anteriores.
+  if (typeof window !== 'undefined') {
+    for (const chave of Object.keys(window.localStorage)) {
+      if (/^ssj:ficha/.test(chave)) window.localStorage.removeItem(chave);
+    }
+  }
 }
 
 export async function salvarRascunhoRemoto(applicationId: string, r: Rascunho) {
