@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -27,14 +29,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Reaproveita o cache do npm entre execuções, chaveado pelo lockfile.
-          cache: 'npm'
 
-      - name: Instalar dependências
+      - name: Instalar dependências da raiz
         run: npm install
 
+      - name: Instalar dependências do app
+        run: cd app && npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Lint
-        # `--if-present` para não quebrar caso o script saia do package.json.
         run: npm run lint --if-present
 
       - name: Build
