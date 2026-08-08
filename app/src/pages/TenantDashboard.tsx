@@ -14,6 +14,8 @@ import {
   Loader2,
   LogOut,
   MapPin,
+  Menu,
+  MoreHorizontal,
   Moon,
   Palette,
   Plane,
@@ -109,6 +111,13 @@ export function TenantDashboard() {
   const [loading, setLoading] = useState(true);
   const [erroFatal, setErroFatal] = useState<string | null>(null);
 
+  // Gaveta da barra lateral. Só tem efeito abaixo de 1024px; no desktop a barra
+  // é permanente e este estado é ignorado pelo CSS.
+  const [menuAberto, setMenuAberto] = useState(false);
+
+  // Menu "⋯" das ações secundárias do topo. Também só existe no celular.
+  const [acoesAbertas, setAcoesAbertas] = useState(false);
+
   const [tenant, setTenant] = useState<{ id: string; nome: string; slug: string; plano: string } | null>(null);
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
@@ -131,7 +140,6 @@ export function TenantDashboard() {
 
   const [modalNovaVaga, setModalNovaVaga] = useState(false);
   const [garoonModalOpen, setGaroonModalOpen] = useState(false);
-  const [garoonCandidato, setGaroonCandidato] = useState<any>(null);
   const [exportandoExcel, setExportandoExcel] = useState<string | null>(null);
 
   const [buscaTexto, setBuscaTexto] = useState('');
@@ -229,6 +237,45 @@ export function TenantDashboard() {
   // A paleta segue `configCor` (e não a salva) para que ajustar o seletor
   // repinte o painel inteiro em tempo real — o cliente vê antes de salvar.
   const p = useMemo(() => derivarPaleta(configCor, isDark), [configCor, isDark]);
+
+  // Gaveta aberta trava a rolagem do fundo e responde ao Esc — o que qualquer
+  // usuário de celular espera de um menu que cobre a tela.
+  useEffect(() => {
+    if (!menuAberto) return;
+
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuAberto(false);
+    };
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', aoTeclar);
+
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, [menuAberto]);
+
+  // O "⋯" fecha ao tocar fora ou no Esc.
+  useEffect(() => {
+    if (!acoesAbertas) return;
+
+    const aoClicarFora = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.ssj-painel__excedente')) setAcoesAbertas(false);
+    };
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAcoesAbertas(false);
+    };
+
+    document.addEventListener('mousedown', aoClicarFora);
+    window.addEventListener('keydown', aoTeclar);
+
+    return () => {
+      document.removeEventListener('mousedown', aoClicarFora);
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, [acoesAbertas]);
+
   const logoAtual = configLogo.trim();
   const temAlteracao =
     configLogo.trim() !== salvo.logo ||
@@ -509,6 +556,9 @@ export function TenantDashboard() {
     border: `1px solid ${cardBorder}`,
     borderRadius: '18px',
   };
+  // Sem `fontSize` de propósito: estilo inline vence folha de estilo, e era
+  // exatamente isso que anulava a regra de 16px do `primitivos.css` que evita
+  // o zoom automático do iOS ao focar um campo. O tamanho vem do CSS agora.
   const inputStyle: CSSProperties = {
     width: '100%',
     padding: '12px 14px',
@@ -516,7 +566,6 @@ export function TenantDashboard() {
     border: `1px solid ${cardBorder}`,
     backgroundColor: sunkenBg,
     color: textPrimary,
-    fontSize: '14px',
     outline: 'none',
   };
   const botaoMarca: CSSProperties = {
@@ -657,35 +706,48 @@ export function TenantDashboard() {
 
   return (
     <div
+      className="ssj-painel"
       style={{
-        display: 'flex',
-        minHeight: '100vh',
         backgroundColor: pageBg,
         color: textPrimary,
         // `base.css` aplica `h1..h4 { color: var(--ssj-text) }`, que vence a
         // herança. Reancorar o token aqui faz os títulos do painel seguirem a
         // paleta do painel em vez da do site institucional.
         ['--ssj-text' as string]: textPrimary,
+        // Ponte entre a paleta do tenant (calculada em JS) e `painel.css`.
+        // Layout é CSS; a identidade continua sendo a do cliente.
+        ['--painel-superficie' as string]: sidebarBg,
+        ['--painel-superficie-veu' as string]: `${sidebarBg}cc`,
+        ['--painel-borda' as string]: cardBorder,
+        ['--painel-texto-2' as string]: textSecondary,
+        ['--painel-marca' as string]: p.marca,
         // Fio de luz da marca no topo: assina o ambiente sem poluir.
         backgroundImage: `radial-gradient(1200px 400px at 20% -10%, ${p.marcaVeu}, transparent 70%)`,
       } as CSSProperties}
     >
+      {/* Véu da gaveta: fecha ao toque fora dela. Inerte no desktop. */}
+      <button
+        type="button"
+        aria-label="Fechar menu"
+        tabIndex={menuAberto ? 0 : -1}
+        data-aberta={menuAberto}
+        className="ssj-painel__veu"
+        onClick={() => setMenuAberto(false)}
+      />
+
       {/* ══ BARRA LATERAL ═════════════════════════════════════════════ */}
-      <aside
-        style={{
-          width: '286px',
-          flexShrink: 0,
-          backgroundColor: sidebarBg,
-          borderRight: `1px solid ${cardBorder}`,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-        }}
-      >
+      <aside className="ssj-painel__lateral" data-aberta={menuAberto}>
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          className="ssj-painel__fechar"
+          onClick={() => setMenuAberto(false)}
+        >
+          <X size={18} />
+        </button>
+
         {/* Assinatura da agência */}
-        <div style={{ padding: '28px 22px 24px', borderBottom: `1px solid ${cardBorder}`, position: 'relative' }}>
+        <div className="ssj-painel__lateral-topo">
           <div
             style={{
               position: 'absolute',
@@ -722,13 +784,16 @@ export function TenantDashboard() {
         </div>
 
         {/* Navegação */}
-        <nav style={{ padding: '18px 14px', display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+        <nav className="ssj-painel__nav">
           {abas.map((item) => {
             const ativo = aba === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setAba(item.id)}
+                onClick={() => {
+                  setAba(item.id);
+                  setMenuAberto(false);
+                }}
                 style={{
                   position: 'relative',
                   display: 'flex',
@@ -782,7 +847,7 @@ export function TenantDashboard() {
         </nav>
 
         {/* Nós, discretos. */}
-        <div style={{ padding: '16px 22px 22px', borderTop: `1px solid ${cardBorder}` }}>
+        <div className="ssj-painel__lateral-rodape">
           <button
             onClick={() => void sair()}
             style={{
@@ -808,98 +873,168 @@ export function TenantDashboard() {
       </aside>
 
       {/* ══ ÁREA PRINCIPAL ════════════════════════════════════════════ */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div className="ssj-painel__corpo">
         {/* Barra superior */}
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            padding: '20px 36px',
-            borderBottom: `1px solid ${cardBorder}`,
-            backgroundColor: `${sidebarBg}cc`,
-            backdropFilter: 'blur(10px)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{titulos[aba].h1}</h1>
-            <p style={{ color: textSecondary, fontSize: '13px', marginTop: '2px' }}>{titulos[aba].sub}</p>
+        <header className="ssj-painel__topo">
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            aria-expanded={menuAberto}
+            className="ssj-painel__menu"
+            onClick={() => setMenuAberto(true)}
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="ssj-painel__titulos">
+            <h1>{titulos[aba].h1}</h1>
+            <p>{titulos[aba].sub}</p>
           </div>
 
-          {linkPublico && (
-            <a
-              href={`/c/${tenant?.slug}`}
-              target="_blank"
-              rel="noreferrer"
+          {/* Ações. No celular só a primária fica visível; as secundárias vão
+              para o "⋯". Botão que importa nunca sai da tela. */}
+          <div className="ssj-painel__acoes">
+            {linkPublico && (
+              <a
+                href={`/c/${tenant?.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="ssj-painel__acao-secundaria"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '9px 14px',
+                  borderRadius: '10px',
+                  border: `1px solid ${p.marcaBorda}`,
+                  background: p.marcaVeu,
+                  color: p.marcaLegivel,
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                <ExternalLink size={15} /> Página do candidato
+              </a>
+            )}
+
+            <button
+              className="ssj-painel__acao-secundaria"
+              onClick={() => {
+                setGaroonModalOpen(true);
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '9px 14px',
                 borderRadius: '10px',
-                border: `1px solid ${p.marcaBorda}`,
-                background: p.marcaVeu,
-                color: p.marcaLegivel,
+                border: '1px solid rgba(192, 132, 252, 0.4)',
+                background: 'rgba(147, 51, 234, 0.15)',
+                color: '#c084fc',
                 fontSize: '13px',
                 fontWeight: 700,
-                textDecoration: 'none',
+                cursor: 'pointer',
               }}
             >
-              <ExternalLink size={15} /> Página do candidato
-            </a>
-          )}
-
-          <button
-            onClick={() => {
-              setGaroonCandidato(null);
-              setGaroonModalOpen(true);
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '9px 14px',
-              borderRadius: '10px',
-              border: '1px solid rgba(192, 132, 252, 0.4)',
-              background: 'rgba(147, 51, 234, 0.15)',
-              color: '#c084fc',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            <Database size={15} /> Integração Garoon
-          </button>
-
-          <button
-            onClick={alternarTema}
-            title={isDark ? 'Tema claro' : 'Tema escuro'}
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              border: `1px solid ${cardBorder}`,
-              background: 'transparent',
-              color: textSecondary,
-              cursor: 'pointer',
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            {isDark ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-
-          {aba !== 'configuracoes' && (
-            <button onClick={() => setModalNovaVaga(true)} style={botaoMarca}>
-              <Plus size={17} /> Nova vaga
+              <Database size={15} /> Integração Garoon
             </button>
-          )}
+
+            <button
+              className="ssj-painel__acao-secundaria"
+              onClick={alternarTema}
+              title={isDark ? 'Tema claro' : 'Tema escuro'}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                border: `1px solid ${cardBorder}`,
+                background: 'transparent',
+                color: textSecondary,
+                cursor: 'pointer',
+                display: 'grid',
+                placeItems: 'center',
+              }}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
+            {/* Excedente: existe só abaixo de 768px. */}
+            <div className="ssj-painel__excedente">
+              <button
+                type="button"
+                aria-label="Mais ações"
+                aria-expanded={acoesAbertas}
+                onClick={() => setAcoesAbertas((v) => !v)}
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  border: `1px solid ${cardBorder}`,
+                  background: 'transparent',
+                  color: textSecondary,
+                  cursor: 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                <MoreHorizontal size={20} />
+              </button>
+
+              {acoesAbertas && (
+                <div
+                  className="ssj-painel__excedente-lista"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+                >
+                  {linkPublico && (
+                    <a
+                      href={`/c/${tenant?.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => setAcoesAbertas(false)}
+                      style={{ color: p.marcaLegivel }}
+                    >
+                      <ExternalLink size={16} /> Página do candidato
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      setAcoesAbertas(false);
+                      setGaroonModalOpen(true);
+                    }}
+                    style={{ color: textPrimary }}
+                  >
+                    <Database size={16} /> Integração Garoon
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAcoesAbertas(false);
+                      alternarTema();
+                    }}
+                    style={{ color: textPrimary }}
+                  >
+                    {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                    {isDark ? 'Tema claro' : 'Tema escuro'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {aba !== 'configuracoes' && (
+              <button
+                className="ssj-painel__acao-primaria"
+                aria-label="Nova vaga"
+                onClick={() => setModalNovaVaga(true)}
+                style={botaoMarca}
+              >
+                <Plus size={17} />
+                <span className="ssj-painel__rotulo">Nova vaga</span>
+              </button>
+            )}
+          </div>
         </header>
 
-        <main style={{ flex: 1, padding: '32px 36px 48px', overflowX: 'hidden' }}>
+        <main className="ssj-painel__conteudo">
           {/* ── VISÃO GERAL ───────────────────────────────────────── */}
           {aba === 'visao' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1240px' }}>
@@ -1032,7 +1167,7 @@ export function TenantDashboard() {
                 ))}
               </section>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)', gap: '16px' }}>
+              <div className="ssj-painel__grade-principal">
                 {/* Funil */}
                 <section style={{ ...cardStyle, padding: '26px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
@@ -1228,7 +1363,7 @@ export function TenantDashboard() {
                       placeholder="Buscar por nome, CPF, telefone ou cidade..."
                       value={buscaTexto}
                       onChange={e => setBuscaTexto(e.target.value)}
-                      style={{ background: 'transparent', border: 'none', color: textPrimary, fontSize: '13.5px', width: '100%', outline: 'none' }}
+                      style={{ background: 'transparent', border: 'none', color: textPrimary, width: '100%', outline: 'none' }}
                     />
                   </div>
 
@@ -1276,7 +1411,7 @@ export function TenantDashboard() {
                   <select
                     value={filtroAltura}
                     onChange={e => setFiltroAltura(e.target.value as any)}
-                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontWeight: 600 }}
                   >
                     <option value="todos">Altura: Todas</option>
                     <option value="baixo">Baixo (&lt; 160 cm)</option>
@@ -1288,7 +1423,7 @@ export function TenantDashboard() {
                   <select
                     value={filtroIMC}
                     onChange={e => setFiltroIMC(e.target.value as any)}
-                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontWeight: 600 }}
                   >
                     <option value="todos">IMC Recrutador: Todos</option>
                     <option value="abaixo">Abaixo do peso (&lt; 18.5)</option>
@@ -1301,7 +1436,7 @@ export function TenantDashboard() {
                   <select
                     value={filtroGeracao}
                     onChange={e => setFiltroGeracao(e.target.value as any)}
-                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontWeight: 600 }}
                   >
                     <option value="todos">Visto / Descendência: Todos</option>
                     <option value="issei">Issei (1ª Geração)</option>
@@ -1315,7 +1450,7 @@ export function TenantDashboard() {
                   <select
                     value={filtroTatuagem}
                     onChange={e => setFiltroTatuagem(e.target.value as any)}
-                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontSize: '12.5px', fontWeight: 600 }}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${cardBorder}`, background: isDark ? '#1a202c' : '#ffffff', color: textPrimary, fontWeight: 600 }}
                   >
                     <option value="todos">Tatuagem: Todas</option>
                     <option value="sim">Possui Tatuagem</option>
@@ -1475,7 +1610,6 @@ export function TenantDashboard() {
 
                             <button
                               onClick={() => {
-                                setGaroonCandidato(card);
                                 setGaroonModalOpen(true);
                               }}
                               style={{
@@ -1600,7 +1734,6 @@ export function TenantDashboard() {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      setGaroonCandidato(card);
                                       setGaroonModalOpen(true);
                                     }}
                                     title="Sincronizar com Cybozu Garoon Japão"
@@ -1632,7 +1765,7 @@ export function TenantDashboard() {
 
           {/* ── IDENTIDADE ─────────────────────────────────────────── */}
           {aba === 'configuracoes' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(300px, 380px)', gap: '20px', maxWidth: '1160px', alignItems: 'start' }}>
+            <div className="ssj-painel__grade-aside">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Logo */}
                 <section style={{ ...cardStyle, padding: '28px' }}>
@@ -1993,7 +2126,7 @@ export function TenantDashboard() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div className="ssj-painel__grade-2">
               <div>
                 <label style={rotulo}>Empresa japonesa</label>
                 <input
@@ -2033,7 +2166,7 @@ export function TenantDashboard() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div className="ssj-painel__grade-2">
               <div>
                 <label style={rotulo}>Província</label>
                 <input
@@ -2054,7 +2187,7 @@ export function TenantDashboard() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div className="ssj-painel__grade-3">
               <div>
                 <label style={rotulo}>Salário ¥/hora</label>
                 <input
@@ -2172,11 +2305,7 @@ export function TenantDashboard() {
       )}
 
       {/* Modal de Integração Cybozu Garoon */}
-      <GaroonIntegrationModal
-        isOpen={garoonModalOpen}
-        onClose={() => setGaroonModalOpen(false)}
-        candidato={garoonCandidato}
-      />
+      <GaroonIntegrationModal isOpen={garoonModalOpen} onClose={() => setGaroonModalOpen(false)} />
     </div>
   );
 }
@@ -2220,7 +2349,6 @@ function CampoLink({
           background: fundo,
           color: texto,
           fontFamily: 'monospace',
-          fontSize: '12.5px',
         }}
       />
       <button

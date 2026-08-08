@@ -1,0 +1,507 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTSYS JOBS · DESIGN SYSTEM — PAINEL (ÁREA LOGADA)
+   ---------------------------------------------------------------------------
+   O casco do painel do tenant. Existe por um motivo específico: estilo inline
+   não aceita media query, então TODA regra responsiva da área logada precisa
+   morar num arquivo CSS. Se uma medida de layout do painel voltar para dentro
+   de `style={{}}`, ela deixa de responder ao tamanho da tela — foi assim que a
+   barra lateral de 286px fixos esmagou o conteúdo no celular.
+
+   Contrato de breakpoints (o mesmo de components.css):
+     ≥ 1024px  desktop — barra lateral permanente
+     < 1024px  gaveta off-canvas + barra superior com botão de menu
+     ≤ 767px   alvos de toque de 44px, tipografia e respiro reduzidos
+
+   As cores continuam vindo da paleta do tenant, calculada em JS (derivarPaleta)
+   e entregue aqui como custom properties: --painel-marca, --painel-superficie,
+   --painel-borda, --painel-texto-2. Layout é CSS; identidade é do cliente.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── Casco ─────────────────────────────────────────────────────────────── */
+.ssj-painel {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh; /* barra de endereço do mobile não corta o rodapé */
+}
+
+/* ── Barra lateral ─────────────────────────────────────────────────────── */
+.ssj-painel__lateral {
+  width: 286px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background-color: var(--painel-superficie);
+  border-right: 1px solid var(--painel-borda);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ssj-painel__lateral-topo {
+  padding: 28px 22px 24px;
+  border-bottom: 1px solid var(--painel-borda);
+  position: relative;
+}
+
+.ssj-painel__lateral-rodape {
+  padding: 16px 22px 22px;
+  border-top: 1px solid var(--painel-borda);
+}
+
+.ssj-painel__nav {
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* Fecha a gaveta. Só existe em telas pequenas. */
+.ssj-painel__fechar {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--painel-borda);
+  background: transparent;
+  color: var(--painel-texto-2);
+  cursor: pointer;
+  place-items: center;
+  z-index: 1;
+}
+
+/* Véu atrás da gaveta. Inerte no desktop. */
+.ssj-painel__veu {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 9, 14, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 79;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ── Coluna de conteúdo ────────────────────────────────────────────────── */
+.ssj-painel__corpo {
+  flex: 1;
+  min-width: 0; /* sem isto o flex item recusa encolher e o conteúdo vaza */
+  display: flex;
+  flex-direction: column;
+}
+
+.ssj-painel__topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 36px;
+  border-bottom: 1px solid var(--painel-borda);
+  background-color: var(--painel-superficie-veu);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.ssj-painel__titulos {
+  flex: 1;
+  min-width: 0;
+}
+
+.ssj-painel__titulos h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.ssj-painel__titulos p {
+  color: var(--painel-texto-2);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* Ações do topo. No desktop ficam na mesma linha do título. */
+.ssj-painel__acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Abre a gaveta. Só existe em telas pequenas. */
+.ssj-painel__menu {
+  display: none;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  border: 1px solid var(--painel-borda);
+  background: transparent;
+  color: var(--painel-texto-2);
+  cursor: pointer;
+  place-items: center;
+}
+
+.ssj-painel__conteudo {
+  flex: 1;
+  padding: 32px 36px 48px;
+  overflow-x: hidden;
+}
+
+/* ── Excedente de ações ("⋯") ──────────────────────────────────────────────
+   Existe só no celular. No desktop as ações cabem todas na barra. */
+.ssj-painel__excedente { display: none; position: relative; }
+
+.ssj-painel__excedente-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 230px;
+  border-radius: var(--ssj-r-md, 13px);
+  box-shadow: var(--ssj-shadow-lg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+}
+
+.ssj-painel__excedente-lista > a,
+.ssj-painel__excedente-lista > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--ssj-r-sm, 8px);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ssj-painel__excedente-lista > a:hover,
+.ssj-painel__excedente-lista > button:hover {
+  background: color-mix(in srgb, var(--painel-marca) 12%, transparent);
+}
+
+/* ── Campos ────────────────────────────────────────────────────────────────
+   O tamanho dos campos do painel vive aqui, e não em `style={{}}`, porque
+   inline vence folha de estilo e anularia a regra de 16px do `primitivos.css`
+   que impede o iOS de dar zoom ao focar um campo. */
+.ssj-painel input,
+.ssj-painel select,
+.ssj-painel textarea {
+  font-size: 14px;
+}
+
+/* A regra acima tem especificidade maior que o `input { font-size: 16px }` do
+   `primitivos.css` e venceria a proteção anti-zoom no celular. Repetir o piso
+   aqui é obrigatório, não redundante. */
+@media (max-width: 767px) {
+  .ssj-painel input:not([type='checkbox']):not([type='radio']),
+  .ssj-painel select,
+  .ssj-painel textarea {
+    font-size: 16px;
+  }
+}
+
+/* ── Modal ─────────────────────────────────────────────────────────────────
+   Um modal de largura fixa vira uma caixa cortada no celular. Aqui ele é
+   centralizado no desktop e vira folha de baixo para cima no telefone, que é
+   o padrão de qualquer app móvel. */
+.ssj-modal-veu {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 22, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.ssj-modal {
+  background: var(--ssj-surface);
+  color: var(--ssj-text);
+  border: 1px solid var(--ssj-rule);
+  border-radius: var(--ssj-r-xl, 20px);
+  box-shadow: var(--ssj-shadow-lg);
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ssj-modal__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--ssj-rule);
+}
+
+.ssj-modal__topo > button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--ssj-r-sm, 8px);
+  background: none;
+  color: var(--ssj-muted);
+  cursor: pointer;
+}
+
+.ssj-modal__titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ssj-modal__icone {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ssj-r-md, 13px);
+  background: var(--ssj-shu-wash);
+  color: var(--ssj-shu);
+}
+
+.ssj-modal__titulo h2 {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.ssj-modal__titulo p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: var(--ssj-t-xs, 13.5px);
+  color: var(--ssj-ambar-ink);
+  font-weight: 600;
+}
+
+.ssj-modal__corpo {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ssj-modal__aviso {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--ssj-r-md, 13px);
+  background: var(--ssj-ambar-wash);
+  color: var(--ssj-ambar-ink);
+}
+
+.ssj-modal__aviso svg { flex-shrink: 0; }
+
+.ssj-modal__aviso p {
+  font-size: var(--ssj-t-xs, 13.5px);
+  line-height: 1.55;
+}
+
+.ssj-modal__subtitulo {
+  font-size: var(--ssj-t-label, 13px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--ssj-track-label, 0.1em);
+  color: var(--ssj-muted);
+  margin-bottom: 12px;
+}
+
+.ssj-modal__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 20px;
+  font-size: var(--ssj-t-xs, 13.5px);
+  line-height: 1.55;
+  color: var(--ssj-text-2);
+}
+
+@media (max-width: 767px) {
+  .ssj-modal-veu {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .ssj-modal {
+    max-width: none;
+    max-height: 88dvh;
+    border-radius: var(--ssj-r-xl, 20px) var(--ssj-r-xl, 20px) 0 0;
+    border-bottom: none;
+  }
+
+  .ssj-modal__topo,
+  .ssj-modal__corpo { padding: 18px 16px; }
+}
+
+/* ── Grades responsivas ────────────────────────────────────────────────────
+   Colunas fixas ('1fr 1fr', '1fr 1fr 1fr') não cabem em 360px. Estas classes
+   substituem as que estavam inline e colapsam para uma coluna no celular. */
+.ssj-painel__grade-2,
+.ssj-painel__grade-3,
+.ssj-painel__grade-principal,
+.ssj-painel__grade-aside {
+  display: grid;
+}
+
+.ssj-painel__grade-2 { grid-template-columns: 1fr 1fr; gap: 14px; }
+.ssj-painel__grade-3 { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* Conteúdo principal + coluna de apoio (ex.: identidade + pré-visualização) */
+.ssj-painel__grade-principal {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.ssj-painel__grade-aside {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 20px;
+  max-width: 1160px;
+  align-items: start;
+}
+
+/* ── < 1024px: a barra lateral vira gaveta ─────────────────────────────── */
+@media (max-width: 1023px) {
+  .ssj-painel__lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100dvh;
+    z-index: 80;
+    width: min(310px, 86vw);
+    transform: translateX(-100%);
+    /* `visibility` tira a gaveta fechada da ordem de tabulação — sem isso o
+       teclado navega por um menu invisível fora da tela. Ela só desliga depois
+       que a animação de saída termina. */
+    visibility: hidden;
+    transition:
+      transform var(--ssj-base, 0.28s) var(--ssj-ease, ease),
+      visibility 0s linear var(--ssj-base, 0.28s);
+    box-shadow: var(--ssj-shadow-lg);
+  }
+
+  .ssj-painel__lateral[data-aberta='true'] {
+    transform: translateX(0);
+    visibility: visible;
+    transition:
+      transform var(--ssj-base, 0.28s) var(--ssj-ease, ease),
+      visibility 0s;
+  }
+
+  .ssj-painel__veu[data-aberta='true'] { display: block; }
+
+  .ssj-painel__fechar { display: grid; }
+
+  .ssj-painel__menu { display: grid; }
+
+  .ssj-painel__grade-principal,
+  .ssj-painel__grade-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ssj-painel__lateral { transition: none; }
+}
+
+/* ── ≤ 767px: celular ──────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ssj-painel__topo {
+    /* Título em cima, ações embaixo: numa linha só, nada cabe. */
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .ssj-painel__titulos h1 {
+    /* 1.05rem faz o título mais longo ("Funil de Candidatos") caber inteiro
+       ao lado dos três alvos de 44px da barra. */
+    font-size: 1.05rem;
+    /* Título longo não empurra as ações para fora: corta em uma linha. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* O subtítulo é texto de orientação de desktop. Numa barra fixa de celular
+     ele custava 85px permanentes de tela — mais do que vale. */
+  .ssj-painel__titulos p { display: none; }
+
+  .ssj-painel__acoes {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Secundárias saem da barra e passam a viver no "⋯". O `!important` é
+     necessário, não preguiça: esses elementos ainda carregam `display` inline
+     (`inline-flex`/`grid`), que vence qualquer classe sem ele. Cai fora quando
+     esses estilos saírem do JSX. */
+  .ssj-painel__acao-secundaria { display: none !important; }
+
+  /* `static` de propósito: assim a lista deixa de se ancorar no botão "⋯" —
+     que fica no meio da barra e empurrava o menu 28px para fora da tela — e
+     passa a se ancorar na própria barra, que é `sticky` e portanto serve de
+     bloco de contenção. Alinha pela margem direita do cabeçalho. */
+  .ssj-painel__excedente { display: block; position: static; }
+
+  .ssj-painel__excedente-lista {
+    right: 16px;
+    top: calc(100% - 4px);
+    max-width: calc(100vw - 32px);
+  }
+
+  /* A ação primária vira ícone. Com rótulo ela custava 137px e espremia o
+     título da página até "Visão…". O `!important` cobre o `padding` que ainda
+     vem inline de `botaoMarca`. */
+  .ssj-painel__acao-primaria {
+    width: 44px;
+    height: 44px;
+    padding: 0 !important;
+    justify-content: center;
+  }
+
+  .ssj-painel__rotulo { display: none; }
+
+  .ssj-painel__conteudo { padding: 18px 16px 40px; }
+
+  .ssj-painel__grade-2,
+  .ssj-painel__grade-3 { grid-template-columns: minmax(0, 1fr); }
+
+  /* Alvo de toque mínimo dentro do painel — mesma regra de primitivos.css. */
+  .ssj-painel__nav button { min-height: 44px; }
+}
+
+/* ── ≤ 400px: telas estreitas ──────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .ssj-painel__conteudo { padding: 14px 12px 36px; }
+  .ssj-painel__topo { padding: 12px 12px; }
+}
