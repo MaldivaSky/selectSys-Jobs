@@ -30,6 +30,12 @@ jobs:
         with:
           node-version: '22'
 
+      # Antes de instalar: o lock precisa listar os binários nativos de Linux.
+      # Gerado no Windows, ele sai só com os de win32 e o runner quebra com um
+      # "Cannot find module" que não parece problema de dependência.
+      - name: Verificar lockfile multiplataforma
+        run: node scripts/verificar_lock_multiplataforma.mjs
+
       - name: Instalar dependências do monorepo
         run: npm install --include=dev --legacy-peer-deps
 
@@ -61,8 +67,19 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Verificar lockfile multiplataforma
+        run: node scripts/verificar_lock_multiplataforma.mjs
+
       - name: Instalar dependências do monorepo
         run: npm install --include=dev --legacy-peer-deps
+
+      # O webServer da suíte roda `vite build`, que depende de rolldown e do
+      # oxide do Tailwind — os mesmos binários nativos verificados acima.
+      - name: Conferir que os binários nativos chegaram na árvore
+        run: |
+          node -e "require.resolve('@rolldown/binding-linux-x64-gnu/package.json')" \
+            || (echo '::error::rolldown sem binário linux — lockfile podado' && exit 1)
+          npx oxlint --version
 
       - name: Instalar Chromium do Playwright
         run: npx playwright install --with-deps chromium
