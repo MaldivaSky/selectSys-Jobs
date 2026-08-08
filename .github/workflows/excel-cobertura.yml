@@ -24,6 +24,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install xlrd xlutils
 
+      # O modelo da ficha é material do cliente e não é versionado (decisão de
+      # compliance — ver .gitignore). Sem ele o runner não tem o que conferir,
+      # então o check pula em vez de falhar: um vermelho permanente que ninguém
+      # pode consertar vira ruído e ensina o time a ignorar a CI.
+      #
+      # Para reativar de verdade: publicar o modelo num storage privado e
+      # baixá-lo aqui com credencial, apontando FICHA_TEMPLATE_XLS para ele.
+      - name: Verificar se o modelo da ficha está disponível
+        id: modelo
+        run: |
+          if [ -f "白紙 FUJIARTE Ficha Cadastral Jun2024 (1).xls" ]; then
+            echo "existe=sim" >> "$GITHUB_OUTPUT"
+          else
+            echo "existe=nao" >> "$GITHUB_OUTPUT"
+            echo "::notice::Modelo da ficha não está no repositório (compliance). Cobertura célula a célula pulada."
+          fi
+
       - name: Executar verificação de cobertura célula a célula
+        if: steps.modelo.outputs.existe == 'sim'
         run: |
           python packages/exportador/verificar_cobertura.py

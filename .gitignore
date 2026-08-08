@@ -40,27 +40,25 @@ secrets.json
 *.csv
 白紙*.xls
 *FUJIARTE*.xls
-# Exceção: o modelo EM BRANCO da ficha é insumo de build, não dado de cliente.
-# Sem ele versionado, o workflow de cobertura falha em todo commit com
-# FileNotFoundError — um check permanentemente vermelho que ninguém mais lê.
-# Conferido antes de versionar: 337 células, todas rótulos, nenhum padrão de
-# CPF, data ou e-mail. Planilhas COM dado de candidato seguem bloqueadas.
-!白紙 FUJIARTE Ficha Cadastral Jun2024 (1).xls
-# Exceção 2: o template .xlsx servido ao navegador. Mesma natureza do modelo
-# acima — rótulo, nenhum dado de candidato — mas esta é a cópia que o app
-# realmente carrega em runtime, via fetch('/templates/...'), para escrever as
-# 221 células mapeadas.
+# SEM EXCEÇÃO. Nenhum artefato da ficha da FUJIARTE entra no repositório —
+# nem o modelo em branco. A decisão é de compliance com o cliente, não técnica:
+# o formulário é material do cliente e não se publica material do cliente, com
+# ou sem dado pessoal dentro.
 #
-# Sem ele versionado, NENHUM build fora desta máquina tem o arquivo: nem a CI,
-# nem a Vercel. E a falha é silenciosa por desenho — `gerarFichaExcel` trata o
-# template ausente num `catch` e devolve uma planilha vazia, com os valores nas
-# coordenadas certas e nenhum rótulo da FUJIARTE. O recrutador vê "baixado com
-# sucesso" e manda para o Japão uma ficha que não é a ficha deles.
+# Consequências assumidas, para quem for mexer nisto:
 #
-# Conferido antes de versionar (mesmo critério do .xls): 4.175 células, todas
-# rótulo, nenhum padrão de CPF, e-mail, telefone, data ou passaporte.
-# Planilhas COM dado de candidato seguem bloqueadas.
-!app/public/templates/ficha_fujiarte_template.xlsx
+#   - `packages/exportador/exportar_ficha.py` espera o modelo .xls na raiz. Quem
+#     roda a cobertura localmente precisa ter o arquivo na máquina, ou apontar
+#     FICHA_TEMPLATE_XLS para onde ele estiver. O workflow de cobertura pula
+#     sozinho quando não acha o arquivo, em vez de falhar.
+#
+#   - Falta resolver o `app/public/templates/ficha_fujiarte_template.xlsx`. Ele
+#     é carregado pelo navegador em runtime, então hoje o site o serve aberto
+#     em /templates/ — tirá-lo do repositório sem mais nada faz a ficha voltar
+#     a sair em branco em produção. Decisão pendente com o Rafael; enquanto
+#     isso ele segue versionado, de propósito, para não regredir o cliente.
+白紙*.xls
+*FUJIARTE*.xls
 
 # Sensitive Business Plans, Internal Master Plans & Mockup Assets
 # O padrão era por extensão (`PLANO_MASTER_SENIOR.md`), então o `.pdf` do MESMO
