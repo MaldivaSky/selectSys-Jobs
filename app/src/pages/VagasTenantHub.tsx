@@ -16,7 +16,9 @@ export function VagasTenantHub() {
 
       const { data: orgData } = await supabase
         .from('organizations')
-        .select('*')
+        // Nunca `*` numa página pública: só as colunas da vitrine, que são as
+        // únicas que a RLS libera sem login.
+        .select('id, slug, nome, logo_url, cor_primaria')
         .eq('slug', tenantSlug)
         .maybeSingle();
 

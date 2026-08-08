@@ -79,7 +79,9 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
 
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, nome, logo_url, cor_primaria, features')
+        // Só a vitrine. `features` carrega configuração de plano e deixou de
+        // ser legível sem login — portal público não lê config de tenant.
+        .select('id, nome, logo_url, cor_primaria')
         .eq('slug', tenantSlug)
         .maybeSingle();
 
@@ -87,10 +89,8 @@ export function CandidateWizard({ lang: _lang }: { lang?: Language }) {
         alert('Agência não encontrada ou link inválido.');
         navigate('/login');
       } else {
-        // Colunas dedicadas mandam; `features` cobre as orgs do seed antigo.
-        const feats = (data.features ?? {}) as Record<string, string>;
-        const cor = normalizarHex(data.cor_primaria ?? feats.cor_primaria);
-        const logo = data.logo_url ?? feats.logo_url ?? '';
+        const cor = normalizarHex(data.cor_primaria);
+        const logo = data.logo_url ?? '';
         setTenantInfo({ id: data.id, nome: data.nome, cor_primaria: cor, logo_url: logo });
         setFormData(prev => ({ ...prev, agenciaCodigo: data.id }));
       }
