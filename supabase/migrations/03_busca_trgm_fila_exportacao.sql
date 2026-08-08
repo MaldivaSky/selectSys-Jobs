@@ -17,11 +17,22 @@
 -- 1. BUSCA — ÍNDICES TRIGRAM
 -- =============================================================================
 
+-- Garante extensões unaccent e pg_trgm no schema extensions
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
+
+-- Função wrapper IMMUTABLE para o unaccent poder ser usado em expressão de índice
+CREATE OR REPLACE FUNCTION public.f_unaccent(text)
+  RETURNS text
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
+  SET search_path = public, extensions, pg_catalog
+  AS 'SELECT extensions.unaccent($1)';
+
 -- Índice GIN para busca tolerante a acento e erro de digitação em nome.
 DROP INDEX IF EXISTS idx_candidates_nome_trgm_unaccent;
 CREATE INDEX idx_candidates_nome_trgm_unaccent
   ON public.candidates
-  USING GIN (unaccent(nome_completo) gin_trgm_ops);
+  USING GIN (public.f_unaccent(nome_completo) gin_trgm_ops);
 
 -- Índice GIN para busca de CPF (numérico; não leva unaccent).
 DROP INDEX IF EXISTS idx_candidates_cpf_trgm;
@@ -80,7 +91,7 @@ RETURNS TABLE (
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
-SET search_path = public, pg_catalog
+SET search_path = public, extensions, pg_catalog
 AS $$
   WITH recorte AS (
     SELECT
@@ -129,7 +140,7 @@ AS $$
     r.updated_at,
     r.ja_esteve_japao,
     CASE WHEN p_termo IS NULL OR p_termo = '' THEN 1.0
-         ELSE similarity(unaccent(r.nome_completo), unaccent(p_termo))
+         ELSE similarity(public.f_unaccent(r.nome_completo), public.f_unaccent(p_termo))
     END AS relevancia
   FROM recorte r
   WHERE

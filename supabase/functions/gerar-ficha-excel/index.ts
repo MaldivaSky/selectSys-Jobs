@@ -14,7 +14,7 @@
    ═════════════════════════════════════════════════════════════════════════ */
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 // @ts-ignore — ExcelJS import em Deno Edge Functions
 import ExcelJS from 'npm:exceljs@4';
 
@@ -135,9 +135,9 @@ Deno.serve(async (req: Request) => {
           (candidato.cpf ?? candidato.id).slice(0, 31),
           { properties: templateSheet.properties }
         );
-        templateSheet.eachRow({ includeEmpty: true }, (row, rowNum) => {
+        templateSheet.eachRow({ includeEmpty: true }, (row: any, rowNum: number) => {
           const newRow = sheet.getRow(rowNum);
-          row.eachCell({ includeEmpty: true }, (cell, colNum) => {
+          row.eachCell({ includeEmpty: true }, (cell: any, colNum: number) => {
             const newCell = newRow.getCell(colNum);
             newCell.value = cell.value;
             newCell.style = { ...cell.style };
