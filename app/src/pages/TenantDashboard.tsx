@@ -281,7 +281,7 @@ export function TenantDashboard() {
 
     const sb = supabase;
     return () => { void sb?.removeChannel(channel); };
-  }, [exportJobs, supabase]);
+  }, [exportJobs]);
 
   // Realtime Tier 2: monitora tarefas assíncronas na tabela job_queues sem bloquear a UI
   useEffect(() => {
