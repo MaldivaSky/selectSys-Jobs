@@ -33,6 +33,31 @@ function calcularIdade(dataNascimento: unknown): string {
 }
 
 export async function gerarFichaExcel(dados: Record<string, any>): Promise<Blob> {
+  // Desembrulha dados vindos de application_data.rascunho, application_data.data ou candidatos
+  const appData = Array.isArray(dados?.application_data)
+    ? dados.application_data[0]
+    : dados?.application_data;
+
+  const rascunho = appData?.rascunho ?? appData?.data ?? dados?.rascunho ?? dados?.data ?? {};
+  const valoresRascunho = rascunho?.valores ?? rascunho?.dados ?? (typeof rascunho === 'object' ? rascunho : {});
+  const linhasRascunho = rascunho?.linhas ?? {};
+
+  // Objeto unificado mesclando topo, candidates e rascunho do servidor
+  const d: Record<string, any> = {
+    ...dados,
+    ...(dados?.candidates ?? {}),
+    ...(typeof valoresRascunho === 'object' ? valoresRascunho : {}),
+    ...(typeof linhasRascunho === 'object' ? linhasRascunho : {}),
+  };
+
+  // Mapeamento de aliases (camelCase -> snake_case do schema FUJIARTE)
+  if (!d.nome_completo && d.nomeCompleto) d.nome_completo = d.nomeCompleto;
+  if (!d.data_nascimento && d.dataNascimento) d.data_nascimento = d.dataNascimento;
+  if (!d.geracao && d.geracaoNikkei) d.geracao = d.geracaoNikkei;
+  if (!d.tem_tatuagem && d.temTatuagem) d.tem_tatuagem = d.temTatuagem;
+  if (!d.ja_esteve_japao && d.jaEsteveJapao) d.ja_esteve_japao = d.jaEsteveJapao;
+  if (!d.nivel_japones && d.nivelJapones) d.nivel_japones = d.nivelJapones;
+
   const workbook = new ExcelJS.Workbook();
   let sheet: ExcelJS.Worksheet;
 
@@ -65,10 +90,10 @@ export async function gerarFichaExcel(dados: Record<string, any>): Promise<Blob>
   for (const etapa of FICHA_FUJIARTE_2024_06.etapas) {
     if (etapa.campos) {
       for (const campo of etapa.campos) {
-        const val = dados[campo.key];
+        const val = d[campo.key];
         
-        if (campo.key === 'idade' && dados.data_nascimento) {
-          setCell(campo.cell || 'S16', calcularIdade(dados.data_nascimento));
+        if (campo.key === 'idade' && d.data_nascimento) {
+          setCell(campo.cell || 'S16', calcularIdade(d.data_nascimento));
           continue;
         }
 
@@ -91,7 +116,7 @@ export async function gerarFichaExcel(dados: Record<string, any>): Promise<Blob>
     // Preenchimento de Tabelas Repetíveis (Família, Histórico Japão, Histórico Brasil)
     if (etapa.repetiveis) {
       for (const rep of etapa.repetiveis) {
-        const lista = (dados[rep.key] as Array<Record<string, any>>) || [];
+        const lista = (d[rep.key] as Array<Record<string, any>>) || [];
         const celulas = rep.cellsPorEntrada || [];
         
         lista.slice(0, rep.truncaExportacaoEm).forEach((item, index) => {
@@ -112,7 +137,7 @@ export async function gerarFichaExcel(dados: Record<string, any>): Promise<Blob>
   // Preenchimento dos Campos Internos da Agência
   if (FICHA_FUJIARTE_2024_06.camposInternos) {
     for (const c of FICHA_FUJIARTE_2024_06.camposInternos) {
-      const v = dados[c.key];
+      const v = d[c.key];
       if (v && c.cell) {
         setCell(c.cell, c.type === 'date' ? formatarDataJaponesa(v) : String(v));
       }
@@ -120,7 +145,7 @@ export async function gerarFichaExcel(dados: Record<string, any>): Promise<Blob>
   }
 
   // Data de preenchimento automatica (AU2)
-  if (!dados.data_preenchimento) {
+  if (!d.data_preenchimento) {
     setCell('AU2', formatarDataJaponesa(new Date().toISOString()));
   }
 

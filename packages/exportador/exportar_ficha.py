@@ -174,6 +174,25 @@ def exportar(dados: dict, saida: str, template: str = TEMPLATE) -> dict:
     if not os.path.exists(template):
         raise FileNotFoundError(f"template não encontrado: {template}")
 
+    # Desembrulha application_data.rascunho e candidatos caso dados venham do servidor
+    if isinstance(dados, dict):
+        d_merged = dict(dados)
+        if "candidates" in dados and isinstance(dados["candidates"], dict):
+            d_merged.update(dados["candidates"])
+        app_data = dados.get("application_data")
+        if isinstance(app_data, list) and len(app_data) > 0:
+            app_data = app_data[0]
+        if isinstance(app_data, dict):
+            rascunho = app_data.get("rascunho") or app_data.get("data")
+            if isinstance(rascunho, dict):
+                valores = rascunho.get("valores") if isinstance(rascunho.get("valores"), dict) else rascunho
+                if isinstance(valores, dict):
+                    d_merged.update(valores)
+                linhas = rascunho.get("linhas")
+                if isinstance(linhas, dict):
+                    d_merged.update(linhas)
+        dados = d_merged
+
     mapa = carregar_mapa()
     livro_leitura = xlrd.open_workbook(template, formatting_info=True)
     livro = copiar_workbook(livro_leitura)

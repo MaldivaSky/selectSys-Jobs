@@ -1,0 +1,12 @@
+# Supabase CLI configuration
+project_id = "cpucbenejecedextdltn"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[functions.gerar-ficha-excel]
+verify_jwt = false
