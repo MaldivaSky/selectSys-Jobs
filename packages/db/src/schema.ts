@@ -322,3 +322,17 @@ export const screeningDecisions = pgTable('screening_decisions', {
   revisaoResultado: screeningOutcomeEnum('revisao_resultado'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Job Queues (Tarefas Assíncronas Tier 2)
+export const jobQueues = pgTable('job_queues', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  payload: jsonb('payload').notNull().default({}),
+  status: text('status').notNull().default('PENDING'),
+  resultUrl: text('result_url'),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+

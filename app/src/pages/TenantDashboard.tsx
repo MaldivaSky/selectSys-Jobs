@@ -273,6 +273,35 @@ export function TenantDashboard() {
     return () => { void sb?.removeChannel(channel); };
   }, [exportJobs, supabase]);
 
+  // Realtime Tier 2: monitora tarefas assíncronas na tabela job_queues sem bloquear a UI
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('job-queues-tier2-watch')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'job_queues' },
+        (payload) => {
+          const job = payload.new as any;
+          if (!job) return;
+
+          if (job.status === 'COMPLETED' && job.result_url) {
+            setAviso({ tipo: 'ok', texto: `✓ Processamento assíncrono concluído — baixando arquivo...` });
+            void baixarPorUrl(job.result_url, `exportacao-fujiarte-${job.id.slice(0, 6)}.xlsx`);
+          } else if (job.status === 'FAILED') {
+            setAviso({ tipo: 'erro', texto: `Processamento em background falhou: ${job.error_message ?? 'Erro interno'}` });
+          } else if (job.status === 'PROCESSING') {
+            setAviso({ tipo: 'ok', texto: `⚙ Processando tarefa em segundo plano (Job #${job.id.slice(0, 6)})...` });
+          }
+        }
+      )
+      .subscribe();
+
+    const sb = supabase;
+    return () => { void sb?.removeChannel(channel); };
+  }, []);
+
   const exportarFichaCandidato = async (candidatoData: any) => {
     const nome = (candidatoData.candidates?.nome_completo || candidatoData.nome_completo || 'candidato-fujiarte') as string;
     const candidateId: string | undefined = candidatoData.candidates?.id || candidatoData.id;
