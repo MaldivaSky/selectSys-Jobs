@@ -81,11 +81,18 @@ test.describe('B2B · Painel do recrutador', () => {
        no Japão. Por isso o teste abre o .xlsx e confere as duas coisas que
        importam: o template oficial entrou e os dados do candidato foram
        escritos nele. */
+    /* Checar `status === 200` aqui NÃO prova nada: o `vite preview` faz
+       fallback de SPA, então um template ausente devolve o index.html com 200
+       alegre. Foi assim que este mesmo teste passou verde na CI com o arquivo
+       faltando no repositório. O que prova é o conteúdo: todo .xlsx é um zip,
+       e todo zip começa com os bytes "PK". */
     const respostaTemplate = await page.request.get('/templates/ficha_fujiarte_template.xlsx');
+    const primeirosBytes = (await respostaTemplate.body()).subarray(0, 2).toString('latin1');
     expect(
-      respostaTemplate.status(),
-      'o template oficial da FUJIARTE precisa estar publicado no build',
-    ).toBe(200);
+      primeirosBytes,
+      'o template oficial da FUJIARTE não está publicado no build — o servidor devolveu ' +
+        `"${respostaTemplate.headers()['content-type']}" em vez de um .xlsx`,
+    ).toBe('PK');
 
     const caminho = await download.path();
     expect(caminho, 'o download precisa ter sido materializado em disco').toBeTruthy();

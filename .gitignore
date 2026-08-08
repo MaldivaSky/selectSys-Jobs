@@ -46,6 +46,21 @@ secrets.json
 # Conferido antes de versionar: 337 células, todas rótulos, nenhum padrão de
 # CPF, data ou e-mail. Planilhas COM dado de candidato seguem bloqueadas.
 !白紙 FUJIARTE Ficha Cadastral Jun2024 (1).xls
+# Exceção 2: o template .xlsx servido ao navegador. Mesma natureza do modelo
+# acima — rótulo, nenhum dado de candidato — mas esta é a cópia que o app
+# realmente carrega em runtime, via fetch('/templates/...'), para escrever as
+# 221 células mapeadas.
+#
+# Sem ele versionado, NENHUM build fora desta máquina tem o arquivo: nem a CI,
+# nem a Vercel. E a falha é silenciosa por desenho — `gerarFichaExcel` trata o
+# template ausente num `catch` e devolve uma planilha vazia, com os valores nas
+# coordenadas certas e nenhum rótulo da FUJIARTE. O recrutador vê "baixado com
+# sucesso" e manda para o Japão uma ficha que não é a ficha deles.
+#
+# Conferido antes de versionar (mesmo critério do .xls): 4.175 células, todas
+# rótulo, nenhum padrão de CPF, e-mail, telefone, data ou passaporte.
+# Planilhas COM dado de candidato seguem bloqueadas.
+!app/public/templates/ficha_fujiarte_template.xlsx
 
 # Sensitive Business Plans, Internal Master Plans & Mockup Assets
 PLANO_MASTER_SENIOR.md
