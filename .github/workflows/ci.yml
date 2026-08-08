@@ -30,11 +30,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Instalar dependências
+      - name: Instalar dependências da raiz
         run: npm install
 
+      - name: Instalar dependências do app
+        run: cd app && npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Lint
-        # `--if-present` para não quebrar caso o script saia do package.json.
         run: npm run lint --if-present
 
       - name: Build
