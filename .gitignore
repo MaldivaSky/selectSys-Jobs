@@ -84,6 +84,12 @@ temp/
 saida/
 backups/
 *.sql
+# Exceção: migrations e seeds são insumos de deploy, não dumps de dados.
+# Migrations definem o schema em produção e devem estar no histórico git.
+!supabase/migrations/*.sql
+!supabase/seed.sql
+!docs/schema/**/*.sql
+
 marca-opcoes/
 ficha-fujiarte-dump.txt
 ficha-globo-designer.html

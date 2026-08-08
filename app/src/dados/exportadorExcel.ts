@@ -1,5 +1,7 @@
 import ExcelJS from 'exceljs';
 import { FICHA_FUJIARTE_2024_06 } from '@selectsys/core';
+import { supabase } from './supabase';
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    EXPORTADOR EXCEL FIEL AO TEMPLATE FUJIARTE (.XLSX) — SELECTSYS JOBS
@@ -162,4 +164,63 @@ export function baixarFichaExcel(blob: Blob, nomeArquivo: string) {
   a.click();
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXPORTAÇÃO EM LOTE — ASSÍNCRONA VIA FILA (export_jobs)
+   ---------------------------------------------------------------------------
+   Para 2+ candidatos: não bloqueia a UI. O front enfileira o job, assina
+   o canal Realtime de `export_jobs` e baixa o arquivo quando a signed_url
+   aparecer (≤30s tipicamente, depende do tamanho do lote).
+
+   Para 1 candidato: ainda usa gerarFichaExcel + baixarFichaExcel (síncrono,
+   <2s, sem overhead de fila).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+export interface ExportJob {
+  id: string;
+  status: 'pendente' | 'processando' | 'pronto' | 'falhou';
+  signed_url: string | null;
+  expira_em: string | null;
+  erro_mensagem: string | null;
+  total_candidatos: number;
+  tentativas: number;
+  created_at: string;
+}
+
+/**
+ * Enfileira a exportação de um lote de candidatos no banco.
+ *
+ * A RPC `criar_export_job` valida que TODOS os candidate_ids pertencem à
+ * organização do chamador antes de inserir — proteção multi-tenant no banco,
+ * não só no front.
+ *
+ * @returns job_id para subscrição via Realtime, ou null em caso de erro.
+ */
+export async function solicitarExportacaoLote(
+  candidateIds: string[],
+): Promise<{ jobId: string | null; erro?: string }> {
+  if (!supabase) return { jobId: null, erro: 'Banco não configurado.' };
+  if (!candidateIds.length) return { jobId: null, erro: 'Lista vazia.' };
+
+  const { data, error } = await supabase
+    .rpc('criar_export_job', { p_candidate_ids: candidateIds })
+    .single<ExportJob>();
+
+  if (error || !data) {
+    return { jobId: null, erro: error?.message ?? 'Falha ao criar job de exportação.' };
+  }
+
+  return { jobId: data.id };
+}
+
+/**
+ * Baixa o arquivo a partir de uma signed URL (resultado do worker assíncrono).
+ * A signed URL dura 1h; use dentro deste período.
+ */
+export async function baixarPorUrl(signedUrl: string, nomeArquivo: string): Promise<void> {
+  const res = await fetch(signedUrl);
+  if (!res.ok) throw new Error(`Download falhou: ${res.status} ${res.statusText}`);
+  const blob = await res.blob();
+  baixarFichaExcel(blob, nomeArquivo);
 }

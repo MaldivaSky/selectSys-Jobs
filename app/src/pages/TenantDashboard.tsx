@@ -32,7 +32,7 @@ import {
 import { useTheme } from '../theme/theme';
 import { COR_PADRAO, derivarPaleta, normalizarHex } from '../theme/marcaTenant';
 import { useNavigate, useParams } from 'react-router-dom';
-import { gerarFichaExcel, baixarFichaExcel } from '../dados/exportadorExcel';
+import { gerarFichaExcel, baixarFichaExcel, solicitarExportacaoLote, baixarPorUrl, type ExportJob } from '../dados/exportadorExcel';
 import { GaroonIntegrationModal } from '../components/GaroonIntegrationModal';
 import { Database, FileSpreadsheet, Search, Table, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 
@@ -141,28 +141,32 @@ export function TenantDashboard() {
   const [modalNovaVaga, setModalNovaVaga] = useState(false);
   const [garoonModalOpen, setGaroonModalOpen] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState<string | null>(null);
+  // Jobs de exportação em lote: Map de job_id → nome do candidato/lote
+  const [exportJobs, setExportJobs] = useState<Map<string, string>>(new Map());
 
   const [buscaTexto, setBuscaTexto] = useState('');
+  const [buscarDebounced, setBuscarDebounced] = useState('');
   const [filtroAltura, setFiltroAltura] = useState<'todos' | 'baixo' | 'medio' | 'alto'>('todos');
   const [filtroIMC, setFiltroIMC] = useState<'todos' | 'abaixo' | 'normal' | 'sobrepeso' | 'obesidade'>('todos');
   const [filtroGeracao, setFiltroGeracao] = useState<'todos' | 'issei' | 'nissei' | 'sansei' | 'yonsei' | 'nao_descendente'>('todos');
   const [filtroTatuagem, setFiltroTatuagem] = useState<'todos' | 'sim' | 'nao'>('todos');
   const [modoVisao, setModoVisao] = useState<'kanban' | 'tabela'>('kanban');
 
+  // Debounce de 300ms: evita disparo a cada tecla
+  useEffect(() => {
+    const t = setTimeout(() => setBuscarDebounced(buscaTexto), 300);
+    return () => clearTimeout(t);
+  }, [buscaTexto]);
+
+  // Filtragem local (altura, IMC, geração, tatuagem) sobre os dados já em memória.
+  // A busca por texto é server-side (buscarDebounced -> RPC). Os demais filtros são
+  // aplicados aqui porque vêm de campos que não estão na RPC buscar_candidatos.
   const candidaturasFiltradas = useMemo(() => {
     return candidaturas.filter((c) => {
       const cand = c.candidates as any;
-      
-      if (buscaTexto.trim()) {
-        const termo = buscaTexto.toLowerCase();
-        const nome = String(cand?.nome_completo || '').toLowerCase();
-        const cpf = String(cand?.cpf || '').toLowerCase();
-        const fone = String(cand?.telefone || '').toLowerCase();
-        const cid = String(cand?.cidade || '').toLowerCase();
-        if (!nome.includes(termo) && !cpf.includes(termo) && !fone.includes(termo) && !cid.includes(termo)) {
-          return false;
-        }
-      }
+
+      // Texto: o filtro server-side já foi aplicado na carga. O useMemo não
+      // filtra por texto — só exibe o que o servidor já devolveu.
 
       if (filtroAltura !== 'todos') {
         const alt = Number(cand?.altura_cm || 0);
@@ -194,17 +198,104 @@ export function TenantDashboard() {
 
       return true;
     });
-  }, [candidaturas, buscaTexto, filtroAltura, filtroIMC, filtroGeracao, filtroTatuagem]);
+  }, [candidaturas, filtroAltura, filtroIMC, filtroGeracao, filtroTatuagem]);
+
+  // Busca server-side: recarrega candidaturas quando o termo debounced muda
+  useEffect(() => {
+    if (!supabase || !tenant) return;
+    if (!buscarDebounced.trim()) {
+      // Sem termo: recarrega lista completa sem filtro de texto
+      void carregarDados();
+      return;
+    }
+    // Com termo: chama a RPC buscar_candidatos (pg_trgm, GIN index)
+    void (async () => {
+      const { data, error } = await supabase
+        .rpc('buscar_candidatos', {
+          p_termo:  buscarDebounced.trim(),
+          p_status: null,
+          p_org:    tenant.id,
+          p_limit:  60,
+          p_offset: 0,
+        });
+      if (!error && data) {
+        // Adapta resultado da RPC para o formato de Candidatura do estado local
+        const adaptados = (data as any[]).map((r: any) => ({
+          id: r.application_id,
+          status: r.status,
+          updated_at: r.updated_at,
+          created_at: r.updated_at,
+          candidates: {
+            nome_completo: r.nome_completo,
+            telefone: r.telefone,
+            cidade: r.cidade,
+            estado: r.estado,
+            cpf: r.cpf,
+            geracao: r.geracao,
+            altura_cm: r.altura_cm,
+            peso_kg: r.peso_kg,
+            tem_tatuagem: r.tem_tatuagem,
+          },
+          jobs: null,
+        }));
+        setCandidaturas(adaptados);
+      }
+    })();
+  }, [buscarDebounced, tenant]);
+
+  // Realtime: ouve export_jobs para baixar automaticamente quando pronto
+  useEffect(() => {
+    if (!supabase || exportJobs.size === 0) return;
+
+    const channel = supabase
+      .channel('export-jobs-watch')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'export_jobs' },
+        (payload) => {
+          const job = payload.new as ExportJob & { id: string };
+          const nomeLote = exportJobs.get(job.id);
+          if (!nomeLote) return; // job de outro usuário ou não monitorado
+
+          if (job.status === 'pronto' && job.signed_url) {
+            setAviso({ tipo: 'ok', texto: `✓ Ficha(s) de ${nomeLote} prontas — baixando...` });
+            void baixarPorUrl(job.signed_url, `${nomeLote}-ficha-fujiarte.xlsx`);
+            setExportJobs((prev) => { const m = new Map(prev); m.delete(job.id); return m; });
+          } else if (job.status === 'falhou') {
+            setAviso({ tipo: 'erro', texto: `Exportação de ${nomeLote} falhou: ${job.erro_mensagem ?? 'erro desconhecido'}` });
+            setExportJobs((prev) => { const m = new Map(prev); m.delete(job.id); return m; });
+          }
+        },
+      )
+      .subscribe();
+
+    const sb = supabase;
+    return () => { void sb?.removeChannel(channel); };
+  }, [exportJobs, supabase]);
 
   const exportarFichaCandidato = async (candidatoData: any) => {
+    const nome = (candidatoData.candidates?.nome_completo || candidatoData.nome_completo || 'candidato-fujiarte') as string;
+    const candidateId: string | undefined = candidatoData.candidates?.id || candidatoData.id;
+
+    // Exportação individual (≤1 candidato): síncrona no browser (<2s, sem overhead de fila)
     try {
       setExportandoExcel(candidatoData.id || 'demo');
       const blob = await gerarFichaExcel(candidatoData);
-      const nome = candidatoData.candidates?.nome_completo || candidatoData.nome_completo || 'candidato-fujiarte';
       baixarFichaExcel(blob, `${nome.toLowerCase().replace(/\s+/g, '-')}-ficha-fujiarte.xlsx`);
       setAviso({ tipo: 'ok', texto: 'Ficha Cadastral Excel (.xlsx) baixada com sucesso!' });
     } catch (err: any) {
-      setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${err?.message || 'Falha ao processar'}` });
+      // Fallback: enfileira na fila assíncrona se geração no browser falhar
+      if (candidateId) {
+        const { jobId, erro } = await solicitarExportacaoLote([candidateId]);
+        if (jobId) {
+          setExportJobs((prev) => new Map(prev).set(jobId, nome));
+          setAviso({ tipo: 'ok', texto: `Gerando ficha de ${nome} em background... será baixada automaticamente.` });
+        } else {
+          setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${erro ?? err?.message ?? 'Falha ao processar'}` });
+        }
+      } else {
+        setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${err?.message || 'Falha ao processar'}` });
+      }
     } finally {
       setExportandoExcel(null);
     }
