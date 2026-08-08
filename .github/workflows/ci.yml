@@ -31,7 +31,7 @@ jobs:
           node-version: '22'
 
       - name: Instalar dependências do monorepo
-        run: npm install --workspaces --include=dev && npm install
+        run: npm install --include=dev
 
       - name: Typecheck
         run: npm run typecheck
