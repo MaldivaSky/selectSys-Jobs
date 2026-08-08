@@ -31,7 +31,7 @@ jobs:
           node-version: '22'
 
       - name: Instalar dependências do monorepo
-        run: npm install --include=dev
+        run: npm install --workspaces --include=dev && npm install
 
       - name: Typecheck
         run: npm run typecheck
@@ -40,4 +40,4 @@ jobs:
         run: npm run lint --if-present
 
       - name: Build
-        run: cd app && npx vite build
+        run: npm run build
