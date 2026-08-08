@@ -44,6 +44,8 @@ docs/07-fluxo-de-caixa.md
 
 # IDEs, Editors & AI Agents Context
 .claude/
+.mcp.json
+.agents/
 .vscode/
 .idea/
 .gemini/

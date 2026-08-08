@@ -5,6 +5,8 @@
   "description": "SelectSys Jobs - SaaS Engine Dekassegui V2",
   "scripts": {
     "dev": "npm --prefix app run dev",
+    "lint": "npm --prefix app run lint",
+    "typecheck": "npm --prefix app run typecheck",
     "build": "cd app && npm install --no-package-lock --include=dev && npm run build"
   },
   "supportedArchitectures": {

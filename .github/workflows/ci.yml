@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+# Um push novo na mesma PR cancela a execução anterior: sem fila de builds
+# obsoletos consumindo minuto de runner.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    name: Lint e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Reaproveita o cache do npm entre execuções, chaveado pelo lockfile.
+          cache: 'npm'
+
+      - name: Instalar dependências
+        # `npm ci` (e não `install`) porque respeita o package-lock.json à risca:
+        # o CI testa exatamente as versões que vão para produção.
+        run: npm ci
+
+      - name: Lint
+        # `--if-present` para não quebrar caso o script saia do package.json.
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build
