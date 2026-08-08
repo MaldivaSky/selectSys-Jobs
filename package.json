@@ -7,7 +7,7 @@
     "dev": "npm --prefix app run dev",
     "lint": "npm --prefix app run lint",
     "typecheck": "npm --prefix app run typecheck",
-    "build": "cd app && npm install --no-package-lock --include=dev && npm run build",
+    "build": "npm --prefix app run build",
     "db:migrate": "node scripts/apply_supabase_migrations.js"
   },
   "supportedArchitectures": {

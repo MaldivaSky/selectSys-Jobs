@@ -25,16 +25,13 @@ jobs:
       - name: Checkout repositório
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Instalar dependências da raiz
+      - name: Instalar dependências do monorepo
         run: npm install
-
-      - name: Instalar dependências do app
-        run: cd app && npm install
 
       - name: Typecheck
         run: npm run typecheck
