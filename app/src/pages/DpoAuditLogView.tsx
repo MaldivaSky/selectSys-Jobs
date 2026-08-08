@@ -32,7 +32,7 @@ export function DpoAuditLogView() {
         if (!error && data) {
           setLogs(data as AuditEntry[]);
         }
-      } catch (_err) {
+      } catch {
         // Fallback de logs em modo offline
       }
     }

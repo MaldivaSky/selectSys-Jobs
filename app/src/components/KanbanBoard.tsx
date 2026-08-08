@@ -69,7 +69,7 @@ export const KanbanBoard: React.FC<Props> = ({
 
     try {
       await onMoverStatus(draggedId, targetStatus);
-    } catch (err: any) {
+    } catch {
       setErroTransicao(`Transição de status inválida ou não permitida para o seu papel.`);
     } finally {
       setDraggedId(null);

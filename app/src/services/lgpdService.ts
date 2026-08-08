@@ -55,7 +55,7 @@ export async function exportarDadosCandidatoLgpd(candidatoId: string): Promise<L
       }
 
       // Sanitiza chaves internas do banco
-      const { id, created_at, updated_at, ...dadosSanitizados } = data;
+      const { id: _id, created_at: _created_at, updated_at: _updated_at, ...dadosSanitizados } = data;
 
       return {
         sucesso: true,
@@ -125,7 +125,7 @@ export async function revogarConsentimentoLgpd(
         recurso: 'candidates',
         detalhes: { candidatoId, motivo, timestamp },
       });
-    } catch (_err) {
+    } catch {
       // Continua se a tabela de audit log estiver offline
     }
   }
