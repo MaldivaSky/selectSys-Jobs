@@ -29,7 +29,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 import { COR_PADRAO, derivarPaleta, normalizarHex } from '../theme/marcaTenant';
 import { useNavigate, useParams } from 'react-router-dom';
 import { gerarFichaExcel, baixarFichaExcel, solicitarExportacaoLote, baixarPorUrl, type ExportJob } from '../dados/exportadorExcel';

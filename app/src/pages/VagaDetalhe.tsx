@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { MapPin, Building2, JapaneseYen, Clock, ArrowLeft, Send } from 'lucide-react';
 import { supabase } from '../dados/supabase';
 import type { Language } from '../translations';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 
 export function VagaDetalhe({ lang: _lang }: { lang?: Language }) {
   const { id } = useParams();

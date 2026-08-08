@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 import { Hanko } from '../brand/Hanko';
 import { AppDoCandidato } from './PrototipoApp';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Scale, CheckCircle2, AlertTriangle, Gavel } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 
 export function TermosUso() {
   const { escuro: isDark } = useTheme();

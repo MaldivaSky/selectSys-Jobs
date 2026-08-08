@@ -8,6 +8,9 @@
     "lint": "npm --prefix app run lint",
     "typecheck": "npm --prefix app run typecheck",
     "build": "npm --prefix app run build",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "db:migrate": "node scripts/apply_supabase_migrations.js"
   },
   "supportedArchitectures": {

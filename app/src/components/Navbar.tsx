@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon, LogIn } from 'lucide-react';
 import { BrandLockup } from '../brand/BrandMark';
 import { BRAND } from '../brand/brand';
-import { useTheme } from '../theme/theme';
+import { useTheme } from '../theme/contexto';
 import type { Language } from '../translations';
 
 interface NavbarProps {
