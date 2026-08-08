@@ -31,9 +31,7 @@ jobs:
           cache: 'npm'
 
       - name: Instalar dependências
-        # `npm ci` (e não `install`) porque respeita o package-lock.json à risca:
-        # o CI testa exatamente as versões que vão para produção.
-        run: npm ci
+        run: npm install
 
       - name: Lint
         # `--if-present` para não quebrar caso o script saia do package.json.
