@@ -41,3 +41,39 @@ jobs:
 
       - name: Build
         run: cd app && npm run build
+
+  e2e:
+    name: Testes E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Job separado do lint/build de propósito: roda em paralelo (não atrasa o
+    # feedback rápido) e, quando quebra, o vermelho já diz que foi a jornada do
+    # usuário, não a tipagem. A suíte sobe o próprio servidor via `webServer` do
+    # playwright.config.ts, com o Supabase stubado — sem segredo de repositório,
+    # então roda também em PR vinda de fork.
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências do monorepo
+        run: npm install --include=dev --legacy-peer-deps
+
+      - name: Instalar Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar jornadas críticas (headless)
+        run: npx playwright test
+
+      - name: Publicar relatório da execução
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -1,5 +1,11 @@
 # Dependencies & Build Outputs
 node_modules/
+# Artefatos da suíte E2E (Playwright): relatório, trace, vídeo e screenshot de
+# falha. São saída de execução, regenerados a cada `npx playwright test`.
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 __pycache__/
 *.pyc
 .next/
