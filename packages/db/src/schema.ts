@@ -115,6 +115,8 @@ export const users = pgTable('users', {
   emailVerificadoEm: timestamp('email_verificado_em', { withTimezone: true }),
   ultimoAcesso: timestamp('ultimo_acesso', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: uuid('deleted_by').references(() => users.id, { onDelete: 'set null' }),
 });
 
 // Agencies
@@ -140,6 +142,8 @@ export const memberships = pgTable('memberships', {
   agencyId: uuid('agency_id').references(() => agencies.id, { onDelete: 'set null' }),
   ativo: boolean('ativo').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: uuid('deleted_by').references(() => users.id, { onDelete: 'set null' }),
 });
 
 // Form Schemas
@@ -210,6 +214,8 @@ export const candidates = pgTable('candidates', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   ultimoContatoEm: timestamp('ultimo_contato_em', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: uuid('deleted_by').references(() => users.id, { onDelete: 'set null' }),
 });
 
 // Work History
@@ -289,6 +295,8 @@ export const applications = pgTable('applications', {
   submetidaEm: timestamp('submetida_em', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: uuid('deleted_by').references(() => users.id, { onDelete: 'set null' }),
 });
 
 // Application Data

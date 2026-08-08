@@ -36,7 +36,7 @@ async function applyMigrations() {
       console.log(`     ✓ Sucesso: ${file}`);
     }
 
-    console.log('\n✅ Todas as migrations Supabase (01 a 04) foram aplicadas com sucesso!');
+    console.log('\n✅ Todas as migrations Supabase (01 a 05) foram aplicadas com sucesso!');
   } catch (err) {
     console.error('❌ Erro na execução da migration:', err.message);
   } finally {
