@@ -35,6 +35,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { gerarFichaExcel, baixarFichaExcel, solicitarExportacaoLote, baixarPorUrl, type ExportJob } from '../dados/exportadorExcel';
 import { GaroonIntegrationModal } from '../components/GaroonIntegrationModal';
 import { Database, FileSpreadsheet, Search, Table, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { useDashboardData, useMoverStatusMutation } from '../hooks/useDashboardQuery';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PAINEL DA AGÊNCIA (TENANT)
@@ -108,19 +109,79 @@ export function TenantDashboard() {
   const { tenantSlug: slugFromUrl } = useParams<{ tenantSlug?: string }>();
 
   const [aba, setAba] = useState<Aba>('visao');
-  const [loading, setLoading] = useState(true);
-  const [erroFatal, setErroFatal] = useState<string | null>(null);
+  const slugTarget = slugFromUrl || 'fujiarte';
 
-  // Gaveta da barra lateral. Só tem efeito abaixo de 1024px; no desktop a barra
-  // é permanente e este estado é ignorado pelo CSS.
+  // 🚀 TanStack Query (React Query v5): Cache inteligente de 5 min + stale-while-revalidate
+  const { data: dashboardQueryData, isLoading: queryLoading, error: queryError, refetch: refetchDashboard } = useDashboardData(slugTarget);
+  const moverMutation = useMoverStatusMutation(slugTarget, (msg) => setAviso({ tipo: 'erro', texto: msg }));
+
+  const loading = queryLoading;
+  const erroFatal = queryError ? (queryError as Error).message : null;
+
+  const tenant = dashboardQueryData?.tenant ?? null;
+  const vagas = useMemo(() => (dashboardQueryData?.vagas ?? []) as Vaga[], [dashboardQueryData?.vagas]);
+
+  const [buscaTexto, setBuscaTexto] = useState('');
+  const [buscarDebounced, setBuscarDebounced] = useState('');
+  const [candidaturasBusca, setCandidaturasBusca] = useState<Candidatura[] | null>(null);
+
+  const candidaturas = useMemo(() => {
+    if (candidaturasBusca) return candidaturasBusca;
+    return (dashboardQueryData?.candidaturas ?? []) as unknown as Candidatura[];
+  }, [dashboardQueryData?.candidaturas, candidaturasBusca]);
+
+  // Estados de controle da UI mobile
   const [menuAberto, setMenuAberto] = useState(false);
-
-  // Menu "⋯" das ações secundárias do topo. Também só existe no celular.
   const [acoesAbertas, setAcoesAbertas] = useState(false);
 
-  const [tenant, setTenant] = useState<{ id: string; nome: string; slug: string; plano: string } | null>(null);
-  const [vagas, setVagas] = useState<Vaga[]>([]);
-  const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
+  // Debounce de 300ms: evita disparo a cada tecla
+  useEffect(() => {
+    const t = setTimeout(() => setBuscarDebounced(buscaTexto), 300);
+    return () => clearTimeout(t);
+  }, [buscaTexto]);
+
+  // Busca server-side: recarrega candidaturas quando o termo debounced muda
+  useEffect(() => {
+    if (!supabase || !tenant) return;
+    if (!buscarDebounced.trim()) {
+      setCandidaturasBusca(null);
+      return;
+    }
+    // Com termo: chama a RPC buscar_candidatos (pg_trgm, GIN index)
+    void (async () => {
+      const { data, error } = await supabase
+        .rpc('buscar_candidatos', {
+          p_termo:  buscarDebounced.trim(),
+          p_status: null,
+          p_org:    tenant.id,
+          p_limit:  60,
+          p_offset: 0,
+        });
+      if (!error && data) {
+        // Adapta resultado da RPC para o formato de Candidatura do estado local
+        const adaptados = (data as any[]).map((r: any) => ({
+          id: r.application_id,
+          status: r.status,
+          updated_at: r.updated_at,
+          created_at: r.updated_at,
+          candidates: {
+            nome_completo: r.nome_completo,
+            telefone: r.telefone,
+            cidade: r.cidade,
+            estado: r.estado,
+            cpf: r.cpf,
+            geracao: r.geracao,
+            altura_cm: r.altura_cm,
+            peso_kg: r.peso_kg,
+            tem_tatuagem: r.tem_tatuagem,
+          },
+          jobs: null,
+        }));
+        setCandidaturasBusca(adaptados as unknown as Candidatura[]);
+      }
+    })();
+  }, [buscarDebounced, tenant]);
+
 
   // Identidade visual: `salvo` é o que está no banco, `config` é o que a tela
   // está mostrando. A diferença entre os dois é o que habilita "Salvar".
@@ -144,19 +205,11 @@ export function TenantDashboard() {
   // Jobs de exportação em lote: Map de job_id → nome do candidato/lote
   const [exportJobs, setExportJobs] = useState<Map<string, string>>(new Map());
 
-  const [buscaTexto, setBuscaTexto] = useState('');
-  const [buscarDebounced, setBuscarDebounced] = useState('');
   const [filtroAltura, setFiltroAltura] = useState<'todos' | 'baixo' | 'medio' | 'alto'>('todos');
   const [filtroIMC, setFiltroIMC] = useState<'todos' | 'abaixo' | 'normal' | 'sobrepeso' | 'obesidade'>('todos');
   const [filtroGeracao, setFiltroGeracao] = useState<'todos' | 'issei' | 'nissei' | 'sansei' | 'yonsei' | 'nao_descendente'>('todos');
   const [filtroTatuagem, setFiltroTatuagem] = useState<'todos' | 'sim' | 'nao'>('todos');
   const [modoVisao, setModoVisao] = useState<'kanban' | 'tabela'>('kanban');
-
-  // Debounce de 300ms: evita disparo a cada tecla
-  useEffect(() => {
-    const t = setTimeout(() => setBuscarDebounced(buscaTexto), 300);
-    return () => clearTimeout(t);
-  }, [buscaTexto]);
 
   // Filtragem local (altura, IMC, geração, tatuagem) sobre os dados já em memória.
   // A busca por texto é server-side (buscarDebounced -> RPC). Os demais filtros são
@@ -199,49 +252,6 @@ export function TenantDashboard() {
       return true;
     });
   }, [candidaturas, filtroAltura, filtroIMC, filtroGeracao, filtroTatuagem]);
-
-  // Busca server-side: recarrega candidaturas quando o termo debounced muda
-  useEffect(() => {
-    if (!supabase || !tenant) return;
-    if (!buscarDebounced.trim()) {
-      // Sem termo: recarrega lista completa sem filtro de texto
-      void carregarDados();
-      return;
-    }
-    // Com termo: chama a RPC buscar_candidatos (pg_trgm, GIN index)
-    void (async () => {
-      const { data, error } = await supabase
-        .rpc('buscar_candidatos', {
-          p_termo:  buscarDebounced.trim(),
-          p_status: null,
-          p_org:    tenant.id,
-          p_limit:  60,
-          p_offset: 0,
-        });
-      if (!error && data) {
-        // Adapta resultado da RPC para o formato de Candidatura do estado local
-        const adaptados = (data as any[]).map((r: any) => ({
-          id: r.application_id,
-          status: r.status,
-          updated_at: r.updated_at,
-          created_at: r.updated_at,
-          candidates: {
-            nome_completo: r.nome_completo,
-            telefone: r.telefone,
-            cidade: r.cidade,
-            estado: r.estado,
-            cpf: r.cpf,
-            geracao: r.geracao,
-            altura_cm: r.altura_cm,
-            peso_kg: r.peso_kg,
-            tem_tatuagem: r.tem_tatuagem,
-          },
-          jobs: null,
-        }));
-        setCandidaturas(adaptados);
-      }
-    })();
-  }, [buscarDebounced, tenant]);
 
   // Realtime: ouve export_jobs para baixar automaticamente quando pronto
   useEffect(() => {
@@ -402,96 +412,10 @@ export function TenantDashboard() {
     normalizarHex(configCor) !== salvo.cor ||
     configSetores.join('|') !== salvo.setores.join('|');
 
-  /* ── CARGA ──────────────────────────────────────────────────────────── */
+  /* ── CARGA DADOS SERVERSIDE VIA TANSTACK QUERY ────────────────────── */
   const carregarDados = useCallback(async () => {
-    if (!supabase) {
-      setErroFatal('Conexão com o banco indisponível. Verifique as variáveis VITE_SUPABASE_*.');
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setErroFatal(null);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setErroFatal('Sessão expirada. Entre novamente para acessar o painel.');
-      setLoading(false);
-      return;
-    }
-
-    const { data: membership, error: memErr } = await supabase
-      .from('memberships')
-      .select('organization_id, role, organizations(id, nome, slug, plano, logo_url, cor_primaria, setores, features)')
-      .eq('user_id', user.id)
-      .eq('ativo', true)
-      .limit(1)
-      .maybeSingle();
-
-    if (memErr) {
-      setErroFatal(`Não foi possível carregar sua organização: ${memErr.message}`);
-      setLoading(false);
-      return;
-    }
-    if (!membership?.organizations) {
-      setErroFatal(
-        'Seu usuário ainda não está vinculado a nenhuma agência. Peça ao administrador para criar o vínculo em memberships.',
-      );
-      setLoading(false);
-      return;
-    }
-
-    const org = membership.organizations as unknown as {
-      id: string;
-      nome: string;
-      slug: string | null;
-      plano: string | null;
-      logo_url: string | null;
-      cor_primaria: string | null;
-      setores: string[] | null;
-      features: Record<string, string> | null;
-    };
-
-    const slug = org.slug || '';
-    // Colunas dedicadas são a fonte da verdade; `features` fica como
-    // compatibilidade com as organizações criadas pelo seed antigo.
-    const logo = org.logo_url || org.features?.logo_url || '';
-    const cor = normalizarHex(org.cor_primaria || org.features?.cor_primaria);
-    const setores = org.setores?.length ? org.setores : SETORES_PADRAO;
-
-    setTenant({ id: org.id, nome: org.nome, slug, plano: org.plano || 'founder' });
-    setSalvo({ logo, cor, setores });
-    setConfigLogo(logo);
-    setConfigCor(cor);
-    setConfigSetores(setores);
-    setNovaVaga((v) => ({ ...v, setor: setores[0] ?? '' }));
-
-    if (!slugFromUrl && slug) navigate(`/admin/${slug}`, { replace: true });
-
-    const [{ data: vagasData }, { data: candData }] = await Promise.all([
-      supabase
-        .from('jobs')
-        .select(
-          'id, titulo, empresa_japonesa, provincia, cidade, setor, salario_hora_jpy, vagas_total, vagas_preenchidas, publicada, requisitos, created_at',
-        )
-        .eq('organization_id', org.id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('applications')
-        .select('id, status, updated_at, created_at, candidates(nome_completo, telefone, cidade, estado), jobs(titulo)')
-        .eq('organization_id', org.id)
-        .order('updated_at', { ascending: false }),
-    ]);
-
-    setVagas((vagasData as Vaga[]) || []);
-    setCandidaturas((candData as unknown as Candidatura[]) || []);
-    setLoading(false);
-  }, [navigate, slugFromUrl]);
-
-  useEffect(() => {
-    void carregarDados();
-  }, [carregarDados]);
+    await refetchDashboard();
+  }, [refetchDashboard]);
 
   // A aba do navegador também é da agência.
   useEffect(() => {
@@ -635,23 +559,11 @@ export function TenantDashboard() {
       setAviso({ tipo: 'erro', texto: error.message });
       return;
     }
-    setVagas((atual) => atual.map((v) => (v.id === vaga.id ? { ...v, publicada: !v.publicada } : v)));
+    void refetchDashboard();
   }
 
   async function moverCandidatura(id: string, novoStatus: string) {
-    if (!supabase) return;
-    const anterior = candidaturas;
-    setCandidaturas((atual) =>
-      atual.map((c) => (c.id === id ? { ...c, status: novoStatus, updated_at: new Date().toISOString() } : c)),
-    );
-    const { error } = await supabase
-      .from('applications')
-      .update({ status: novoStatus, updated_at: new Date().toISOString() })
-      .eq('id', id);
-    if (error) {
-      setCandidaturas(anterior); // rollback: a tela não mente sobre o banco
-      setAviso({ tipo: 'erro', texto: `Não foi possível mover: ${error.message}` });
-    }
+    moverMutation.mutate({ applicationId: id, novoStatus });
   }
 
   function adicionarSetor() {
