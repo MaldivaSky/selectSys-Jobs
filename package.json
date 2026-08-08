@@ -11,11 +11,22 @@
     "db:migrate": "node scripts/apply_supabase_migrations.js"
   },
   "supportedArchitectures": {
-    "os": ["current", "linux", "win32"],
-    "cpu": ["current", "x64", "arm64"]
+    "os": [
+      "current",
+      "linux",
+      "win32"
+    ],
+    "cpu": [
+      "current",
+      "x64",
+      "arm64"
+    ]
   },
   "workspaces": [
     "app",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
 }
