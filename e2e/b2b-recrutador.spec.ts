@@ -18,15 +18,6 @@ import { CANDIDATO, ORGANIZACAO } from './fixtures/dados-mock';
 const ROTA_PAINEL = `/admin/${ORGANIZACAO.slug}`;
 const ARQUIVO_ESPERADO = 'marina-tanaka-oliveira-ficha-fujiarte.xlsx';
 
-/* Textos impressos no modelo oficial `ficha_fujiarte_template.xlsx`. São
-   rótulos do formulário — o exportador só escreve VALORES, nunca rótulo. Achar
-   estes no arquivo baixado é a prova de que o template foi carregado, e não a
-   planilha vazia que o `catch` de `gerarFichaExcel` monta quando a leitura
-   falha. */
-const ROTULOS_DO_TEMPLATE = [
-  'PREENCHA EM LETRA DE FORMA MAIÚSCULA',
-  'COMO SOUBE DA FUJIARTE?',
-];
 
 test.describe('B2B · Painel do recrutador', () => {
   test.beforeEach(async ({ page, supabase }) => {
@@ -81,19 +72,27 @@ test.describe('B2B · Painel do recrutador', () => {
        no Japão. Por isso o teste abre o .xlsx e confere as duas coisas que
        importam: o template oficial entrou e os dados do candidato foram
        escritos nele. */
-    /* Checar `status === 200` aqui NÃO prova nada: o `vite preview` faz
-       fallback de SPA, então um template ausente devolve o index.html com 200
-       alegre. Foi assim que este mesmo teste passou verde na CI com o arquivo
-       faltando no repositório. O que prova é o conteúdo: todo .xlsx é um zip,
-       e todo zip começa com os bytes "PK". */
-    const respostaTemplate = await page.request.get('/templates/ficha_fujiarte_template.xlsx');
-    const primeirosBytes = (await respostaTemplate.body()).subarray(0, 2).toString('latin1');
+    /* O modelo da FUJIARTE não é mais servido pelo site — é material do
+       cliente e vive num bucket privado. Confirmar isso faz parte do teste:
+       se alguém reintroduzir o arquivo em app/public/, aqui acende. */
+    const tentativaTemplate = await page.request.get('/templates/ficha_fujiarte_template.xlsx');
+    const tipo = tentativaTemplate.headers()['content-type'] ?? '';
     expect(
-      primeirosBytes,
-      'o template oficial da FUJIARTE não está publicado no build — o servidor devolveu ' +
-        `"${respostaTemplate.headers()['content-type']}" em vez de um .xlsx`,
-    ).toBe('PK');
+      tipo,
+      'o modelo da FUJIARTE voltou a ser publicado pelo site — é material do cliente',
+    ).not.toContain('spreadsheet');
 
+    /* O painel precisa ter pedido a ficha ao SERVIDOR, com o candidato certo.
+       `criar_export_job` valida no Postgres que o candidato pertence à
+       organização de quem pediu: é o isolamento multi-tenant. */
+    const jobs = supabase.chamadasDe('/rest/v1/rpc/criar_export_job');
+    expect(jobs, 'a exportação precisa passar pela RPC que valida o tenant').toHaveLength(1);
+    expect((jobs[0].corpo as Record<string, any>).p_candidate_ids).toEqual([CANDIDATO.id]);
+
+    const invocacoes = supabase.chamadasDe('/functions/v1/gerar-ficha-excel');
+    expect(invocacoes, 'a edge function de geração precisa ter sido chamada').toHaveLength(1);
+
+    // E o que chegou ao disco é um .xlsx legível, com os dados do candidato.
     const caminho = await download.path();
     expect(caminho, 'o download precisa ter sido materializado em disco').toBeTruthy();
 
@@ -102,26 +101,10 @@ test.describe('B2B · Painel do recrutador', () => {
 
     const aba = planilha.getWorksheet('FICHA CADASTRAL');
     expect(aba, 'a aba oficial "FICHA CADASTRAL" precisa existir no arquivo').toBeTruthy();
-
-    // O template em branco tem centenas de linhas de rótulo. Uma planilha
-    // criada do zero pelo fallback tem só as células que o exportador escreve.
     expect(
-      aba!.rowCount,
-      'poucas linhas: a planilha saiu do fallback em branco, sem o template',
-    ).toBeGreaterThan(50);
-
-    const conteudo = textoDaPlanilha(aba!);
-
-    // Rótulos que existem SÓ no template oficial — o exportador nunca escreve
-    // texto fixo, só valores. Se sumirem, a ficha saiu do fallback em branco.
-    for (const rotulo of ROTULOS_DO_TEMPLATE) {
-      expect(conteudo, `rótulo do template ausente: "${rotulo}"`).toContain(rotulo);
-    }
-
-    // E os dados do candidato foram mesmo escritos nas células mapeadas.
-    expect(conteudo, 'o nome do candidato precisa estar escrito na ficha').toContain(
-      CANDIDATO.nome_completo,
-    );
+      textoDaPlanilha(aba!),
+      'o nome do candidato precisa estar escrito na ficha',
+    ).toContain(CANDIDATO.nome_completo);
 
     // ── Critério de aceite: nada de 5xx na jornada ──────────────────────
     // Vale para tudo que a página pediu — inclusive o template .xlsx e as
@@ -135,6 +118,39 @@ test.describe('B2B · Painel do recrutador', () => {
     const leituras = supabase.chamadasDe('/rest/v1/applications');
     expect(leituras.length).toBeGreaterThan(0);
     expect(leituras[0].parametros.organization_id).toBe(`eq.${ORGANIZACAO.id}`);
+  });
+
+  /* ── A regressão que este teste existe para impedir ─────────────────────
+     Por muito tempo, quando a geração da ficha falhava, o app disfarçava: o
+     `catch` montava uma planilha vazia e o painel dizia "baixada com sucesso".
+     O recrutador mandava para o Japão uma ficha sem um único rótulo da
+     FUJIARTE e só descobria quando o cliente recusava.
+
+     Agora falha tem que aparecer como falha. Se alguém reintroduzir qualquer
+     fallback silencioso, este teste acende. */
+  test('quando o servidor falha, o painel mostra o erro em vez de fingir sucesso', async ({
+    page,
+    supabase,
+  }) => {
+    supabase.funcaoDeveFalhar =
+      'TEMPLATE_INDISPONIVEL: não foi possível ler app-templates/ficha_fujiarte_template.xlsx';
+
+    await page.goto(ROTA_PAINEL);
+    await page.getByRole('button', { name: /Funil de Candidatos/ }).click();
+
+    const botaoExcel = page.getByRole('button', { name: /Ficha \.XLS/ }).first();
+    await expect(botaoExcel).toBeVisible();
+
+    let baixou = false;
+    page.on('download', () => {
+      baixou = true;
+    });
+
+    await botaoExcel.click();
+
+    await expect(page.getByText(/Erro na exportação Excel/)).toBeVisible();
+    await expect(page.getByText('Ficha Cadastral Excel (.xlsx) baixada com sucesso!')).toBeHidden();
+    expect(baixou, 'não pode baixar arquivo nenhum quando a geração falhou').toBe(false);
   });
 
   test('sem sessão, a rota do painel devolve o usuário para o login', async ({ page, context }) => {

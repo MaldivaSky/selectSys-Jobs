@@ -32,7 +32,7 @@ import {
 import { useTheme } from '../theme/contexto';
 import { COR_PADRAO, derivarPaleta, normalizarHex } from '../theme/marcaTenant';
 import { useNavigate, useParams } from 'react-router-dom';
-import { gerarFichaExcel, baixarFichaExcel, solicitarExportacaoLote, baixarPorUrl, type ExportJob } from '../dados/exportadorExcel';
+import { exportarFichaPeloServidor, baixarPorUrl, type ExportJob } from '../dados/exportadorExcel';
 import { GaroonIntegrationModal } from '../components/GaroonIntegrationModal';
 import { Database, FileSpreadsheet, Search, Table, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { useDashboardData, useMoverStatusMutation } from '../hooks/useDashboardQuery';
@@ -312,29 +312,38 @@ export function TenantDashboard() {
     return () => { void sb?.removeChannel(channel); };
   }, []);
 
+  /* Exportação da ficha
+     -------------------------------------------------------------------------
+     Gerada no servidor, sempre. O modelo da FUJIARTE é material do cliente e
+     mora num bucket privado; o navegador não o alcança — ver
+     `dados/exportadorExcel`.
+
+     Não há mais fallback silencioso. Antes, se a geração falhasse, o código
+     enfileirava o job e avisava "gerando em background" — e o recrutador ficava
+     esperando um download que podia nunca vir. Agora: ou o arquivo baixa, ou
+     aparece o motivo. */
   const exportarFichaCandidato = async (candidatoData: any) => {
     const nome = (candidatoData.candidates?.nome_completo || candidatoData.nome_completo || 'candidato-fujiarte') as string;
     const candidateId: string | undefined = candidatoData.candidates?.id || candidatoData.id;
 
-    // Exportação individual (≤1 candidato): síncrona no browser (<2s, sem overhead de fila)
+    if (!candidateId) {
+      setAviso({ tipo: 'erro', texto: 'Candidato sem identificador — não é possível exportar a ficha.' });
+      return;
+    }
+
+    setExportandoExcel(candidatoData.id || 'demo');
     try {
-      setExportandoExcel(candidatoData.id || 'demo');
-      const blob = await gerarFichaExcel(candidatoData);
-      baixarFichaExcel(blob, `${nome.toLowerCase().replace(/\s+/g, '-')}-ficha-fujiarte.xlsx`);
+      const { ok, signedUrl, erro } = await exportarFichaPeloServidor([candidateId]);
+
+      if (!ok || !signedUrl) {
+        setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${erro ?? 'Falha ao processar'}` });
+        return;
+      }
+
+      await baixarPorUrl(signedUrl, `${nome.toLowerCase().replace(/\s+/g, '-')}-ficha-fujiarte.xlsx`);
       setAviso({ tipo: 'ok', texto: 'Ficha Cadastral Excel (.xlsx) baixada com sucesso!' });
     } catch (err: any) {
-      // Fallback: enfileira na fila assíncrona se geração no browser falhar
-      if (candidateId) {
-        const { jobId, erro } = await solicitarExportacaoLote([candidateId]);
-        if (jobId) {
-          setExportJobs((prev) => new Map(prev).set(jobId, nome));
-          setAviso({ tipo: 'ok', texto: `Gerando ficha de ${nome} em background... será baixada automaticamente.` });
-        } else {
-          setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${erro ?? err?.message ?? 'Falha ao processar'}` });
-        }
-      } else {
-        setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${err?.message || 'Falha ao processar'}` });
-      }
+      setAviso({ tipo: 'erro', texto: `Erro na exportação Excel: ${err?.message || 'Falha ao processar'}` });
     } finally {
       setExportandoExcel(null);
     }

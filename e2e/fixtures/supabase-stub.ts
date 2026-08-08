@@ -1,3 +1,4 @@
+import ExcelJS from 'exceljs';
 import { test as base, type Page, type Route } from '@playwright/test';
 import {
   CANDIDATO,
@@ -30,6 +31,31 @@ import {
    singular pelo cabeçalho `Accept: application/vnd.pgrst.object+json` que o
    `.single()` / `.maybeSingle()` do supabase-js envia.
    ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Onde o stub finge que está o arquivo pronto. É a "URL assinada" que a edge
+ * function devolveria — mesma origem do preview, para o download não sair da
+ * máquina. Ver `responderFuncao`.
+ */
+export const URL_FICHA_FALSA = '/__ficha-assinada/ficha.xlsx';
+
+/**
+ * Um .xlsx de verdade, montado aqui no Node. Serve para o teste exercitar o
+ * caminho inteiro do download — invoke → URL assinada → fetch → abrir o
+ * arquivo — sem depender do modelo da FUJIARTE, que não está mais no
+ * repositório nem no build.
+ *
+ * Se o modelo oficial foi de fato usado é responsabilidade do servidor agora,
+ * e por isso deixou de ser verificável aqui: o E2E confere o contrato entre
+ * painel e função, não o conteúdo que a função produz.
+ */
+async function fichaDeMentira(): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const aba = wb.addWorksheet('FICHA CADASTRAL');
+  aba.getCell('A6').value = CANDIDATO.nome_completo;
+  aba.getCell('A25').value = CANDIDATO.cpf;
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}
 
 export type Registro = Record<string, any>;
 
@@ -154,6 +180,16 @@ export class StubSupabase {
       rota.fulfill({ contentType: 'application/json', body: JSON.stringify(VIACEP_RESPOSTA) }),
     );
 
+    // A "URL assinada" do arquivo pronto.
+    const ficha = await fichaDeMentira();
+    await page.route(/__ficha-assinada/, (rota) =>
+      rota.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        body: ficha,
+      }),
+    );
+
     await page.route(/\/__supabase\//, (rota) => this.despachar(rota));
   }
 
@@ -185,12 +221,44 @@ export class StubSupabase {
       return this.responderTabela(rota, caminho.replace('/rest/v1/', ''), metodo, parametros, corpo);
     }
     if (caminho.startsWith('/functions/v1/')) {
-      return responder(rota, { ok: true });
+      return this.responderFuncao(rota, caminho.replace('/functions/v1/', ''));
     }
 
     this.naoMapeadas.push(`${metodo} ${caminho}`);
     return responder(rota, []);
   }
+
+  /**
+   * Edge functions. A que importa é `gerar-ficha-excel`: desde que o modelo da
+   * FUJIARTE saiu do repositório e do site, é ela quem monta a ficha, lendo o
+   * modelo de um bucket privado. O front só invoca e baixa da URL assinada.
+   *
+   * O stub devolve a URL assinada apontando para uma rota local que serve um
+   * .xlsx de verdade (ver `URL_FICHA_FALSA`), para o teste exercitar o caminho
+   * inteiro: invoke → signed URL → download → abrir o arquivo.
+   */
+  private async responderFuncao(rota: Route, nome: string): Promise<void> {
+    if (nome !== 'gerar-ficha-excel') return responder(rota, { ok: true });
+
+    if (this.funcaoDeveFalhar) {
+      return responder(
+        rota,
+        { erro: 'PROCESSAMENTO_FALHOU', detalhe: this.funcaoDeveFalhar },
+        500,
+      );
+    }
+
+    return responder(rota, {
+      ok: true,
+      job_id: '66666666-6666-4666-8666-666666666666',
+      signed_url: URL_FICHA_FALSA,
+      expira_em: new Date(Date.now() + 3600_000).toISOString(),
+      total_candidatos: 1,
+    });
+  }
+
+  /** Faz a próxima chamada da função responder 500 com este detalhe. */
+  funcaoDeveFalhar: string | null = null;
 
   private async responderAuth(rota: Route, caminho: string): Promise<void> {
     if (caminho.endsWith('/logout')) return rota.fulfill({ status: 204, body: '' });

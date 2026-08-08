@@ -22,6 +22,11 @@ const MAX_TENTATIVAS = 3;
 const SIGNED_URL_EXPIRY_SECS = 3600; // 1 hora
 const BUCKET = 'export-fichas';
 
+/* Modelo da ficha: bucket privado, sem policy de leitura para anon ou
+   authenticated. Só service_role alcança — ver migration 07. */
+const BUCKET_TEMPLATES = 'app-templates';
+const CAMINHO_TEMPLATE = 'ficha_fujiarte_template.xlsx';
+
 function cors(req: Request) {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -111,44 +116,54 @@ Deno.serve(async (req: Request) => {
     workbook.creator = 'SelectSys Jobs';
     workbook.created = new Date();
 
-    let templateBuffer: ArrayBuffer | null = null;
-    try {
-      const templatePath = 'templates/ficha_fujiarte_template.xlsx';
-      const { data: templateBlob } = await admin.storage
-        .from('public-assets')
-        .download(templatePath);
-      if (templateBlob) {
-        templateBuffer = await templateBlob.arrayBuffer();
-      }
-    } catch {
-      // Template fallback
+    /* ── Modelo da ficha ──────────────────────────────────────────────────
+       Vem do bucket PRIVADO `app-templates`, lido com service_role. Não está
+       no repositório nem é servido pelo site: é material da FUJIARTE.
+
+       Antes isto apontava para um bucket `public-assets` que nunca existiu no
+       projeto, e o erro caía num `catch` vazio. A função seguia em frente e
+       montava uma planilha sem um único rótulo — o job terminava `pronto`, o
+       recrutador baixava com ar de sucesso e mandava para o Japão uma ficha
+       que não era a ficha deles.
+
+       Agora template ausente é FALHA. Um job vermelho com motivo legível é
+       recuperável; uma ficha errada entregue ao cliente não é. */
+    const { data: templateBlob, error: templateErr } = await admin.storage
+      .from(BUCKET_TEMPLATES)
+      .download(CAMINHO_TEMPLATE);
+
+    if (templateErr || !templateBlob) {
+      throw new Error(
+        `TEMPLATE_INDISPONIVEL: não foi possível ler ` +
+          `${BUCKET_TEMPLATES}/${CAMINHO_TEMPLATE} — ${templateErr?.message ?? 'resposta vazia'}. ` +
+          `Republique com: node scripts/publicar_template_ficha.mjs`,
+      );
     }
 
-    for (const candidato of candidatos as Record<string, any>[]) {
-      let sheet: ExcelJS.Worksheet;
+    const templateBuffer: ArrayBuffer = await templateBlob.arrayBuffer();
 
-      if (templateBuffer) {
-        const templateWb = new ExcelJS.Workbook();
-        await templateWb.xlsx.load(templateBuffer);
-        const templateSheet = templateWb.worksheets[0];
-        sheet = workbook.addWorksheet(
-          (candidato.cpf ?? candidato.id).slice(0, 31),
-          { properties: templateSheet.properties }
-        );
-        templateSheet.eachRow({ includeEmpty: true }, (row: any, rowNum: number) => {
-          const newRow = sheet.getRow(rowNum);
-          row.eachCell({ includeEmpty: true }, (cell: any, colNum: number) => {
-            const newCell = newRow.getCell(colNum);
-            newCell.value = cell.value;
-            newCell.style = { ...cell.style };
-          });
-          newRow.commit();
+    for (const candidato of candidatos as Record<string, any>[]) {
+      /* Sem ramo alternativo: chegar aqui já significa que o modelo carregou.
+         O `else` que existia antes montava uma aba vazia e era justamente o
+         que produzia ficha sem rótulo. */
+      const templateWb = new ExcelJS.Workbook();
+      await templateWb.xlsx.load(templateBuffer);
+      const templateSheet = templateWb.worksheets[0];
+
+      const sheet: ExcelJS.Worksheet = workbook.addWorksheet(
+        (candidato.cpf ?? candidato.id).slice(0, 31),
+        { properties: templateSheet.properties },
+      );
+
+      templateSheet.eachRow({ includeEmpty: true }, (row: any, rowNum: number) => {
+        const newRow = sheet.getRow(rowNum);
+        row.eachCell({ includeEmpty: true }, (cell: any, colNum: number) => {
+          const newCell = newRow.getCell(colNum);
+          newCell.value = cell.value;
+          newCell.style = { ...cell.style };
         });
-      } else {
-        sheet = workbook.addWorksheet(
-          (candidato.cpf ?? candidato.id).slice(0, 31)
-        );
-      }
+        newRow.commit();
+      });
 
       const setCell = (ref: string, val: unknown) => {
         if (val === null || val === undefined || val === '') return;

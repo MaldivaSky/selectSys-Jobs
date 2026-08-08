@@ -52,13 +52,14 @@ secrets.json
 #     FICHA_TEMPLATE_XLS para onde ele estiver. O workflow de cobertura pula
 #     sozinho quando não acha o arquivo, em vez de falhar.
 #
-#   - Falta resolver o `app/public/templates/ficha_fujiarte_template.xlsx`. Ele
-#     é carregado pelo navegador em runtime, então hoje o site o serve aberto
-#     em /templates/ — tirá-lo do repositório sem mais nada faz a ficha voltar
-#     a sair em branco em produção. Decisão pendente com o Rafael; enquanto
-#     isso ele segue versionado, de propósito, para não regredir o cliente.
+#   - O modelo .xlsx que o app usa vive no bucket PRIVADO `app-templates` do
+#     Supabase (migration 07). Quem o lê é a edge function `gerar-ficha-excel`,
+#     com service_role. O navegador não alcança, e por isso a geração do .xlsx
+#     saiu do browser. Para republicar depois de uma revisão da FUJIARTE:
+#         node scripts/publicar_template_ficha.mjs <arquivo.xlsx>
 白紙*.xls
 *FUJIARTE*.xls
+app/public/templates/
 
 # Sensitive Business Plans, Internal Master Plans & Mockup Assets
 # O padrão era por extensão (`PLANO_MASTER_SENIOR.md`), então o `.pdf` do MESMO
