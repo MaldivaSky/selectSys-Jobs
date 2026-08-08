@@ -77,14 +77,28 @@ function AppLayout({ lang, setLang }: { lang: Language, setLang: (l: Language) =
   );
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutos de cache (stale-while-revalidate)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 export function App() {
   const [lang, setLang] = useState<Language>('pt-BR');
 
   return (
-    <Router>
-      <BootSplash />
-      <AppLayout lang={lang} setLang={setLang} />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <BootSplash />
+        <AppLayout lang={lang} setLang={setLang} />
+      </Router>
+    </QueryClientProvider>
   );
 }
 
